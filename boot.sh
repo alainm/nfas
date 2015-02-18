@@ -40,6 +40,7 @@ fi
 # Executa o /script/first.sh
 yum -y install git
 mkdir -p /script
+rm -rf nfas
 git clone https://github.com/alainm/nfas.git
 cp -afv nfas/script/* /script
 /script/first.sh
