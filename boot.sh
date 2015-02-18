@@ -43,5 +43,6 @@ mkdir -p /script
 rm -rf nfas
 git clone https://github.com/alainm/nfas.git
 cp -afv nfas/script/* /script
+chmod -Rv +x /script/*.sh
 /script/first.sh
 
