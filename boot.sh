@@ -7,13 +7,16 @@
 echo "Executando boot.sh, parabéns..."
 
 # Liga modo de debug: todos os comando são mostrados no console
-set -x
+# set -x
+
+# atualiza todo o sistema
+yum -y update
 
 # Determina se está rodando em um VirtualBox
 # site: http://stackoverflow.com/questions/12874288/how-to-detect-if-the-script-is-running-on-a-virtual-machine
 yum install dmidecode
 dmidecode  | grep -i product | grep VirtualBox
-if [ "$?" == "0" ] ;then
+if [ $? -eq 0 ] ;then
   IS_VIRTUALBOX="Y"
 else
   IS_VIRTUALBOX="N"
@@ -31,3 +34,11 @@ if [ "$IS_VIRTUALBOX" == "Y" ]; then
   chkconfig acpid on
   service acpid start
 fi
+
+# Copia repositório de scrips, o git-clone vai criar um diretório /root/nfas/
+yum -y install git
+mkdir -p /script
+git clone https://github.com/alainm/nfas.git
+cp -afv nfas/script/* /script
+
+
