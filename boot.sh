@@ -35,10 +35,12 @@ if [ "$IS_VIRTUALBOX" == "Y" ]; then
   service acpid start
 fi
 
-# Copia repositório de scrips, o git-clone vai criar um diretório /root/nfas/
+# Copia repositório de scrips
+# O git-clone vai criar um diretório /root/nfas/ depois copia para o /script/
+# Executa o /script/first.sh
 yum -y install git
 mkdir -p /script
 git clone https://github.com/alainm/nfas.git
 cp -afv nfas/script/* /script
-
+/script/first.sh
 
