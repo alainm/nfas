@@ -4,6 +4,10 @@
 
 echo "Parabéns, você está rotando o /script/first.sh"
 
+# Perguntas de configuração antes de começar:
+# alterar hostname
+# (?)
+
 # atualiza todo o sistema
 yum -y update
 
