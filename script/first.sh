@@ -12,8 +12,7 @@ echo "Parabéns, você está rotando o /script/first.sh"
 yum -y update
 
 # Diretório de dados
-DADOS="/script/dados"
-mkdir -p $DADOS
+mkdir -p /script/var
 
 # Altera o /etc/rc.d/rc.local para chamar o /script/autostart.sh
 cat /etc/rc.d/rc.local | grep "autostart.sh"
@@ -23,7 +22,7 @@ fi
 
 # Determina se está rodando em um VirtualBox
 # site: http://stackoverflow.com/questions/12874288/how-to-detect-if-the-script-is-running-on-a-virtual-machine
-# A variável fica guardada no diretório de dados, para usar deve ser incluida com o camando ". "
+# A variável fica guardada no diretório de dados, para usar deve ser incluida com o comando ". "
 yum -y install dmidecode
 dmidecode  | grep -i product | grep VirtualBox
 if [ $? -eq 0 ] ;then
@@ -31,7 +30,7 @@ if [ $? -eq 0 ] ;then
 else
   IS_VIRTUALBOX="N"
 fi
-echo "IS_VIRTUALBOX=$IS_VIRTUALBOX" > $DADOS/virtualbox
+echo "IS_VIRTUALBOX=$IS_VIRTUALBOX" > /script/var/virtualbox
 /script/virtualbox.sh
 
 # ===== FIM do first.sh =====

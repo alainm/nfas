@@ -11,10 +11,11 @@ echo "Executando boot.sh, parabéns..."
 
 # Copia repositório de scrips
 # O git-clone vai criar um diretório /root/nfas/ depois copia para o /script/
+# apaga o diretório nfas antes de baixar, evita que o git-clone dê erro
 yum -y install git
-mkdir -p /script
 rm -rf nfas
 git clone https://github.com/alainm/nfas.git
+mkdir -p /script
 cp -afv nfas/script/* /script
 chmod -Rv +x /script/*.sh
 
