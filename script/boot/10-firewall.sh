@@ -203,7 +203,7 @@ $IPT -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 $IPT -A INPUT -j IN_FIREWALL
 # fecha todo o resto
 # drop and log everything else
-$IPT -A INPUT -m limit --limit 5/m --limit-burst 7 -j LOG --log-prefix " DEFAULT DROP "
+#$IPT -A INPUT -m limit --limit 5/m --limit-burst 7 -j LOG --log-prefix " DEFAULT DROP "
 $IPT -A INPUT -j DROP
 
 #--------------------------------------------------------------------------
@@ -213,9 +213,6 @@ $IPT -A INPUT -j DROP
 #$IPT -A OUTPUT -p tcp -m state --state NEW -j LOG --log-prefix "IPT NEW OUT-F @@@@: "
 #$IPT -A OUTPUT -p tcp -m state --state RELATED -j LOG --log-prefix "IPT REL OUT-F @@@@: "
 $IPT -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
-#---------- Permite estabelecer novas conexões somente do firewall para fora
-$IPT -A OUTPUT -m state --state NEW -p udp --dport 123 -j ACCEPT  # NTP (clock)
-$IPT -A OUTPUT -m state --state NEW -p udp --dport 53  -j ACCEPT  # DNS
 # Serviços acessíveis são controlados por uma outra chain
 $IPT -A OUTPUT -j OUT_FIREWALL
 # fecha todo o resto
