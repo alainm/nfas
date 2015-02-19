@@ -44,6 +44,8 @@ SYNOPT="-m limit --limit 5/second --limit-burst 10"
 BADIP="0.0.0.0/8 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 255.255.255.255/32"
 # Endereços Locais que não podem vir da internet, também pela RFC 3330
 BADIP="$BADIP 127.0.0.0/8 169.254.0.0/16 240.0.0.0/4 224.0.0.0/4 240.0.0.0/4"
+# Endereços Locais que não podem vir da internet, pela RFC 2365
+BADIP="$BADIP 239.255.255.0/24"
 # Endereços IP da lista negra (IPs e Redes)
 BLAK_LIST=""
 
