@@ -202,7 +202,6 @@ $IPT -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 # Serviços abertos são controlados por uma outra chain
 $IPT -A INPUT -j IN_FIREWALL
 # fecha todo o resto
-# drop and log everything else
 #$IPT -A INPUT -m limit --limit 5/m --limit-burst 7 -j LOG --log-prefix " DEFAULT DROP "
 $IPT -A INPUT -j DROP
 
