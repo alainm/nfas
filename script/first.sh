@@ -10,6 +10,10 @@ echo "Parabéns, você está rotando o /script/first.sh"
 
 # atualiza todo o sistema
 yum -y update
+# Repositório auxiliar: https://fedoraproject.org/wiki/EPEL
+yum -y install epel-release
+# Instalar pacotes extra
+yum -y man nano mcedit
 
 # Diretório de dados
 mkdir -p /script/var
