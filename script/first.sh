@@ -4,6 +4,15 @@
 
 echo "Parabéns, você está rotando o /script/first.sh"
 
+# Primeiro verifica se a Distribuição é compatível,
+# executa o script e importa as variáveis resultantes
+/script/distro.sh
+. /script/info/distro.var
+if [ "$DISTRO_OK" != "Y" ]; then
+  echo "Versão de sistema incompatível. Abortanto..."
+  exit 1
+fi
+
 # Perguntas de configuração antes de começar:
 # alterar hostname
 # (?)

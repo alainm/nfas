@@ -20,4 +20,5 @@ cp -afv nfas/script/* /script
 chmod -Rv +x /script/*.sh
 
 # Executa o /script/first.sh
+cd /script
 /script/first.sh
