@@ -30,8 +30,8 @@ if [ -n "$(ls /etc/*release* 2>/dev/null)" ]; then
   fi
 fi
 
-echo "DISTRO_LIST=\"$DISTRO_LIST\""       >  /script/info/distro.var
-echo "DISTRO_NAME=\"$DISTRO_NAME\""       >> /script/info/distro.var
-echo "DISTRO_VERSION=\"$DISTRO_VERSION\"" >> /script/info/distro.var
-echo "DISTRO_OK=\"$DISTRO_OK\""           >> /script/info/distro.var
+echo "DISTRO_LIST=\"$DISTRO_LIST\""   >  /script/info/distro.var
+echo "DISTRO_NAME=\"$DISTRO_NAME\""   >> /script/info/distro.var
+echo "DISTRO_VERSION=$DISTRO_VERSION" >> /script/info/distro.var
+echo "DISTRO_OK=$DISTRO_OK"           >> /script/info/distro.var
 
