@@ -12,7 +12,7 @@ INFO_FILE=/script/info/distro.var
 # Fornece também uma LISTa das Distros suportadas
 DISTRO_LIST="CentOS 6"
 DISTRO_NAME="Unknown"
-DISTRO_VERSION=""
+DISTRO_VERSION="?"
 DISTRO_OK="N"
 
 # Teste para a família RedHat, testa só o CentoOS
@@ -30,8 +30,8 @@ if [ -n "$(ls /etc/*release* 2>/dev/null)" ]; then
   fi
 fi
 
-echo "DISTRO_LIST="$DISTRO_LIST       >  /script/info/distro.var
-echo "DISTRO_NAME="$DISTRO_NAME       >> /script/info/distro.var
-echo "DISTRO_VERSION="$DISTRO_VERSION >> /script/info/distro.var
-echo "DISTRO_OK="$DISTRO_OK           >> /script/info/distro.var
+echo "DISTRO_LIST=\"$DISTRO_LIST\""       >  /script/info/distro.var
+echo "DISTRO_NAME=\"$DISTRO_NAME\""       >> /script/info/distro.var
+echo "DISTRO_VERSION=\"$DISTRO_VERSION\"" >> /script/info/distro.var
+echo "DISTRO_OK=\"$DISTRO_OK\""           >> /script/info/distro.var
 
