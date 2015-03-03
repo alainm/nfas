@@ -29,15 +29,17 @@ if [ -z "$DISTRO_NAME" ]; then
   fi
 fi
 
-# Teste para a família RedHat, testa só o CentoOS
+# Teste para a família RedHat
 if [ -z "$DISTRO_NAME" ]; then
-  # faz um teste com o ls para evitar mensagem de erro
-  if [ -n "$(ls /etc/*release* 2>/dev/null)" ]; then
-    OS_TMP1=$(cat /etc/*release* | grep -i -m1 centos)
-    if [ -n "$OS_TMP1" ]; then
-      DISTRO_NAME=$(echo $OS_TMP1 | cut -d' ' -f1)
-      DISTRO_VERSION=$(echo $OS_TMP1 | cut -d' ' -f3 | cut -d'.' -f1)
-    fi
+  OS_TMP1=""
+  if [ -a /etc/redhat-release ]; then
+    OS_TMP1=$(cat /etc/redhat-release)
+  elif [ -a /etc/centos-release ]; then
+    OS_TMP1=$(cat /etc/centos-release)
+  fi
+  if [ -n "$OS_TMP1" ]; then
+    DISTRO_NAME=$(echo $OS_TMP1 | cut -d' ' -f1)
+    DISTRO_VERSION=$(echo $OS_TMP1 | cut -d' ' -f3 | cut -d'.' -f1)
   fi
 fi
 
