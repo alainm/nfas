@@ -21,15 +21,18 @@ if [ -a /etc/lsb-release ]; then
   DISTRO_VERSION=$(cat /etc/lsb-release | sed -n 's/DISTRIB_RELEASE=\(.*\)/\1/p')
 fi
 
-# Teste do Debian, tem que ser depois do Ubuntu (existe o arquivo no Ubuntu por compatibilidade)
+# Teste do Debian, de maneira especial (existe o arquivo no Ubuntu por compatibilidade)
 if [ -z "$DISTRO_NAME" ]; then
-  if [ -a /etc/debian_version ]; then
+  cat /proc/version | grep -i "debian" > /dev/null
+  if [ $? -eq 0 ] && [ -a /etc/debian_version ]; then
     DISTRO_NAME="Debian"
     DISTRO_VERSION=$(cat /etc/debian_version | cut -d'.' -f1)
   fi
 fi
 
 # Teste para a família RedHat
+# http://unix.stackexchange.com/questions/6345/how-can-i-get-distribution-name-and-version-number-in-a-simple-shell-script
+# http://linuxmafia.com/faq/Admin/release-files.html
 if [ -z "$DISTRO_NAME" ]; then
   OS_TMP1=""
   if [ -a /etc/redhat-release ]; then
@@ -39,7 +42,8 @@ if [ -z "$DISTRO_NAME" ]; then
   fi
   if [ -n "$OS_TMP1" ]; then
     DISTRO_NAME=$(echo $OS_TMP1 | cut -d' ' -f1)
-    DISTRO_VERSION=$(echo $OS_TMP1 | cut -d' ' -f3 | cut -d'.' -f1)
+    # Detecta versão em campo numérico e não pela posição
+    DISTRO_VERSION=$(sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release)
   fi
 fi
 
