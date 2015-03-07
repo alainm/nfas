@@ -43,7 +43,7 @@ if [ -z "$DISTRO_NAME" ]; then
   if [ -n "$OS_TMP1" ]; then
     DISTRO_NAME=$(echo $OS_TMP1 | cut -d' ' -f1)
     # Detecta versão em campo numérico e não pela posição
-    DISTRO_VERSION=$(sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release)
+    DISTRO_VERSION=$(sed -rn 's/.*\ ([0-9]+)[\.\ $]+.*/\1/p;' /etc/redhat-release)
   fi
 fi
 
