@@ -41,5 +41,11 @@ fi
 
 # ===== FIM do first.sh =====
 # => executa o /script/autostart.sh para iniciar
-/script/autostart.sh
+# /script/autostart.sh
 
+# Precisa rebootar para que as configurações econteçam
+MSG="\nA instalação está terminada..."
+MSG+="\n\nSerá necessário reiniciar para ativar e\nverificar todas as configurações"
+whiptail --title "Instalação NFAS" --msgbox "$MSG" 11 50
+
+reboot

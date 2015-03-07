@@ -58,10 +58,11 @@ fi
 
 echo -e "\nDistribuição encontrada: \"$DISTRO_NAME\" versão \"$DISTRO_VERSION\""
 
-echo "DISTRO_LIST=\"$DISTRO_LIST\""   2>/dev/null >  $INFO_FILE
-echo "DISTRO_NAME=\"$DISTRO_NAME\""   2>/dev/null >> $INFO_FILE
-echo "DISTRO_VERSION=$DISTRO_VERSION" 2>/dev/null >> $INFO_FILE
-echo "DISTRO_OK=$DISTRO_OK"           2>/dev/null >> $INFO_FILE
+echo "DISTRO_LIST=\"$DISTRO_LIST\""                        2>/dev/null >  $INFO_FILE
+echo "DISTRO_NAME=\"$DISTRO_NAME\""                        2>/dev/null >> $INFO_FILE
+echo "DISTRO_NAME_VERS=\"$DISTRO_NAME $DISTRO_VERSION\""   2>/dev/null >> $INFO_FILE
+echo "DISTRO_VERSION=$DISTRO_VERSION"                      2>/dev/null >> $INFO_FILE
+echo "DISTRO_OK=$DISTRO_OK"                                2>/dev/null >> $INFO_FILE
 
 if [[ ! -a $INFO_FILE ]]; then
   echo "ERRO: gravando arquivo /script/info/distro.var"
