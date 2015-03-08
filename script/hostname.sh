@@ -16,6 +16,15 @@
 # Site: http://webcache.googleusercontent.com/search?q=cache:CcanLD8maQEJ:serverfault.com/questions/331936/setting-the-hostname-fqdn-or-short-name+&cd=5&hl=pt-BR&ct=clnk&gl=br
 # Site: https://github.com/DigitalOcean-User-Projects/Articles-and-Tutorials/blob/master/set_hostname_fqdn_on_ubuntu_centos.md
 
+#-----------------------------------------------------------------------
+# Função para extrair IP da saída do ifconfig, deve funcionar sempre (pt, en, arm)
+# uso: IP=$(ifconfig eth0 | GetIpFromIfconfig)
+function GetIpFromIfconfig(){
+  # sed -n '/.*inet /s/ *\(inet *\)\([A-Za-z\.: ]*\)\([\.0-9]*\).*/\3/p'
+  sed -n '/.*inet /s/ *inet \+[A-Za-z\.: ]*\([\.0-9]*\).*/\1/p'
+}
+
+
 # Lê Nome e versão da DISTRO
 . /script/info/distro.var
 
@@ -75,7 +84,39 @@ else
 fi
 
 # Altera o arquivo /ETC/HOSTS para ter:
-#   <ip> <fqdn> <localhostname>
+#   <ip> <fullhostname> <localhostname>
+NOME_LOCAL=$(hostname -s 2> /dev/null)
+NOME_FULL=$(hostname)
+[ "$NOME_LOCAL" == "$NOME_FULL" ] && NOME_FULL="" # elimina fqdn se não existe
+MY_IP=$(ifconfig eth0 |GetIpFromIfconfig)
+if [ -n "$MY_IP" ]; then
+  HOSTS_MY_IP=$(cat /etc/hosts | grep "$MY_IP")
+  if [ "$NOME_LOCAL" != "localhost" ]; then
+    HOSTS_MY_NAME1=$(cat /etc/hosts | grep -v "127.0.0.1" | grep -v "::1" | grep "$NOME_LOCAL")
+    HOSTS_MY_NAME2=$(cat /etc/hosts | grep -v "127.0.0.1" | grep -v "::1" | grep "$NOME_FULL")
+  else
+    HOSTS_MY_NAME1=""; HOSTS_MY_NAME2=""
+  fi
+  if [ -n "$HOSTS_MY_IP" ]; then
+    # já existe uma linha com o IP atual: apaga tudo
+    sed -i '/'$MY_IP'/d' /etc/hosts
+  fi
+  if [ -n "$HOSTS_MY_NAME1" ] || [ -n "$HOSTS_MY_NAME1" ]; then
+    # já existe uma linha com este hostname apaga tudo
+    sed -i '/'$NOME_LOCAL'/d' /etc/hosts
+    sed -i '/'$NOME_FULL'/d' /etc/hosts
+  fi
+  if [ "$(echo -e $OLD_HOSTNAME | cut -d '.' -f 1)" != "localhost" ]; then
+    # apaga nome antigo se não tinha o mesmo IP
+    sed -i '/'$OLD_HOSTNAME'/d' /etc/hosts
+  fi
+  # Cria linha no /etc/hosts com IP e hostname atuais
+  echo -e "$MY_IP\t$NOME_FULL $NOME_LOCAL" >> /etc/hosts
+  echo  "Alterando /etc/hosts para \"$MY_IP $NOME_FULL $NOME_LOCAL\""
+else
+  # Não tem IP na eth0, não faz nada (?)
+  echo "ERRO: não foi encontrado IP para a eth0, /etc/hosts não alerado!"
+fi
 
 echo
 echo "ATENÇÃO: o prompt só muda após um novo Login !!!"
