@@ -104,7 +104,9 @@ if [ -n "$MY_IP" ]; then
   if [ -n "$HOSTS_MY_NAME1" ] || [ -n "$HOSTS_MY_NAME1" ]; then
     # já existe uma linha com este hostname apaga tudo
     sed -i '/'$NOME_LOCAL'/d' /etc/hosts
-    sed -i '/'$NOME_FULL'/d' /etc/hosts
+    if [ -n "$NOME_FULL" ]; then
+      sed -i '/'$NOME_FULL'/d' /etc/hosts
+    fi
   fi
   if [ "$(echo -e $OLD_HOSTNAME | cut -d '.' -f 1)" != "localhost" ]; then
     # apaga nome antigo se não tinha o mesmo IP
