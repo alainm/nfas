@@ -24,6 +24,8 @@ function GetIpFromIfconfig(){
   sed -n '/.*inet /s/ *inet \+[A-Za-z\.: ]*\([\.0-9]*\).*/\1/p'
 }
 
+# Arquivo de Informação gerado
+INFO_FILE=/script/info/hostname.var
 
 # Lê Nome e versão da DISTRO
 . /script/info/distro.var
@@ -81,6 +83,8 @@ else
     # ?? precisa reinicar a rede para ter efeito
     # ?? service network restart
   fi
+  # Guarda Hostname fornecido
+  echo "HOSTNAME_INFO=\"$NEW_HOSTNAME\""  2>/dev/null >  $INFO_FILE
 fi
 
 # Altera o arquivo /ETC/HOSTS para ter:
