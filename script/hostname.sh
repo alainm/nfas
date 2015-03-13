@@ -48,10 +48,11 @@ if [ -z "$NEW_HOSTNAME" ]; then
   if [ "$FIRST" == "Y" ]; then
     MSG="\nQual o NOME da máquina (hostname)?\n"
     MSG+="\n(deixe em branco para \"$OLD_HOSTNAME\""
-    if [ "$NEW_HOSTNAME" == "localhost.localdomain" ];
+    if [ "$NEW_HOSTNAME" == "localhost.localdomain" ]; then
       MSG+="- não recomendado)"
     else
       MSG+=")"
+    fi
   else
     MSG="\nO hostname atual é: \"$OLD_HOSTNAME\"\n"
     MSG+="Qual o novo hostname?\n"
