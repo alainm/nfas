@@ -24,6 +24,46 @@ function GetIpFromIfconfig(){
   sed -n '/.*inet /s/ *inet \+[A-Za-z\.: ]*\([\.0-9]*\).*/\1/p'
 }
 
+function AskHostname(){
+  if [ "$FIRST" == "Y" ]; then
+    MSG="\nQual o NOME da máquina (hostname)?\n"
+    MSG+="\n(deixe em branco para \"$OLD_HOSTNAME\""
+    if [ "$NEW_HOSTNAME" == "localhost.localdomain" ]; then
+      MSG+="- não recomendado)"
+    else
+      MSG+=")"
+    fi
+  else
+    MSG="\nO hostname atual é: \"$OLD_HOSTNAME\"\n"
+    MSG+="Qual o novo hostname?\n"
+    MSG+="\n(deixe em branco para não alterar, mas corrigir o /etc/hosts)"
+  fi
+  if [ -n "$1" ]; then
+	MSG+="\n$1"
+  else
+    MSG+="\n"
+  fi
+  # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
+  NEW_HOSTNAME=$(whiptail --title "Configuração NFAS" --inputbox "$MSG" 13 74  3>&1 1>&2 2>&3)
+  if [ $? -ne 0 ]; then
+    echo "Operação cancelada!"
+    exit 1
+  fi
+  # Validação do nome
+  # ajudou: http://www.linuxquestions.org/questions/programming-9/bash-regex-for-validating-computername-872683/
+  LC_CTYPE="C"
+  NEW_HOSTNAME=$(echo $NEW_HOSTNAME | grep -E '^[a-zA-Z][-a-zA-Z0-9_\.]+[-a-zA-Z0-9_]$')
+  if [ "$NEW_HOSTNAME" != "" ] &&                         # testa se vazio, pode ter sido recusado pela ER...
+     [ "$NEW_HOSTNAME" == "${NEW_HOSTNAME//-_/}" ] &&     # testa combinação inválida
+     [ "$NEW_HOSTNAME" == "${NEW_HOSTNAME//_-/}" ] ; then
+    echo "Hostname ok"
+    return 0
+  else
+    echo "Error"
+    return 1
+  fi
+}
+
 # Arquivo de Informação gerado
 INFO_FILE=/script/info/hostname.var
 
@@ -45,28 +85,16 @@ fi
 OLD_HOSTNAME="$( hostname )"
 
 if [ -z "$NEW_HOSTNAME" ]; then
-  if [ "$FIRST" == "Y" ]; then
-    MSG="\nQual o NOME da máquina (hostname)?\n"
-    MSG+="\n(deixe em branco para \"$OLD_HOSTNAME\""
-    if [ "$NEW_HOSTNAME" == "localhost.localdomain" ]; then
-      MSG+="- não recomendado)"
-    else
-      MSG+=")"
-    fi
-  else
-    MSG="\nO hostname atual é: \"$OLD_HOSTNAME\"\n"
-    MSG+="Qual o novo hostname?\n"
-    MSG+="\n(deixe em branco para não alterar, mas corrige o /etc/hosts)"
-  fi
-  # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
-  NEW_HOSTNAME=$(whiptail --title "Configuração NFAS" --inputbox "$MSG" 11 74  3>&1 1>&2 2>&3)
-  if [ $? -ne 0 ]; then
-    echo "Operação cancelada!"
-    exit 1
-  fi
+  # Pergunta o hostname na tela
+  AskHostname
+  ERR=$?
+  while [ $ERR -ne 0 ]; do
+    AskHostname "Nome inválido, por favor tente novamente"
+    ERR=$?
+  done
 fi
 
-# se está em brando, usa o que já existe
+# se está em branco, usa o que já existe
 if [ -z "$NEW_HOSTNAME" ]; then
   NEW_HOSTNAME="$OLD_HOSTNAME"
 fi
@@ -81,7 +109,7 @@ else
     echo -e "\nERRO: novo hostname é inválido, operação Cancelada!\n"
     exit 2
   fi
-  # altera os arquivos releventes para ficar permanente
+  # altera os arquivos relevantes para ficar permanente
   if [ "$DISTRO_NAME_VERS" == "CentOS 6" ]; then
     # Só para CentOS: tem que alterar na configuração de Rede
     sed -i "s/HOSTNAME=.*/HOSTNAME=$NEW_HOSTNAME/g" /etc/sysconfig/network
