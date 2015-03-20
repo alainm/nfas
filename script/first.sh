@@ -7,6 +7,7 @@ echo "Parabéns, você está rotando o /script/first.sh"
 
 # Diretório de informações coletadas
 mkdir -p /script/info
+echo "NEED_BOOT=\"N\""  2>/dev/null >  /script/info/needboot.var
 
 # Primeiro verifica se a Distribuição é compatível,
 # executa o script e importa as variáveis resultantes
@@ -46,9 +47,18 @@ fi
 # => executa o /script/autostart.sh para iniciar
 # /script/autostart.sh
 
-# Precisa rebootar para que as configurações econteçam
-MSG="\nA instalação está terminada..."
-MSG+="\n\nSerá necessário reiniciar para ativar e\nverificar todas as configurações"
-whiptail --title "Instalação NFAS" --msgbox "$MSG" 11 50
-
-reboot
+# Lê flag pedindo reboot, pode ter sido setado se precisar
+. /script/info/needboot.var
+if [ "$NEED_BOOT" == "N" ]; then
+  # Não precisa rebootar, mas recomenda
+  MSG="\nA instalação está terminada..."
+  MSG+="\n\nRecomenda-se rebootar para maior segurança!"
+  whiptail --title "Instalação NFAS" --msgbox "$MSG" 11 50
+else
+  # Precisa rebootar para que as configurações econteçam
+  MSG="\nA instalação está terminada..."
+  MSG+="\n\nSerá necessário reiniciar para ativar e\nverificar todas as configurações"
+  whiptail --title "Instalação NFAS" --msgbox "$MSG" 11 50
+  # reboot forçado
+  reboot
+fi

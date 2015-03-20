@@ -128,6 +128,8 @@ if [ -z "$NEW_HOSTNAME" ]; then
         fi
         # Guarda Hostname fornecido
         echo "HOSTNAME_INFO=\"$NEW_HOSTNAME\""  2>/dev/null >  $INFO_FILE
+        # indica que vao precisar de Reboot
+        echo "NEED_BOOT=\"Y\""  2>/dev/null >  /script/info/needboot.var
       fi
     else
       ERR_ST="Nome inválido, por favor tente novamente"
