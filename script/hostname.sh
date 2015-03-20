@@ -24,6 +24,9 @@ function GetIpFromIfconfig(){
   sed -n '/.*inet /s/ *inet \+[A-Za-z\.: ]*\([\.0-9]*\).*/\1/p'
 }
 
+#-----------------------------------------------------------------------
+# Função para perguntar e verificar o HOSTNAME
+# Retorna: 0=ok, 1=em branco(intencional) 2=Erro, Aborta de <Cancelar>
 function AskHostname(){
   if [ "$FIRST" == "Y" ]; then
     MSG="\nQual o NOME da máquina (hostname)?\n"
@@ -38,21 +41,22 @@ function AskHostname(){
     MSG+="Qual o novo hostname?\n"
     MSG+="\n(deixe em branco para não alterar, mas corrigir o /etc/hosts)"
   fi
-  if [ -n "$1" ]; then
-	MSG+="\n$1"
-  else
-    MSG+="\n"
-  fi
+  # Acrescenta mensagem de erro
+  MSG+="\n$1"
   # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
   NEW_HOSTNAME=$(whiptail --title "Configuração NFAS" --inputbox "$MSG" 13 74  3>&1 1>&2 2>&3)
   if [ $? -ne 0 ]; then
     echo "Operação cancelada!"
     exit 1
   fi
+  if [ -z "$NEW_HOSTNAME" ]; then
+    echo "Hostname inalterado"
+    return 1
+  fi
   # Validação do nome
-  # ajudou: http://www.linuxquestions.org/questions/programming-9/bash-regex-for-validating-computername-872683/
+  # Site ajudou: http://www.linuxquestions.org/questions/programming-9/bash-regex-for-validating-computername-872683/
   LC_CTYPE="C"
-  NEW_HOSTNAME=$(echo $NEW_HOSTNAME | grep -E '^[a-zA-Z][-a-zA-Z0-9_\.]+[-a-zA-Z0-9_]$')
+  NEW_HOSTNAME=$(echo $NEW_HOSTNAME | grep -E '^[a-zA-Z][-a-zA-Z0-9_\.]+[a-zA-Z0-9]$')
   if [ "$NEW_HOSTNAME" != "" ] &&                         # testa se vazio, pode ter sido recusado pela ER...
      [ "$NEW_HOSTNAME" == "${NEW_HOSTNAME//-_/}" ] &&     # testa combinação inválida
      [ "$NEW_HOSTNAME" == "${NEW_HOSTNAME//_-/}" ] ; then
@@ -60,7 +64,7 @@ function AskHostname(){
     return 0
   else
     echo "Error"
-    return 1
+    return 2
   fi
 }
 
@@ -86,38 +90,44 @@ OLD_HOSTNAME="$( hostname )"
 
 if [ -z "$NEW_HOSTNAME" ]; then
   # Pergunta o hostname na tela
-  AskHostname
-  ERR=$?
+  ERR=255;   ERR_ST=""
   while [ $ERR -ne 0 ]; do
-    AskHostname "Nome inválido, por favor tente novamente"
+    AskHostname "$ERR_ST"
     ERR=$?
+    if [ $ERR -eq 1 ]; then
+      # Hostname em branco intencionalmente
+      NEW_HOSTNAME="$OLD_HOSTNAME"
+      echo "Hostname continua sendo \"$OLD_HOSTNAME\", nada a ser feito..."
+      ERR=0;
+    elif [ $ERR -eq 0 ]; then
+      # Tenta alterar hostname
+      echo "Alterando hostname de \"$OLD_HOSTNAME\" para \"$NEW_HOSTNAME\""
+      # Alterando temporáriamente
+      hostname $NEW_HOSTNAME &>2 >/dev/null
+      if [ $? -ne 0 ]; then
+        # Mesmo depois de testado, foi recusado...
+        ERR_ST="Nome foi recusado pelo comando \"hostname\", por favor tente novamente"
+        ERR=255
+      elif [ "$(hostname)" != "$NEW_HOSTNAME" ]; then
+        # Mesmo depois de testado, o comando não retornou o que foi programado
+        OLD_HOSTNAME="$(hostname)"
+        ERR_ST="ATENÇÃO: o hostmane ficou DIFERENTE do desejado, por favor tente novamente"
+        ERR=255
+      else
+        # altera os arquivos relevantes para ficar permanente
+        if [ "$DISTRO_NAME_VERS" == "CentOS 6" ]; then
+          # Só para CentOS: tem que alterar na configuração de Rede
+          sed -i "s/HOSTNAME=.*/HOSTNAME=$NEW_HOSTNAME/g" /etc/sysconfig/network
+          # ?? precisa reinicar a rede para ter efeito
+          # ?? service network restart
+        fi
+        # Guarda Hostname fornecido
+        echo "HOSTNAME_INFO=\"$NEW_HOSTNAME\""  2>/dev/null >  $INFO_FILE
+      fi
+    else
+      ERR_ST="Nome inválido, por favor tente novamente"
+    fi
   done
-fi
-
-# se está em branco, usa o que já existe
-if [ -z "$NEW_HOSTNAME" ]; then
-  NEW_HOSTNAME="$OLD_HOSTNAME"
-fi
-
-if [ "$NEW_HOSTNAME" == "$OLD_HOSTNAME" ]; then
-  echo "Hostname continua sendo \"$OLD_HOSTNAME\", nada a ser feito..."
-else
-  echo "Alterando hostname de \"$OLD_HOSTNAME\" para \"$NEW_HOSTNAME\""
-  # Alterando temporáriamente
-  hostname "$NEW_HOSTNAME" &>2 >/dev/null
-  if [ $? -ne 0 ]; then
-    echo -e "\nERRO: novo hostname é inválido, operação Cancelada!\n"
-    exit 2
-  fi
-  # altera os arquivos relevantes para ficar permanente
-  if [ "$DISTRO_NAME_VERS" == "CentOS 6" ]; then
-    # Só para CentOS: tem que alterar na configuração de Rede
-    sed -i "s/HOSTNAME=.*/HOSTNAME=$NEW_HOSTNAME/g" /etc/sysconfig/network
-    # ?? precisa reinicar a rede para ter efeito
-    # ?? service network restart
-  fi
-  # Guarda Hostname fornecido
-  echo "HOSTNAME_INFO=\"$NEW_HOSTNAME\""  2>/dev/null >  $INFO_FILE
 fi
 
 # Altera o arquivo /ETC/HOSTS para ter:
