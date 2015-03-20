@@ -56,10 +56,12 @@ function AskHostname(){
   # Validação do nome
   # Site ajudou: http://www.linuxquestions.org/questions/programming-9/bash-regex-for-validating-computername-872683/
   LC_CTYPE="C"
+  # Testa se só tem caracteres válidos
   NEW_HOSTNAME=$(echo $NEW_HOSTNAME | grep -E '^[a-zA-Z][-a-zA-Z0-9_\.]+[a-zA-Z0-9]$')
+  # Testa combinações inválidas
   if [ "$NEW_HOSTNAME" != "" ] &&                         # testa se vazio, pode ter sido recusado pela ER...
      [ "$NEW_HOSTNAME" == "${NEW_HOSTNAME//-_/}" ] &&     # testa combinação inválida
-     [ "$NEW_HOSTNAME" == "${NEW_HOSTNAME//_-/}" ] ; then
+     [ "$NEW_HOSTNAME" == "${NEW_HOSTNAME//_-/}" ]; then
     echo "Hostname ok"
     return 0
   else
@@ -67,6 +69,9 @@ function AskHostname(){
     return 2
   fi
 }
+
+#-----------------------------------------------------------------------
+# Começo do Script...
 
 # Arquivo de Informação gerado
 INFO_FILE=/script/info/hostname.var
