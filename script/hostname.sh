@@ -2,9 +2,8 @@
 # set -x
 
 # Script para alterar o nome da máquina: hostname
-#  1) Durante instalação: /script/hostname.sh --init
+#  1) Durante instalação: /script/hostname.sh --first
 #  2) Alteração interativa, pergunta: /script/hostname.sh
-#  3) Modo batch: /script/hostname.sh novo.hostname
 # O nome pode ser tanto simples(local) quanto FQDN, isso será tratado pelo sistema
 #   a parte antes do primeiro "." é o hostname local, o resto é o domínio, o conjunto todo é o FQDN.
 #   Isso não tem nada a ver com o que algum DNS possa estar apontando para a máquina,

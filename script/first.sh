@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+# set -x
 
 # Script de inicialização geral, chamadao pelo boot.sh
 
