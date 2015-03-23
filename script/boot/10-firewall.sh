@@ -181,16 +181,10 @@ $IPT -A OUTPUT -j DROP
 $IPT -N IN_FIREWALL
 # SSH fica aberto, por enquanto
 $IPT -A IN_FIREWALL -p tcp --dport 22 -m state --state NEW -j ACCEPT
-
+# Portas HTTP e HTTPS
+$IPT -A IN_FIREWALL -p tcp --dport 80  -m state --state NEW -j ACCEPT
+$IPT -A IN_FIREWALL -p tcp --dport 443 -m state --state NEW -j ACCEPT
 #==========================================================================
-# Serviços acessíveis - SAIDAS
-#==========================================================================
-# Estes comandos estão em Chains separadas para poderem ser alterados
-$IPT -N OUT_FIREWALL
-$IPT -A OUT_FIREWALL -m state --state NEW -p udp --dport 123 -j ACCEPT  # NTP (clock)
-$IPT -A OUT_FIREWALL -m state --state NEW -p udp --dport 53  -j ACCEPT  # DNS
-$IPT -A OUT_FIREWALL -m state --state NEW -p tcp --dport 25  -j ACCEPT  # smtp
-$IPT -A OUT_FIREWALL -m state --state NEW -p tcp --dport 465 -j ACCEPT  # smtp com ssl
 
 #--------------------------------------------------------------------------
 # Entrada do Servidor, processamento genérico
@@ -212,11 +206,8 @@ $IPT -A INPUT -j DROP
 #$IPT -A OUTPUT -p tcp -m state --state NEW -j LOG --log-prefix "IPT NEW OUT-F @@@@: "
 #$IPT -A OUTPUT -p tcp -m state --state RELATED -j LOG --log-prefix "IPT REL OUT-F @@@@: "
 $IPT -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
-# Serviços acessíveis são controlados por uma outra chain
-$IPT -A OUTPUT -j OUT_FIREWALL
-# fecha todo o resto
-# $IPT -A INPUT  -j LOG --log-prefix "IPT INPUT  DROP: " $LOGOPT
-$IPT -A OUTPUT -j DROP
+# Por enquanto deixa saídas abertas, se quiser fechar atrapalha muito e não aumenta a segurança
+$IPT -A OUTPUT -j ACCEPT
 
 #--------------------------------------------------------------------------
 # Fim
