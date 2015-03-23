@@ -17,7 +17,8 @@ rm -rf nfas
 git clone https://github.com/alainm/nfas.git
 mkdir -p /script
 cp -afv nfas/script/* /script
-chmod -Rv +x /script/*.sh
+chmod -v +x /script/*.sh
+chmod -v +x /script/boot/*.sh
 
 # Executa o /script/first.sh
 cd /script

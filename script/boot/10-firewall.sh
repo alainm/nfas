@@ -1,4 +1,5 @@
 #!/bin/bash
+# set -x
 
 # Primeiro firewall, mais simples e não muito seguro
 # fica ativo durante 30 segundos antes de ativar o firewall verdadeiro
@@ -41,13 +42,18 @@ LOGOPT="--log-level=3 -m limit --limit 3/minute --limit-burst 3"
 # Limite para ataque tipo SYN-FLOOD
 SYNOPT="-m limit --limit 5/second --limit-burst 10"
 # Endereços inválidos em qualquer lugar pela RFC 3330
-BADIP="0.0.0.0/8 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 255.255.255.255/32"
+BADIP="0.0.0.0/8 172.16.0.0/12 255.255.255.255/32"
 # Endereços Locais que não podem vir da internet, também pela RFC 3330
-BADIP="$BADIP 127.0.0.0/8 169.254.0.0/16 240.0.0.0/4 224.0.0.0/4 240.0.0.0/4"
+BADIP+=" 127.0.0.0/8 169.254.0.0/16 240.0.0.0/4 224.0.0.0/4 240.0.0.0/4"
 # Endereços Locais que não podem vir da internet, pela RFC 2365
-BADIP="$BADIP 239.255.255.0/24"
+BADIP+=" 239.255.255.0/24"
 # Endereços IP da lista negra (IPs e Redes)
 BLAK_LIST=""
+# Se não for Virtualbox, bloqueia IPs locais
+. /script/info/virtualbox.var
+if [ "$IS_VIRTUALBOX" != "Y" ]; then
+  BADIP+=" 10.0.0.0/8 192.168.0.0/16"
+fi
 
 #-------------------------------------------------------------------
 # Limpa as regras de firewall já existentes
@@ -71,7 +77,7 @@ echo 0 > /proc/sys/net/ipv4/ip_forward
 # para fazer statefull
 modprobe ip_conntrack
 # para fazer regras com temporização
-modprobe ipt_recent
+# modprobe ipt_recent
 
 #---------------------------------------------------------------------
 # local aceita tudo
@@ -126,19 +132,13 @@ $IPT  -A INPUT -m pkttype --pkt-type broadcast -j BADFLAGS
 $IPT  -A INPUT -m pkttype --pkt-type multicast -j BADFLAGS
 # Elimina pacotes de um stream que se tornou inválido
 $IPT  -A INPUT -m state --state INVALID -j BADFLAGS
-# Elimina pacotes com problemas (mal formado ou header inválido) [não tem no livro]
-$IPT -A INPUT -m unclean -j BADFLAGS
 
 #--------------------------------------------------------------------------
 # Testes de IP na Entrada: Blacklist, Anti-spoofing
 #--------------------------------------------------------------------------
-# Lista negra de IPs
-for ip in $BLAK_LIST; do
-  $IPT -A INPUT -s $ip -j BAD_IP
-  $IPT -A INPUT -d $ip -j BAD_IP
-done
-# Mensagens com IP na Lista Negra, inválidos ou reservados pelo RFC 3330
-for ip in "$BADIP $BLAK_LIST"; do
+# Lista negra de IPs, inválidos ou reservados pelo RFC 3330
+for ip in $BADIP $BLAK_LIST
+do
   $IPT -A INPUT  -s $ip -j BAD_IP
   $IPT -A OUTPUT -d $ip -j BAD_IP
 done
@@ -168,11 +168,6 @@ $IPT -A OUTPUT -p icmp --icmp-type source-quench -j ACCEPT
 # Apagar esta mensagem atrapalha a recuperação de erro. Alguns recomendam apagar,
 #  mas outros dizem que não compromete a segurança
 $IPT -A OUTPUT -p icmp --icmp-type parameter-problem -j ACCEPT
-# Bloqueia todo o resto e põe no Log
-# $IPT -A INPUT  -j LOG --log-prefix "ICMP INPUT  DROP: " $LOGOPT
-# $IPT -A OUTPUT -j LOG --log-prefix "ICMP OUTPUT DROP: " $LOGOPT
-$IPT -A INPUT  -j DROP
-$IPT -A OUTPUT -j DROP
 
 #==========================================================================
 # Serviços disponíveis - ENTRADAS

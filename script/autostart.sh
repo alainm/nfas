@@ -23,3 +23,12 @@ else
   sed -i "s/\(^[[:blank:]]*IP atual[[:blank:]]*:\)\(.*\)/\1 $MY_IP/" /etc/issue
 fi
 
+#-----------------------------------------------------------------------
+# Executa arquivos no /script/boot na ordem
+FILES=$(ls /script/boot/*.sh)
+for f in $FILES; do
+  echo "Processing $f"
+  $f
+done
+
+
