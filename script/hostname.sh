@@ -16,14 +16,6 @@
 # Site: https://github.com/DigitalOcean-User-Projects/Articles-and-Tutorials/blob/master/set_hostname_fqdn_on_ubuntu_centos.md
 
 #-----------------------------------------------------------------------
-# Função para extrair IP da saída do ifconfig, deve funcionar sempre (pt, en, arm)
-# uso: IP=$(ifconfig eth0 | GetIpFromIfconfig)
-function GetIpFromIfconfig(){
-  # sed -n '/.*inet /s/ *\(inet *\)\([A-Za-z\.: ]*\)\([\.0-9]*\).*/\3/p'
-  sed -n '/.*inet /s/ *inet \+[A-Za-z\.: ]*\([\.0-9]*\).*/\1/p'
-}
-
-#-----------------------------------------------------------------------
 # Função para perguntar e verificar o HOSTNAME
 # Retorna: 0=ok, 1=em branco(intencional) 2=Erro, Aborta de <Cancelar>
 function AskHostname(){
@@ -72,9 +64,10 @@ function AskHostname(){
 #-----------------------------------------------------------------------
 # Começo do Script...
 
+# Inclui funções básicas
+. /script/functions.sh
 # Arquivo de Informação gerado
 INFO_FILE=/script/info/hostname.var
-
 # Lê Nome e versão da DISTRO
 . /script/info/distro.var
 
