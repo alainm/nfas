@@ -1,6 +1,8 @@
 #!/bin/bash
 # set -x
 
+echo "Executando 10-firewall.sh" >> /script/info/autostart.log
+
 # Primeiro firewall, mais simples e não muito seguro
 # fica ativo durante 30 segundos antes de ativar o firewall verdadeiro
 # ==================================================

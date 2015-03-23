@@ -5,7 +5,7 @@
 #
 # Essa chamada é configurada quando executa o /script/first.sh
 
-echo "Rodando o Script de inicialização: /script/autostart.sh"
+echo "Rodando o Script de inicialização: /script/autostart.sh" > /script/info/autostart.log
 
 # Inclui funções básicas
 . /script/functions.sh
@@ -25,7 +25,7 @@ fi
 
 #-----------------------------------------------------------------------
 # quando troca o MAC no CentOS, a placa de rede troca de nome para eth1, eth2, etc.
-# elimina informação da placa para evitar a troca de nome
+# elimina informação da placa para evitar a troca de nome, tem que fazer a cada boot
 # Só no Virtualbox e CentOS
 . /script/info/virtualbox.var
 . /script/info/distro.var
@@ -38,8 +38,9 @@ fi
 # Executa arquivos no /script/boot na ordem
 FILES=$(ls /script/boot/*.sh)
 for f in $FILES; do
-  echo "Processing $f"
-  $f
+  echo "Chamando $f" >> /script/info/autostart.log
+  # está rodando dentro de um ambiente não padrão (init?), precisa chamar o bash explicitamente
+  /bin/bash $f
 done
 
 
