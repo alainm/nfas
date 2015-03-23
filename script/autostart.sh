@@ -24,6 +24,17 @@ else
 fi
 
 #-----------------------------------------------------------------------
+# quando troca o MAC no CentOS, a placa de rede troca de nome para eth1, eth2, etc.
+# elimina informação da placa para evitar a troca de nome
+# Só no Virtualbox e CentOS
+. /script/info/virtualbox.var
+. /script/info/distro.var
+if [ "$IS_VIRTUALBOX" == "Y" ] && [ "$DISTRO_NAME" == "CentOS" ]; then
+  echo "#" > /etc/udev/rules.d/70-persistent-net.rules
+  sed -i /HWADDR/d /etc/sysconfig/network-scripts/ifcfg-eth0
+fi
+
+#-----------------------------------------------------------------------
 # Executa arquivos no /script/boot na ordem
 FILES=$(ls /script/boot/*.sh)
 for f in $FILES; do
