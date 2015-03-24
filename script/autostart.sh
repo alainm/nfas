@@ -39,8 +39,8 @@ fi
 FILES=$(ls /script/boot/*.sh)
 for f in $FILES; do
   echo "Chamando $f" >> /script/info/autostart.log
-  # está rodando dentro de um ambiente não padrão (init?), precisa chamar o bash explicitamente
-  /bin/bash $f
+  # usa o su para criar um login-shell, está rodando num ambiente não padrão
+  su -l -c $f
 done
 
 
