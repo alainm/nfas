@@ -35,12 +35,26 @@ if [ "$IS_VIRTUALBOX" == "Y" ] && [ "$DISTRO_NAME" == "CentOS" ]; then
 fi
 
 #-----------------------------------------------------------------------
+# evita apagamento da tela, tanto para VM quanto para console remoto
+setterm -blank 0
+
+#-----------------------------------------------------------------------
 # Executa arquivos no /script/boot na ordem
 FILES=$(ls /script/boot/*.sh)
 for f in $FILES; do
   echo "Chamando $f" >> /script/info/autostart.log
   # usa o su para criar um login-shell, está rodando num ambiente não padrão
   su -l -c $f
+done
+
+#-----------------------------------------------------------------------
+# Inicializa Aplicações
+FILES=$(ls /home/*/auto.sh)
+for f in $FILES; do
+  USR=$(echo "$f" | sed 's@/home/\(.*\)/.*@\1@')
+  echo "Chamando $f USR=$USR" >> /script/info/autostart.log
+  # usa o su para criar um login-shell, está rodando num ambiente não padrão
+  su $USR -l -c "nohup $f 2>&1 >/dev/null &"
 done
 
 
