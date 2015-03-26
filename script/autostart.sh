@@ -36,7 +36,17 @@ fi
 
 #-----------------------------------------------------------------------
 # evita apagamento da tela, tanto para VM quanto para console remoto
-setterm -blank 0
+# http://superuser.com/questions/152347/change-linux-console-screen-blanking-behavior
+if [ "$DISTRO_NAME_VERS" == "CentOS 6" ]; then
+  for term in /dev/tty[0-9]*; do # select all ttyNN, but skip ttyS*
+    setterm -blank 0 -powersave off >$term <$term
+  done
+fi
+# Versão apra Ubuntu com Upstart:
+# for file in /etc/init/tty*.conf; do
+#   tty="/dev/`basename $file .conf`"
+#   echo "post-start exec setterm -blank 0 -powersave off >$tty <$tty" | sudo tee -a "$file"
+# done
 
 #-----------------------------------------------------------------------
 # Executa arquivos no /script/boot na ordem
