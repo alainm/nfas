@@ -37,6 +37,7 @@ fi
 #-----------------------------------------------------------------------
 # evita apagamento da tela, tanto para VM quanto para console remoto
 # http://superuser.com/questions/152347/change-linux-console-screen-blanking-behavior
+# cada sistema tem um método, depente se usa init.d, upstart ou systemd
 if [ "$DISTRO_NAME_VERS" == "CentOS 6" ]; then
   for term in /dev/tty[0-9]*; do # select all ttyNN, but skip ttyS*
     setterm -blank 0 -powersave off >$term <$term

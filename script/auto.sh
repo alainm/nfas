@@ -5,15 +5,17 @@
 # Chamada com usuário <user>
 # Não precisa retornar, chamada em Background
 
-# Inicializa e limpa log
-echo "Rodando $HOME/auto.sh"  > $HOME/auto.log
-date                         >> $HOME/auto.log
+# ------ Inicializa e limpa log ------
+echo "Rodando $HOME/auto.sh, USER=$USER"  > $HOME/auto.log
+date                                     >> $HOME/auto.log
+id                                       >> $HOME/auto.log
+echo -e "----------\n"                   >> $HOME/auto.log
 
-# ------ Alterada quando é criado o aplicativo ------
+# ------ Esta parte é alterada quando é criado o aplicativo ------
 
 # Portas para Aplicativos NODE
-NODE_PORT=3000
+export NODE_PORT=3000
 
-# ------ Fim da parte automática ------
+# ------ Fim da parte alterada automáticamente ------
 
 
