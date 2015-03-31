@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+# set -x
 
 # Script para perguntar email do administrador e servidor smtp
 # As perguntas são interativas através de TUI
@@ -198,6 +198,8 @@ function AskEmailSmtpPasswd(){
       echo "Senha ok: $EMAIL_USER_PASSWD"
       return 0
     else
+      PW1=""
+      PW2=""
       ERR_ST="Senha inválida, por favor tente novamente"
     fi
   done
