@@ -141,10 +141,14 @@ function AskEmailSmtpPort(){
 # uso: AskEmailSmtpStartTls
 # Retorna: 0=ok, 1=Aborta se <Cancelar>
 function AskEmailSmtpStartTls(){
+  local LAST_IS_NO=""
   MSG="\nPrecisa usar o comando StartTLS?\n"
   MSG+="(é necessário para o Gmail...)\n"
+  if [ "$EMAIL_SMTP_STARTTLS" != "Y" ]; then
+    LAST_IS_NO="--defaultno"
+  fi
   # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail#Yes.2Fno_box
-  whiptail --title "Configuração NFAS" --yesno --defaultno "$MSG" 10 78
+  whiptail --title "Configuração NFAS" --yesno $LAST_IS_NO "$MSG" 10 78
   if [ $? -eq 0 ]; then
     EMAIL_SMTP_STARTTLS="Y"
   else
@@ -161,14 +165,14 @@ function AskEmailSmtpPasswd(){
   local PW1=""
   local PW2=""
   local TMP=""
-  if [ "$FIRST" != "Y" ]; then
-    PW1="$EMAIL_USER_PASSWD"
-  fi
+  if [ "$FIRST" == "Y" ]; then
+    MSG="\nQual a Senha do usuário para LOGIN?\n"
+  else
+    MSG="\nQual a Senha do usuário para LOGIN?\n"
+    MSG+="\n Deixe em branco para manter a senha anterior"
+fi
   # loop só sai com return
   while true; do
-    MSG="\nQual a Senha do usuário para LOGIN?\n"
-    # Acrescenta mensagem de erro
-    MSG+="\n$ERR_ST"
     # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail#Password_box
     PW1=$(whiptail --title "Configuração NFAS" --passwordbox "$MSG" 10 78 $PW1 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
@@ -176,11 +180,12 @@ function AskEmailSmtpPasswd(){
       ABORT="Y"
       return 1
     fi
+    if [ -z "$PW1" ]; then
+      echo "Senha não alterada"
+      return 0
+    fi
     MSG="\nQual a Senha do usuário para LOGIN?\n"
     MSG+="\n Por favor repita a senha para conferência"
-    if [ "$FIRST" != "Y" ] && [ "$PW1" == "$EMAIL_USER_PASSWD" ]; then
-      PW2="$EMAIL_USER_PASSWD"
-    fi
     PW2=$(whiptail --title "Configuração NFAS" --passwordbox "$MSG" 10 78 $PW2 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
       echo "Operação cancelada!"
@@ -200,7 +205,8 @@ function AskEmailSmtpPasswd(){
     else
       PW1=""
       PW2=""
-      ERR_ST="Senha inválida, por favor tente novamente"
+      MSG="\nQual a Senha do usuário para LOGIN?\n"
+      MSG+="\nSenha inválida, por favor tente novamente"
     fi
   done
 }
