@@ -42,6 +42,8 @@ fi
 /script/virtualbox.sh
 # Pergunta hostname e configura
 /script/hostname.sh --first
+# Pergunta dados de Email, chama outros scripts de configuração
+/script/email.sh --first
 
 # ===== FIM do first.sh =====
 # => executa o /script/autostart.sh para iniciar
