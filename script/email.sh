@@ -107,7 +107,7 @@ function AskEmailSmtpPort(){
   while true; do
     MSG="\nQual a PORTA a ser usada do servidor de SMTP?\n"
     # http://pt.wikipedia.org/wiki/Simple_Mail_Transfer_Protocol
-    MSG+="(Default geralmente é 465)"
+    MSG+="(Default geralmente é 465 ou 587)"
     if [ "$FIRST" == "Y" ]; then
       EMAIL_SMTP_PORT=465
     fi
@@ -174,7 +174,7 @@ fi
   # loop só sai com return
   while true; do
     # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail#Password_box
-    PW1=$(whiptail --title "Configuração NFAS" --passwordbox "$MSG" 10 78 $PW1 3>&1 1>&2 2>&3)
+    PW1=$(whiptail --title "Configuração NFAS" --passwordbox "$MSG" 11 78 $PW1 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
       echo "Operação cancelada!"
       ABORT="Y"
@@ -186,7 +186,7 @@ fi
     fi
     MSG="\nQual a Senha do usuário para LOGIN?\n"
     MSG+="\n Por favor repita a senha para conferência"
-    PW2=$(whiptail --title "Configuração NFAS" --passwordbox "$MSG" 10 78 $PW2 3>&1 1>&2 2>&3)
+    PW2=$(whiptail --title "Configuração NFAS" --passwordbox "$MSG" 11 78 $PW2 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
       echo "Operação cancelada!"
       ABORT="Y"
@@ -284,8 +284,9 @@ cat $INFO_FILE
 #-----------------------------------------------------------------------
 
 ARG="--email"
-[ "$FIRST" == "Y" ] && ARG="--email"
+[ "$FIRST" == "Y" ] && ARG="--first"
 
+# Envio de email
 /script/ssmtp.sh $ARG
 
 #-----------------------------------------------------------------------

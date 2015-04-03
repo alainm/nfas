@@ -166,5 +166,15 @@ else
   echo "ERRO: não foi encontrado IP para a eth0, /etc/hosts não alerado!"
 fi
 
+#-----------------------------------------------------------------------
+# Chama scripts que dependem do Email
+#-----------------------------------------------------------------------
+
+if [ "$FIRST" != "Y" ]; then
+  /script/ssmtp.sh --hostname
+fi
+
+#-----------------------------------------------------------------------
+
 echo
 echo "ATENÇÃO: o prompt só muda após um novo Login !!!"
