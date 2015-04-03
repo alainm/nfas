@@ -79,13 +79,13 @@ chmod g+s $SSMTP_BIN                           # Seta o SGID para acessar dados 
 # Arquivo /etc/ssmtp/revaliases
 echo "root:root@$HOSTNAME_INFO:$EMAIL_SMTP_URL:$EMAIL_SMTP_PORT"    >/etc/ssmtp/revaliases
 # Campo chamado "finger" fica no arquivo /etc/passwd
-chfn -f "root@$HOSTNAME_INFO" root                                  >/dev/null
+chfn -f "root@$(hostname -s)" root                                  >/dev/null
 # Loop para todos os usuários
 for USR in $(ls /home); do
   # configura ALIASES no ssmtp
   echo "$USR:$USR@$HOSTNAME_INFO:$EMAIL_SMTP_URL:$EMAIL_SMTP_PORT" >>/etc/ssmtp/revaliases
   # campo "finger
-  chfn -f "$USR@$HOSTNAME_INFO" $USR                                >/dev/null
+  chfn -f "$USR@$(hostname -s)" $USR                                >/dev/null
   # acrescenta usuários ao gripo MAIL para poderem mandar Email
   usermod -a -G mail $USR
 done
