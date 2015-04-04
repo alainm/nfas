@@ -20,10 +20,6 @@ if [ "$DISTRO_OK" != "Y" ]; then
   exit 1
 fi
 
-# Perguntas de configuração antes de começar:
-# alterar hostname
-# (?)
-
 # atualiza todo o sistema
 yum -y update
 # remove pacotes não usados

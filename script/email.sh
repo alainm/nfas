@@ -170,11 +170,11 @@ function AskEmailSmtpPasswd(){
   else
     MSG="\nQual a Senha do usuário para LOGIN?\n"
     MSG+="\n Deixe em branco para manter a senha anterior"
-fi
+  fi
   # loop só sai com return
   while true; do
     # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail#Password_box
-    PW1=$(whiptail --title "Configuração NFAS" --passwordbox "$MSG" 11 78 $PW1 3>&1 1>&2 2>&3)
+    PW1=$(whiptail --title "Configuração NFAS" --passwordbox "$MSG" 14 78 $PW1 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
       echo "Operação cancelada!"
       ABORT="Y"
@@ -186,27 +186,31 @@ fi
     fi
     MSG="\nQual a Senha do usuário para LOGIN?\n"
     MSG+="\n Por favor repita a senha para conferência"
-    PW2=$(whiptail --title "Configuração NFAS" --passwordbox "$MSG" 11 78 $PW2 3>&1 1>&2 2>&3)
+    PW2=$(whiptail --title "Configuração NFAS" --passwordbox "$MSG" 14 78 $PW2 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
       echo "Operação cancelada!"
       ABORT="Y"
       return 1
     fi
     # Validação do nome, expressão corta no primeiro " "
-    TMP=$(echo $PW1 | sed 's/^\(.*\)[ ].*$/\1/')
+    TMP=$(echo $PW1 | sed 's/[\t \"]//;' | sed "s/'//;")
     # Testa combinações inválidas
-    if [ "$PW1" != "" ] &&            # testa se vazio
-       [ "$PW1" == "$PW2" ] &&        # têm que ser iguais
-       [ "$TMP" == "$PW1" ]; then     # Não foi alterado pela ER
-      # Senha aceita, Continua
-      EMAIL_USER_PASSWD="$PW1"
-      echo "Senha ok: $EMAIL_USER_PASSWD"
-      return 0
-    else
+    if [ "$TMP" != "$PW1" ]; then     # Não foi alterado pela ER
       PW1=""
       PW2=""
       MSG="\nQual a Senha do usuário para LOGIN?\n"
       MSG+="\nSenha inválida, por favor tente novamente"
+      MSG+="\nNão pode conter <Espaço>, <Tab> ou Aspas simples ou duplas"
+    elif [ "$PW1" != "$PW2" ]; then       # têm que ser iguais
+      PW1=""
+      PW2=""
+      MSG="\nQual a Senha do usuário para LOGIN?\n"
+      MSG+="\nSenha diferentes, por favor tente novamente"
+    else
+      # Senha aceita, Continua
+      EMAIL_USER_PASSWD="$PW1"
+      echo "Senha ok: $EMAIL_USER_PASSWD"
+      return 0
     fi
   done
 }
