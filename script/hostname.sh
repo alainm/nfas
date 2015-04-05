@@ -77,13 +77,10 @@ if [ "$1" == "--first" ]; then
   FIRST="Y"
 else
   FIRST="N"
-  # o novo HOSTNAME pode ser fornecido pela linha de comando:
-  #   operação automática, sem perguntas
-  NEW_HOSTNAME="$1"
 fi
 
 # Lê o HOSTNAME atual
-OLD_HOSTNAME="$( hostname )"
+OLD_HOSTNAME="$(hostname)"
 
 if [ -z "$NEW_HOSTNAME" ]; then
   # Pergunta o hostname na tela
@@ -95,6 +92,8 @@ if [ -z "$NEW_HOSTNAME" ]; then
       # Hostname em branco intencionalmente
       NEW_HOSTNAME="$OLD_HOSTNAME"
       echo "Hostname continua sendo \"$OLD_HOSTNAME\", nada a ser feito..."
+      # Guarda Hostname fornecido, pode ser necessário no --first ou se houver diferença
+      echo "HOSTNAME_INFO=\"$NEW_HOSTNAME\""  2>/dev/null >  $INFO_FILE
       ERR=0;
     elif [ $ERR -eq 0 ]; then
       # Tenta alterar hostname
