@@ -291,6 +291,6 @@ ARG="--email"
 [ "$FIRST" == "Y" ] && ARG="--first"
 
 # Envio de email
-/script/ssmtp.sh $ARG
+/script/postfix.sh $ARG
 
 #-----------------------------------------------------------------------

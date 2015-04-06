@@ -1,6 +1,9 @@
 #!/bin/bash
 set -x
 
+#### ATENÇÃO ### Este script está obsoleto e não é mais usado
+# Está sendo mantido aqui apenas porque pode ser útil para alguém
+
 # Script para (re)configurar o envio de Email usando o SSMTP
 # O mesmo Script é usado para a primeira vez e para alterar a configuração
 # Chamada: "/script/ssmtp.sh <cmd>"
