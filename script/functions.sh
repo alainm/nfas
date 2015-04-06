@@ -14,4 +14,22 @@ function GetIpFromIfconfig(){
 }
 
 #-----------------------------------------------------------------------
+# Função para editar Arquivo de configuração, parametro separado por ":"
+# Formato doa parametros: "param:  valor" de separador é ":"
+# uso: EditConfColon <Arquivo> <param> <valor>
+# usa método de apagar e recriar, é mais seguro!
+#   (alguns caracteres poderiam ser interpretados pelo SED)
+function EditConfColon(){
+  local ARQ=$1
+  local PARAM=$2
+  local VAL=$3
+  if grep -E "^[[:blank:]]*$PARAM[[:blank:]]*:" $ARQ; then
+    # linha já existe, precisa apagar antes de criar de novo
+    sed -i /^[[:blank:]]*$PARAM[[:blank:]]*:/d $ARQ
+  fi
+  # linha com parametro não existe, acrescenta linha
+  echo "$PARAM:   $VAL" >> $ARQ
+}
+
+#-----------------------------------------------------------------------
 

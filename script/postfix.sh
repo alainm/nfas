@@ -22,6 +22,8 @@ CMD=$1
 # Lê dados anteriores
 . /script/info/hostname.var
 . /script/info/email.var
+# Inclui funções básicas
+. /script/functions.sh
 
 #-----------------------------------------------------------------------
 # Instala e faz cópia da configuração original
@@ -81,9 +83,16 @@ chfn -f "root@$(hostname -s)" root                                  >/dev/null
 for USR in $(ls /home); do
   # campo "finger
   chfn -f "$USR@$(hostname -s)" $USR                                >/dev/null
+  # ALIAS para envio de email, todos mandam como root
+  EditConfColon /etc/aliases $USR root
   # acrescenta usuários ao gripo MAIL para poderem mandar Email
   usermod -a -G mail $USR
 done
+# ALIAS para envio de email do root com email real
+EditConfColon /etc/aliases admin root
+EditConfColon /etc/aliases root $EMAIL_ADMIN
+# ativa novos aliases
+newaliases
+service postfix restart
 
 #-----------------------------------------------------------------------
- 
