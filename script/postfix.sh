@@ -45,10 +45,10 @@ chmod 0600 /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
 CFG=/etc/postfix/main.cf
 # não pode ter [ ]: http://stackoverflow.com/questions/11287861/how-to-check-if-a-file-contains-a-specific-string-using-bash
 if ! grep -q "Fim do arquivo" $CFG; then
-  echo -e "\n\n#=========================================================="           >> $CFG
-  echo -e   "\n# Fim do arquivo original"                                             >> $CFG
-  echo -e   "\n# mas as configurações já existentes foram alteradas acima deste ponto" >> $CFG
-  echo -e   "\n#=========================================================="           >> $CFG
+  echo -e "\n#====================================================================="   >> $CFG
+  echo -e   "# Fim do arquivo original"                                                >> $CFG
+  echo -e   "# mas as configurações já existentes foram alteradas acima deste ponto"   >> $CFG
+  echo -e   "#=====================================================================\n" >> $CFG
 fi
 
 # Configura o POSSTFIX usando comando próprio de edição
@@ -86,3 +86,4 @@ for USR in $(ls /home); do
 done
 
 #-----------------------------------------------------------------------
+ 
