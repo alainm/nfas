@@ -51,6 +51,7 @@ function AskHostname(){
   NEW_HOSTNAME=$(echo $NEW_HOSTNAME | grep -E '^[a-zA-Z][-a-zA-Z0-9_\.]+[a-zA-Z0-9]$')
   # Testa combinações inválidas
   if [ "$NEW_HOSTNAME" != "" ] &&                         # testa se vazio, pode ter sido recusado pela ER...
+     [ "$NEW_HOSTNAME" == "${NEW_HOSTNAME//../}" ] &&     # testa combinação inválida
      [ "$NEW_HOSTNAME" == "${NEW_HOSTNAME//-_/}" ] &&     # testa combinação inválida
      [ "$NEW_HOSTNAME" == "${NEW_HOSTNAME//_-/}" ]; then
     echo "Hostname ok"
@@ -96,31 +97,37 @@ if [ -z "$NEW_HOSTNAME" ]; then
       echo "HOSTNAME_INFO=\"$NEW_HOSTNAME\""  2>/dev/null >  $INFO_FILE
       ERR=0;
     elif [ $ERR -eq 0 ]; then
-      # Tenta alterar hostname
-      echo "Alterando hostname de \"$OLD_HOSTNAME\" para \"$NEW_HOSTNAME\""
-      # Alterando temporáriamente
-      hostname $NEW_HOSTNAME &>2 >/dev/null
-      if [ $? -ne 0 ]; then
-        # Mesmo depois de testado, foi recusado...
-        ERR_ST="Nome foi recusado pelo comando \"hostname\", por favor tente novamente"
-        ERR=255
-      elif [ "$(hostname)" != "$NEW_HOSTNAME" ]; then
-        # Mesmo depois de testado, o comando não retornou o que foi programado
-        OLD_HOSTNAME="$(hostname)"
-        ERR_ST="ATENÇÃO: o hostmane ficou DIFERENTE do desejado, por favor tente novamente"
-        ERR=255
+      # testa se é FQDN, tem que ter "." no hostname
+      if echo "$NEW_HOSTNAME" | grep -qv "\."; then
+        ERR_ST="Nome tem que ser FQDN (precisa ter \".\" no nome)"
+        ERR=1 # força repetir
       else
-        # altera os arquivos relevantes para ficar permanente
-        if [ "$DISTRO_NAME_VERS" == "CentOS 6" ]; then
-          # Só para CentOS: tem que alterar na configuração de Rede
-          sed -i "s/HOSTNAME=.*/HOSTNAME=$NEW_HOSTNAME/g" /etc/sysconfig/network
-          # ?? precisa reinicar a rede para ter efeito
-          # ?? service network restart
+        # Tenta alterar hostname
+        echo "Alterando hostname de \"$OLD_HOSTNAME\" para \"$NEW_HOSTNAME\""
+        # Alterando temporáriamente
+        hostname $NEW_HOSTNAME 2>&1 >/dev/null
+        if [ $? -ne 0 ]; then
+          # Mesmo depois de testado, foi recusado...
+          ERR_ST="Nome foi recusado pelo comando \"hostname\", por favor tente novamente"
+          ERR=255
+        elif [ "$(hostname)" != "$NEW_HOSTNAME" ]; then
+          # Mesmo depois de testado, o comando não retornou o que foi programado
+          OLD_HOSTNAME="$(hostname)"
+          ERR_ST="ATENÇÃO: o hostmane ficou DIFERENTE do desejado, por favor tente novamente"
+          ERR=255
+        else
+          # altera os arquivos relevantes para ficar permanente
+          if [ "$DISTRO_NAME_VERS" == "CentOS 6" ]; then
+            # Só para CentOS: tem que alterar na configuração de Rede
+            sed -i "s/HOSTNAME=.*/HOSTNAME=$NEW_HOSTNAME/g" /etc/sysconfig/network
+            # ?? precisa reinicar a rede para ter efeito
+            # ?? service network restart
+          fi
+          # Guarda Hostname fornecido
+          echo "HOSTNAME_INFO=\"$NEW_HOSTNAME\""  2>/dev/null >  $INFO_FILE
+          # indica que vao precisar de Reboot
+          echo "NEED_BOOT=\"Y\""  2>/dev/null >  /script/info/needboot.var
         fi
-        # Guarda Hostname fornecido
-        echo "HOSTNAME_INFO=\"$NEW_HOSTNAME\""  2>/dev/null >  $INFO_FILE
-        # indica que vao precisar de Reboot
-        echo "NEED_BOOT=\"Y\""  2>/dev/null >  /script/info/needboot.var
       fi
     else
       ERR_ST="Nome inválido, por favor tente novamente"
