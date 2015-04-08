@@ -40,7 +40,7 @@ fi
 /script/virtualbox.sh
 # Pergunta hostname e configura
 /script/hostname.sh --first
-# Pergunta dados de Email, chama outros scripts de configuração
+# Pergunta dados de Email
 /script/email.sh --first
 # Configura Postfix, usa dados de Email e Hostname
 /script/postfix.sh --first
