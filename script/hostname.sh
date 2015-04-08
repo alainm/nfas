@@ -19,7 +19,7 @@
 # Função para perguntar e verificar o HOSTNAME
 # Retorna: 0=ok, 1=em branco(intencional) 2=Erro, Aborta de <Cancelar>
 function AskHostname(){
-  if [ "$FIRST" == "Y" ]; then
+  if [ "$CMD" == "--first" ]; then
     MSG="\nQual o NOME da máquina (hostname)?\n"
     MSG+="\n(deixe em branco para \"$OLD_HOSTNAME\""
     if [ "$NEW_HOSTNAME" == "localhost.localdomain" ]; then
@@ -73,12 +73,7 @@ INFO_FILE=/script/info/hostname.var
 . /script/info/distro.var
 
 # Processa a linha de comando
-if [ "$1" == "--first" ]; then
-  # Chamado pelo Script de instalação inicial
-  FIRST="Y"
-else
-  FIRST="N"
-fi
+CMD=$1
 
 # Lê o HOSTNAME atual
 OLD_HOSTNAME="$(hostname)"
@@ -176,7 +171,7 @@ fi
 # Chama scripts que dependem do Email
 #-----------------------------------------------------------------------
 
-if [ "$FIRST" != "Y" ]; then
+if [ "$CMD" != "--first" ]; then
   /script/postfix.sh --hostname
 fi
 

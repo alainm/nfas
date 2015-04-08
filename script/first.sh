@@ -42,6 +42,8 @@ fi
 /script/hostname.sh --first
 # Pergunta dados de Email, chama outros scripts de configuração
 /script/email.sh --first
+# Configura Postfix, usa dados de Email e Hostname
+/script/postfix.sh --first
 
 # ===== FIM do first.sh =====
 # => executa o /script/autostart.sh para iniciar

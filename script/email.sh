@@ -217,12 +217,6 @@ INFO_FILE=/script/info/email.var
 
 # Processa a linha de comando
 CMD=$1
-if [ "$1" == "--first" ]; then
-  # Chamado pelo Script de instalação inicial
-  FIRST="Y"
-else
-  FIRST="N"
-fi
 # Lê dados anteriores
 . $INFO_FILE
 
@@ -249,7 +243,7 @@ while [ $FIM != "Y" ]; do
   if [ $ABORT == "Y" ]; then
     # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail#Yes.2Fno_box
     MSG="Deseja MESMO cancelar cadastramente de Email?\n"
-    if [ "$FIRST" == "Y" ]; then
+    if [ "$CMD" == "--first" ]; then
       MSG+="\n Se cancelar, não haverá envio de notificações do Sistema"
     fi
     MSG+="\n Esta operação pode ser refeita posteriormente!"
@@ -281,10 +275,9 @@ cat $INFO_FILE
 # Chama scripts que dependem do Email
 #-----------------------------------------------------------------------
 
-ARG="--email"
-[ "$FIRST" == "Y" ] && ARG="--first"
-
-# Envio de email
-/script/postfix.sh $ARG
+if [ "$CMD" != "--first" ]; then
+  # Envio de email
+  /script/postfix.sh --email
+fi
 
 #-----------------------------------------------------------------------
