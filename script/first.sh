@@ -42,6 +42,8 @@ fi
 /script/hostname.sh --first
 # Pergunta dados de Email
 /script/email.sh --first
+# Cria novo usuário
+/script/newuser.sh
 # Configura Postfix, usa dados de Email e Hostname
 /script/postfix.sh --first
 
