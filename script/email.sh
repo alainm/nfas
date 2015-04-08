@@ -1,5 +1,5 @@
 #!/bin/bash
-# set -x
+set -x
 
 # Script para perguntar email do administrador e servidor smtp
 # As perguntas são interativas através de TUI
@@ -16,13 +16,8 @@ function AskEmail(){
   local NOME=$2
   local TMP=""
   local ERR_ST=""
-  # Prepara valor inicial
-  if [ "$FIRST" == "Y" ]; then
-    TMP=""
-  else
-    # pega valor enterior do Email
-    eval TMP=\$$VAR
-  fi
+  # pega valor enterior do Email
+  eval TMP=\$$VAR
   # loop só sai com return
   while true; do
     MSG="\nQual o $NOME (para envio de notificações)?\n"
@@ -62,19 +57,17 @@ function AskEmail(){
 # Retorna: 0=ok, 1=Aborta se <Cancelar>
 function AskEmailSmtp(){
   local ERR_ST=""
-  if [ "$FIRST" == "Y" ]; then
-    EMAIL_SMTP_URL=""
-  fi
   # loop só sai com return
   while true; do
     MSG="\nQual o servidor de SMTP (para envio de notificações)?\n"
     if [ -n "$EMAIL_SMTP_URL" ]; then
+      TMP="$EMAIL_SMTP_URL"
       MSG+="\n<Enter> para manter o anterior sendo mostrado\n"
     fi
     # Acrescenta mensagem de erro
     MSG+="\n$ERR_ST"
     # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
-    EMAIL_SMTP_URL=$(whiptail --title "Configuração NFAS" --inputbox "$MSG" 13 74 $EMAIL_SMTP_URL 3>&1 1>&2 2>&3)
+    TMP=$(whiptail --title "Configuração NFAS" --inputbox "$MSG" 13 74 $TMP 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
       echo "Operação cancelada!"
       ABORT="Y"
@@ -84,11 +77,12 @@ function AskEmailSmtp(){
     # Site ajudou: http://stackoverflow.com/questions/15268987/bash-based-regex-domain-name-validation
     LC_CTYPE="C"
     # Testa se só tem caracteres válidos
-    SMTP_TMP=$(echo $EMAIL_SMTP_URL | grep -P '(?=^.{5,254}$)(^(?:(?!\d+\.)[a-zA-Z0-9_\-]{1,63}\.?)+\.(?:[a-zA-Z]{2,})$)')
+    SMTP_TMP=$(echo $TMP | grep -P '(?=^.{5,254}$)(^(?:(?!\d+\.)[a-zA-Z0-9_\-]{1,63}\.?)+\.(?:[a-zA-Z]{2,})$)')
     # Testa combinações inválidas
-    if [ "$SMTP_TMP" != "" ] &&                   # testa se vazio, pode ter sido recusado pela ER...
-       [ "$SMTP_TMP" == "$EMAIL_SMTP_URL" ]; then # Não foi alterado pela ER
+    if [ "$SMTP_TMP" != "" ] &&              # testa se vazio, pode ter sido recusado pela ER...
+       [ "$SMTP_TMP" == "$TMP" ]; then       # Não foi alterado pela ER
       # Email do Admin aceito, Continua
+      EMAIL_SMTP_URL="$SMTP_TMP"
       echo "Servidor de SMTP ok: $EMAIL_SMTP_URL"
       return 0
     else
@@ -108,10 +102,10 @@ function AskEmailSmtpPort(){
     MSG="\nQual a PORTA a ser usada do servidor de SMTP?\n"
     # http://pt.wikipedia.org/wiki/Simple_Mail_Transfer_Protocol
     MSG+="(Default geralmente é 465 ou 587)"
-    if [ "$FIRST" == "Y" ]; then
-      EMAIL_SMTP_PORT=465
+    if [ -z "$EMAIL_SMTP_PORT" ]; then
+      EMAIL_SMTP_PORT=587
     fi
-    MSG+="\n<Enter> para manter o anterior sendo mostrado\n"
+    MSG+="\n\n<Enter> para manter o anterior sendo mostrado\n"
     # Acrescenta mensagem de erro
     MSG+="\n$ERR_ST"
     # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
@@ -165,10 +159,8 @@ function AskEmailSmtpPasswd(){
   local PW1=""
   local PW2=""
   local TMP=""
-  if [ "$FIRST" == "Y" ]; then
-    MSG="\nQual a Senha do usuário para LOGIN?\n"
-  else
-    MSG="\nQual a Senha do usuário para LOGIN?\n"
+  MSG="\nQual a Senha do usuário para LOGIN?\n"
+  if [ -n "$EMAIL_USER_PASSWD" ]; then
     MSG+="\n Deixe em branco para manter a senha anterior"
   fi
   # loop só sai com return
@@ -180,7 +172,7 @@ function AskEmailSmtpPasswd(){
       ABORT="Y"
       return 1
     fi
-    if [ -z "$PW1" ]; then
+    if [ -z "$PW1" ] && [ -n "$EMAIL_USER_PASSWD" ]; then
       echo "Senha não alterada"
       return 0
     fi
@@ -195,7 +187,8 @@ function AskEmailSmtpPasswd(){
     # Validação do nome, expressão corta no primeiro " "
     TMP=$(echo $PW1 | sed 's/[\t \"]//;' | sed "s/'//;")
     # Testa combinações inválidas
-    if [ "$TMP" != "$PW1" ]; then     # Não foi alterado pela ER
+    if [ -z "$TMP" ] ||               # não é vazia
+       [ "$TMP" != "$PW1" ]; then     # Não foi alterado pela ER
       PW1=""
       PW2=""
       MSG="\nQual a Senha do usuário para LOGIN?\n"
@@ -223,6 +216,7 @@ function AskEmailSmtpPasswd(){
 INFO_FILE=/script/info/email.var
 
 # Processa a linha de comando
+CMD=$1
 if [ "$1" == "--first" ]; then
   # Chamado pelo Script de instalação inicial
   FIRST="Y"
