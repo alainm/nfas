@@ -7,6 +7,8 @@ set -x
 # necessário apenas para testar os outros recursos
 
 # criando usuários
+# OBS: --stdin só funciona no CentOS (não no Ubuntu 14.04)
+# OBS: useradd não cria o home directory no Ubuntu 14.04, só com "-m"
 useradd teste1
 echo "node1" | passwd --stdin teste1
 cp -a /script/auto.sh /home/teste1
