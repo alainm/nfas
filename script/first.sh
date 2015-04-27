@@ -27,7 +27,8 @@ rpm -e postfix
 # Repositório auxiliar: https://fedoraproject.org/wiki/EPEL
 yum -y install epel-release
 # Instalar pacotes extra
-yum -y install man nano mcedit telnet bind-utils
+yum -y install man nano mcedit telnet bind-utils  \
+               openssl openssl-devel pam pam-devel gcc make
 
 # Altera o /etc/rc.d/rc.local para chamar o /script/autostart.sh
 cat /etc/rc.d/rc.local | grep "autostart.sh"
@@ -42,6 +43,8 @@ fi
 /script/hostname.sh --first
 # Pergunta dados de Email
 /script/email.sh --first
+# Monitoramente da máquina
+/script/monit.sh --first
 # Cria novo usuário
 /script/newuser.sh
 # Configura Postfix, usa dados de Email e Hostname
