@@ -196,6 +196,7 @@ if [ ! -e $ARQ ]; then
 	  if total upload > 15 GB in last day then alert
 	  # Só para testes
 	  if total upload > 5 MB in last minute then alert
+	  if saturation > 90% then alert
 	EOF
 fi
 chmod 600 $ARQ
