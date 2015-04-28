@@ -123,7 +123,7 @@ if [ ! -e $ARQ ]; then
 	##################################################
 	##  Monit: Configuração de Cpu, disco e memória
 	##################################################
-	##  Este arquivo não é alterado depois de criado
+	##  Depois de criado, apenas a linha com o Hostname é alterada
 
 	check system system.$HOSTNAME_INFO
 	  if loadavg (1min) > 4 then alert
@@ -137,6 +137,9 @@ if [ ! -e $ARQ ]; then
 	  if space usage > 3% then alert
 	  if inode usage > 80% then alert
 	EOF
+else
+  sed -i "/check system/s/\(.*system\.\).*/\1$HOSTNAME_INFO/g" $ARQ
+  sed -i "/check filesystem/s/\(.*rootfs\.\)[^ ]*\( .*\)/\1$HOSTNAME_INFO\2/g" $ARQ
 fi
 chmod 600 $ARQ
 
@@ -146,7 +149,12 @@ chmod 600 $ARQ
 
 ARQ="/etc/monit/monit.d/format.monit"
 if [ ! -e $ARQ ]; then
-  echo "set mail-format {"                       >  $ARQ
+  echo "##################################################"               >  $ARQ
+  echo "##  Monit: Formatação do email de notificação"                    >> $ARQ
+  echo "##################################################"               >> $ARQ
+  echo "##  Depois de criado, apenas a linha com o Hostname é alterada"   >> $ARQ
+  echo ""                                        >> $ARQ
+  echo "set mail-format {"                       >> $ARQ
   echo "  from: monit@$HOSTNAME_INFO"            >> $ARQ
   echo "  subject: [MONIT] \$SERVICE: \$EVENT"   >> $ARQ
   echo "  message:"                              >> $ARQ
@@ -159,6 +167,9 @@ if [ ! -e $ARQ ]; then
   echo ""                                        >> $ARQ
   echo "Data: \$DATE"                            >> $ARQ
   echo "}"                                       >> $ARQ
+else
+  sed -i "/from:/s/\(.*@\)[^ ]*.*/\1$HOSTNAME_INFO/g" $ARQ
+  sed -i "/Host:/s/\(^[[:blank:]]*Host:[[:blank:]]*\)[^ ]*.*/\1$HOSTNAME_INFO/g" $ARQ
 fi
 chmod 600 $ARQ
 
@@ -183,6 +194,7 @@ if [ "$DISTRO_NAME_VERS" == "CentOS 6" ]; then
 	# Roda sem ser como daemon para o respawn funcionar
 	exec monit -I
 	EOF
+  # Não pode usar "restart", precisa saber se está rodando para poder dar "stop"
   if ( status monit | grep start ); then
     stop monit
   fi
