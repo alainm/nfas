@@ -101,16 +101,18 @@ fi #--first
 # Envio de Email para o administrador
 
 ARQ="/etc/monit/monit.d/email.monit"
+if [ ! -e $ARQ ]; then
   cat <<- EOF > $ARQ
 	##################################################
 	##  Monit: Configuração de Email do admin
 	##################################################
-	##  Este arquivo é alterado automáticamente
+	##  Depois de criado, não é mais alterado
 
 	set mailserver localhost port 25
 	  with timeout 30 seconds
-	set alert root@$HOSTNAME_INFO with reminder on 30 cycles
+	set alert root@localhost with reminder on 30 cycles
 	EOF
+fi
 chmod 600 $ARQ
 
 #-----------------------------------------------------------------------
@@ -123,9 +125,9 @@ if [ ! -e $ARQ ]; then
 	##################################################
 	##  Monit: Configuração de Cpu, disco e memória
 	##################################################
-	##  Depois de criado, apenas a linha com o Hostname é alterada
+	##  Depois de criado, não é mais alterado
 
-	check system system.$HOSTNAME_INFO
+	check system SystemCheck
 	  if loadavg (1min) > 4 then alert
 	  if loadavg (5min) > 2 then alert
 	  if memory usage > 75% then alert
@@ -133,13 +135,14 @@ if [ ! -e $ARQ ]; then
 	  if cpu usage (system) > 30% then alert
 	  if cpu usage (wait) > 20% then alert
 
-	check filesystem rootfs.$HOSTNAME_INFO with path /
+	check filesystem FilesystemCheck with path /
+	  # Só para testes (usar 75%)
 	  if space usage > 3% then alert
 	  if inode usage > 80% then alert
 	EOF
-else
-  sed -i "/check system/s/\(.*system\.\).*/\1$HOSTNAME_INFO/g" $ARQ
-  sed -i "/check filesystem/s/\(.*rootfs\.\)[^ ]*\( .*\)/\1$HOSTNAME_INFO\2/g" $ARQ
+# else
+#   sed -i "/check system/s/\(.*system\.\).*/\1$HOSTNAME_INFO/g" $ARQ
+#   sed -i "/check filesystem/s/\(.*rootfs\.\)[^ ]*\( .*\)/\1$HOSTNAME_INFO\2/g" $ARQ
 fi
 chmod 600 $ARQ
 
@@ -182,10 +185,17 @@ if [ ! -e $ARQ ]; then
 	##################################################
 	##  Monit: Configuração Uso da rede
 	##################################################
-	##  Depois de criado, apenas a linha com o Hostname é alterada
+	##  Depois de criado, não é mais alterado
 
 	check network NetTraffic with interface eth0
-	  if upload > 50 kB/s then alert
+	  # Download: para o próprio servidor (ex: yum update)
+	  if download > 100 kB/s then alert
+	  # Upload: alguém baixando arquivo DO servidor
+	  # Tráfego 1TB/mes, 50%, 15GB/dia, 700MB/hora
+	  if total upload > 700 MB in last 1 hours then alert
+	  if total upload > 15 GB in last day then alert
+	  # Só para testes
+	  if total upload > 5 MB in last minute then alert
 	EOF
 fi
 chmod 600 $ARQ
