@@ -174,6 +174,24 @@ fi
 chmod 600 $ARQ
 
 #-----------------------------------------------------------------------
+# Monitora uso da Rede
+
+ARQ="/etc/monit/monit.d/network.monit"
+if [ ! -e $ARQ ]; then
+  cat <<- EOF > $ARQ
+	##################################################
+	##  Monit: Configuração Uso da rede
+	##################################################
+	##  Depois de criado, apenas a linha com o Hostname é alterada
+
+	check network NetTraffic with interface eth0
+	  if upload > 50 kB/s then alert
+	EOF
+fi
+chmod 600 $ARQ
+
+
+#-----------------------------------------------------------------------
 # Instala com o UPSTART
 # OBS: só para "CentOS 6" e talvez Ubuntu14.04, CentOS 7 usa SYSTEMD
 
