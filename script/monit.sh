@@ -94,7 +94,7 @@ if [ "$CMD" == "--first" ]; then
   mkdir -p /etc/monit/monit.d
 
   popd      # Volta ao diretório original
-  # rm -fd /script/monit
+  rm -fd /script/monit
 fi #--first
 
 #-----------------------------------------------------------------------
@@ -201,6 +201,24 @@ if [ ! -e $ARQ ]; then
 fi
 chmod 600 $ARQ
 
+#-----------------------------------------------------------------------
+# Monitora uso da CPU com scripts externos
+
+ARQ="/etc/monit/monit.d/cpu.monit"
+if [ ! -e $ARQ ]; then
+  cat <<- EOF > $ARQ
+	##################################################
+	##  Monit: Configuração Uso da CPU e dos Cores
+	##################################################
+	##  Depois de criado, não é mais alterado
+
+	check program CpuUse with path /script/cpu-use.sh
+	  with timeout 10 seconds
+	  # valor para teste, usar 75 (por exemplo) em produção
+	  if status > 2 then alert
+	EOF
+fi
+chmod 600 $ARQ
 
 #-----------------------------------------------------------------------
 # Instala com o UPSTART
