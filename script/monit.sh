@@ -44,15 +44,18 @@ CMD=$1
 #-----------------------------------------------------------------------
 # Instala apartir dos fontes
 
+SRC=monit-5.12.2.tar.gz
 if [ "$CMD" == "--first" ]; then
   # pacotes para compilar e dependencias
   yum -y install openssl openssl-devel pam pam-devel gcc make
   # Compila num diretório próprio
   mkdir -p /script/monit
   pushd /script/monit      # Vai para diretório mas lembra do anterior
-  wget http://mmonit.com/monit/dist/monit-5.12.tar.gz
-  tar xfv monit-5.12.2.tar.gz
-  cd monit-5.12/
+  wget http://mmonit.com/monit/dist/$SRC
+  tar xfv $SRC
+  pwd;ls
+  # Diretório foi criado com nome da versão
+  cd $(echo $SRC | sed -n 's/\(.*\)\.tar\.gz/\1/p')
   ./configure --prefix=/usr --sysconfdir=/etc/monit
   make clean
   make

@@ -43,12 +43,12 @@ fi
 /script/hostname.sh --first
 # Pergunta dados de Email
 /script/email.sh --first
-# Monitoramente da máquina
-/script/monit.sh --first
 # Cria novo usuário
 /script/newuser.sh
 # Configura Postfix, usa dados de Email e Hostname
 /script/postfix.sh --first
+# Monitoramente da máquina
+/script/monit.sh --first
 
 # ===== FIM do first.sh =====
 # => executa o /script/autostart.sh para iniciar
