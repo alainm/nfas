@@ -22,8 +22,6 @@ fi
 
 # atualiza todo o sistema
 yum -y update
-# remove pacotes não usados
-rpm -e postfix
 # Repositório auxiliar: https://fedoraproject.org/wiki/EPEL
 yum -y install epel-release
 # Instalar pacotes extra
