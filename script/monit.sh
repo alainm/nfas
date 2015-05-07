@@ -219,6 +219,11 @@ if [ ! -e $ARQ ]; then
 	  with timeout 10 seconds
 	  # valor para teste, usar 75 (por exemplo) em produção
 	  if status > 2 then alert
+
+	check program CoreUse with path /script/core-use.sh
+	  with timeout 10 seconds
+	  # valor para teste, usar 75 (por exemplo) em produção
+	  if status > 2 then alert
 	EOF
 fi
 chmod 600 $ARQ
