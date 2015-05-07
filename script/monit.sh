@@ -66,7 +66,7 @@ if [ "$CMD" == "--first" ]; then
   #-----------------------------------------------------------------------
   # configuração básica
   mkdir -p /etc/monit
-  cp -af monitrc /etc/monit/monitrc.orig   # Preserva o original
+  cp -afv monitrc /etc/monit/monitrc.orig   # Preserva o original
   ARQ="/etc/monit/monitrc"
   cat <<- EOF > $ARQ
 	###############################################################################
