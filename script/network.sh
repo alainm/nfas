@@ -23,12 +23,13 @@ if [ "$CMD" == "--first" ]; then
     if [ ! -e $ARQ ]; then
       cat <<- EOF > $ARQ
 				#!/bin/sh
-				if [[ "$1" == "eth0" ]]; then
+				if [[ "\$1" == "eth0" ]]; then
 				  echo "this part will be executed right after eth0 is up."
 				  postfix flush
 				  logger -t ifup-local "Postfix flush"
 				fi
 			EOF
+      chmod +x $ARQ
     fi
   fi # CentOS 6
 fi # --first
