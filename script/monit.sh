@@ -12,7 +12,7 @@ set -x
 #        --hostname  quando foi alterado hostname, só se alteração posterior
 
 # Testar configuração: monit validate
-# Serviço: start|stop|status monit
+# Serviço: start|stop monit
 # Informações: monit status
 # Alteração: monit reload
 # Para ver o log: tail -f /var/log/monit
@@ -139,8 +139,8 @@ if [ ! -e $ARQ ]; then
 	  if cpu usage (wait) > 20% then alert
 
 	check filesystem FilesystemCheck with path /
-	  # Só para testes (usar 75%)
-	  if space usage > 3% then alert
+	  # Só para testes usar 3%
+	  if space usage > 75% then alert
 	  if inode usage > 80% then alert
 	EOF
 # else
@@ -191,6 +191,10 @@ if [ ! -e $ARQ ]; then
 	##  Depois de criado, não é mais alterado
 
 	check network NetTraffic with interface eth0
+	  # Testa e restaura link se cair
+	  start program = "/sbin/ifup eth0"
+	  stop program = "/sbin/ifdown eth0"
+	  if failed link then restart else if succeeded then alert
 	  # Download: para o próprio servidor (ex: yum update)
 	  if download > 100 kB/s then alert
 	  # Upload: alguém baixando arquivo DO servidor
@@ -217,13 +221,13 @@ if [ ! -e $ARQ ]; then
 
 	check program CpuUse with path /script/cpu-use.sh
 	  with timeout 10 seconds
-	  # valor para teste, usar 75 (por exemplo) em produção
-	  if status > 2 then alert
+	  # valor para teste: 2, usar 75 (por exemplo) em produção
+	  if status > 75 then alert
 
 	check program CoreUse with path /script/core-use.sh
 	  with timeout 10 seconds
-	  # valor para teste, usar 75 (por exemplo) em produção
-	  if status > 2 then alert
+	  # valor para teste: 2, usar 75 (por exemplo) em produção
+	  if status > 75 then alert
 	EOF
 fi
 chmod 600 $ARQ
