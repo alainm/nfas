@@ -21,7 +21,8 @@ for ((N=0;N<$CORES;N++));do
 done
 
 # Calcula uso de cada Core
-MAX=0;
+MAX=0
+MAX_F=0.0
 for ((N=0;N<$CORES;N++));do
   CORE_TMP=${CORE[N]}
   set -- $CORE_TMP                                  # reset positional params (indexa apartir de 1)
@@ -36,6 +37,9 @@ for ((N=0;N<$CORES;N++));do
   DIFF_IDLE=$(( $IDLE_TMP - $PREV_IDLE_TMP ))
   DIFF_ACTIVE=$(( $ACTIVE_TMP - $PREV_ACTIVE_TMP ))
   CORE_USE_TMP=$(( $DIFF_ACTIVE * 100 / ( $DIFF_ACTIVE + $DIFF_IDLE ) ))
+  # Faz a conta com uma casa decimal e coloca um "0" na frente
+  CORE_USE_TMP_F=$(echo "scale=1; $DIFF_ACTIVE * 100 / ( $DIFF_ACTIVE + $DIFF_IDLE )" | bc)
+  [ "${CORE_USE_TMP_F:0:1}" == "." ] && CORE_USE_TMP_F="0$CORE_USE_TMP_F"
   # Guarda em novas Arrays
   IDLE[$N]=$IDLE_TMP
   ACTIVE[$N]=$ACTIVE_TMP
@@ -43,10 +47,11 @@ for ((N=0;N<$CORES;N++));do
   # Calcula Core com maior uso
   if [ $CORE_USE_TMP -gt $MAX ]; then
     MAX=$CORE_USE_TMP
+    MAX_F=$CORE_USE_TMP_F
   fi
 done
 
-echo "CORE com maior uso=$MAX% (media de um minuto)"
+echo "CORE com maior uso=$MAX_F% (media de um minuto)"
 
 # # Guarda Valores para próxima vez
 echo ""                                   >  /script/info/core-use.var
@@ -56,4 +61,9 @@ for ((N=0;N<$CORES;N++));do
 done
 
 # Retorna uso máximo de CORE como errorlevel
-exit $CORE_USE
+# Se tem só um core, reporta sempre ZERO para não gerar alerta repetido
+if [ $CORES -eq 1 ]; then
+  exit 0
+else
+  exit $CORE_USE
+fi

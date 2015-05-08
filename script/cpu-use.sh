@@ -30,7 +30,10 @@ ACTIVE=$(( ${@:2:1} + ${@:4:1} + ${@:6:1} )) # campos 1+3+5 (usa +1): user+syste
 DIFF_IDLE=$(( $IDLE - $PREV_IDLE ))
 DIFF_ACTIVE=$(( $ACTIVE - $PREV_ACTIVE ))
 CPU_USE=$(( $DIFF_ACTIVE * 100 / ( $DIFF_ACTIVE + $DIFF_IDLE ) ))
-echo "Uso total de CPU=$CPU_USE% (media de um minuto)"
+# Faz a conta com uma casa decimal e coloca um "0" na frente
+CPU_USE_F=$(echo "scale=1; $DIFF_ACTIVE * 100 / ( $DIFF_ACTIVE + $DIFF_IDLE )" | bc)
+[ "${CPU_USE_F:0:1}" == "." ] && CPU_USE_F="0$CPU_USE_F"
+echo "Uso total de CPU=$CPU_USE_F% (media de um minuto)"
 
 # Guarda Valores para próxima vez
 echo "PREV_IDLE=$IDLE"         >  /script/info/cpu-use.var

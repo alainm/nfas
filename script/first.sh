@@ -25,7 +25,7 @@ yum -y update
 # Repositório auxiliar: https://fedoraproject.org/wiki/EPEL
 yum -y install epel-release
 # Instalar pacotes extra
-yum -y install man nano mcedit telnet bind-utils  \
+yum -y install man nano mcedit telnet bind-utils bc \
                openssl openssl-devel pam pam-devel gcc make
 
 # Altera o /etc/rc.d/rc.local para chamar o /script/autostart.sh
