@@ -43,6 +43,8 @@ fi
 /script/email.sh --first
 # Cria novo usuário
 /script/newuser.sh
+# Configurações e alterações na Rede
+/script/network.sh --first
 # Configura Postfix, usa dados de Email e Hostname
 /script/postfix.sh --first
 # Monitoramente da máquina
