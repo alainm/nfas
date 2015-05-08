@@ -16,6 +16,14 @@ set -x
 # http://help.mandrill.com/entries/23060367-Can-I-configure-Postfix-to-send-through-Mandrill-
 # http://wiki.centos.org/HowTos/postfix_sasl_relayhost
 
+# Ver fila: mailq, qshape
+# força enviar: postfix flush
+# Limpar a fila: postsuper -d ALL
+# pacote de utilidades: yum install postfix-perl-scripts
+# fila do postfix: https://rtcamp.com/tutorials/mail/postfix-queue/
+#                  http://www.tullyrankin.com/managing-the-postfix-queue
+# Analise da fila: http://www.postfix.org/QSHAPE_README.html
+
 #-----------------------------------------------------------------------
 # Processa a linha de comando
 CMD=$1
