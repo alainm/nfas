@@ -269,7 +269,8 @@ echo "EMAIL_SMTP_STARTTLS=\"$EMAIL_SMTP_STARTTLS\""        2>/dev/null >> $INFO_
 echo "EMAIL_USER_ID=\"$EMAIL_USER_ID\""                    2>/dev/null >> $INFO_FILE
 echo "EMAIL_USER_PASSWD=\"$EMAIL_USER_PASSWD\""            2>/dev/null >> $INFO_FILE
 cat $INFO_FILE
-
+# evita acesso às senhas pelos usuários
+chmod 600 $INFO_FILE
 
 #-----------------------------------------------------------------------
 # Chama scripts que dependem do Email
