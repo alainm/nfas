@@ -14,6 +14,7 @@ CMD=$1
 
 #-----------------------------------------------------------------------
 # Cria arquivo  que é executado ao reiniciar a rede
+# http://xmodulo.com/how-to-run-startup-script-automatically-after-network-interface-is-up-on-centos.html
 
 if [ "$CMD" == "--first" ]; then
   if [ "$DISTRO_NAME" == "CentOS" ]; then
