@@ -44,7 +44,7 @@ CMD=$1
 #-----------------------------------------------------------------------
 # Instala apartir dos fontes
 
-SRC=monit-5.12.2.tar.gz
+SRC=monit-5.13.tar.gz
 if [ "$CMD" == "--first" ]; then
   # pacotes para compilar e dependencias
   yum -y install openssl openssl-devel pam pam-devel gcc make
@@ -79,6 +79,10 @@ if [ "$CMD" == "--first" ]; then
 	#
 	set daemon  60              # check services at 1-minute intervals
 
+	# Configura arquivo de log (precisa do logrotate)
+	#
+	set logfile /var/log/monit.log
+
 	# Precisa configura HTTP do Monit para acesso mínimo
 	# Como usa apenas por Tunnel do SSH, libera todos os IPs
 	#
@@ -95,6 +99,31 @@ if [ "$CMD" == "--first" ]; then
   chmod 600 $ARQ
   # Diretório de includes para configurações de cada recurso
   mkdir -p /etc/monit/monit.d
+
+  #----------
+  # Configura Logrotate
+  # http://www.dicas-l.com.br/arquivo/utilizando_logrotate.php#.VU0dn95Ytj0
+  # http://linuxconfig.org/setting-up-logrotate-on-redhat-linux
+  ARQ="/etc/logrotate.d/monit"
+  if [ ! -e $ARQ ]; then
+    cat <<- EOF > $ARQ
+		##################################################
+		##  Logrotate para o Monit
+		##################################################
+		##  Depois de criado, não é mais alterado
+
+		/var/log/monit.log {
+		  missingok
+		  notifempty
+		  compress
+		  delaycompress
+		  size 100k
+		  daily
+		  create 0600 root root
+		}
+	EOF
+  fi
+  chmod 600 $ARQ
 
   popd      # Volta ao diretório original
   rm -fd /script/monit
