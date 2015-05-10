@@ -10,6 +10,6 @@ Este projeto tem como finalidade criar todo o ambiente necessário para rodar um
 
 Neste repositórios ficarão os Scripts e Arquivos necessários
 
-Veja mais detalhes em nosso site: https://bonseletrons.wordpress.com em "Node.js"
+Veja mais detalhes em nosso site: https://bonseletrons.wordpress.com/node-js
 
-**ATENÇÃO**: este projeto está  em sua primeira infância, não existe quase nada funcionando ;-)
+**ATENÇÃO**: este projeto está dandos seus primeiros passos, apenas alguns recursos estão funcionando ;-)
