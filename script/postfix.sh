@@ -17,6 +17,7 @@ set -x
 # http://wiki.centos.org/HowTos/postfix_sasl_relayhost
 
 # Ver fila: mailq, qshape
+# Ver email: postcat -q <ID>  # Tem que pegar o ID do comando mailq
 # força enviar: postfix flush
 # Limpar a fila: postsuper -d ALL
 # pacote de utilidades: yum install postfix-perl-scripts
