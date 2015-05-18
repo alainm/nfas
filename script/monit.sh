@@ -219,11 +219,13 @@ if [ ! -e $ARQ ]; then
 	##################################################
 	##  Depois de criado, não é mais alterado
 
+	check host PingTest with address 8.8.8.8
+	  # Se falhou o Ping, chama script para eventua recuperação
+	  if failed PING then exec "/script/network.sh --monit-noping"
+
 	check network NetTraffic with interface eth0
-	  # Testa e restaura link se cair
-	  start program = "/sbin/ifup eth0"
-	  stop program = "/sbin/ifdown eth0"
-	  if failed link then restart else if succeeded then alert
+	  # Testa link
+	  if failed link then alert else if succeeded then exec "/script/network.sh --monit-ifup"
 	  # Download: para o próprio servidor (ex: yum update)
 	  if download > 100 kB/s then alert
 	  # Upload: alguém baixando arquivo DO servidor
