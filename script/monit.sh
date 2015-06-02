@@ -118,7 +118,7 @@ if [ "$CMD" == "--first" ]; then
 		  compress
 		  delaycompress
 		  size 100k
-		  daily
+		  weekly
 		  create 0600 root root
 		}
 	EOF
@@ -221,7 +221,7 @@ if [ ! -e $ARQ ]; then
 
 	check host PingTest with address 8.8.8.8
 	  # Se falhou o Ping, chama script para eventua recuperação
-	  if failed PING then exec "/script/network.sh --monit-noping"
+	  if failed PING count 5 then exec "/script/network.sh --monit-noping"
 
 	check network NetTraffic with interface eth0
 	  # Testa link

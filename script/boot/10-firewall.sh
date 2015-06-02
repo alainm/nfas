@@ -192,9 +192,10 @@ $IPT -A IN_FIREWALL -p tcp --dport 443 -m state --state NEW -j ACCEPT
 $IPT -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 # Serviços abertos são controlados por uma outra chain
 $IPT -A INPUT -j IN_FIREWALL
-# fecha todo o resto
+# Log de todo o resto
 #$IPT -A INPUT -m limit --limit 5/m --limit-burst 7 -j LOG --log-prefix " DEFAULT DROP "
-$IPT -A INPUT -j DROP
+# Não fecha, a POLICY default já é fechada!!!
+#   e assim fica possível ser alterada para usar no Virtualbox
 
 #--------------------------------------------------------------------------
 # Saída do Servidor, processamento genérico
