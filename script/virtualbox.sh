@@ -32,3 +32,14 @@ yum -y install acpid
 chkconfig acpid on
 service acpid start
 
+# Opção para DEBUG: deixar as portas abertas no firewall
+MSG="\nVocê está usando o VirtualBox.\n\nDeseja dixar as portas do Firewall abertas para facilitar o Debug?\n"
+MSG+="Se responder Sim, todos os serviços estarão acessíveis diretamente\n"
+MSG+="\n(Esta opção não aparece fora do VirtualBox!)\n"
+# uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail#Yes.2Fno_box
+whiptail --title "Configuração NFAS" --yesno --defaultno "$MSG" 13 78
+if [ $? -eq 0 ]; then
+  echo "OPEN_FIREWALL=Y" >> /script/info/virtualbox.var
+else
+  echo "OPEN_FIREWALL=N" >> /script/info/virtualbox.var
+fi
