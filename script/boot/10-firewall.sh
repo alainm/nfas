@@ -3,6 +3,9 @@
 
 echo "Executando 10-firewall.sh" >> /script/info/autostart.log
 
+# Carrega arquivo de configuração
+[-e /script/info/virtualbox.var ] && . /script/info/virtualbox.var
+
 # Primeiro firewall, mais simples e não muito seguro
 # fica ativo durante 30 segundos antes de ativar o firewall verdadeiro
 # ==================================================
@@ -60,15 +63,19 @@ fi
 #-------------------------------------------------------------------
 # Limpa as regras de firewall já existentes
 #-------------------------------------------------------------------
-$IPT -P INPUT DROP	  # Set default policy to DROP: Seguro
-$IPT -P OUTPUT DROP	  # Set default policy to DROP
-$IPT -P FORWARD DROP	# Set default policy to DROP
-$IPT -F 		          # Flush all chains
-$IPT -X 		          # Delete all chains
+$IPT -P OUTPUT DROP   # Set default policy to DROP
+$IPT -P FORWARD DROP  # Set default policy to DROP
+if [ "$OPEN_FIREWALL" == "Y" ]; then
+  $IPT -P INPUT ACCEPT# Set default policy to ACCEPT: Debug
+else
+  $IPT -P INPUT DROP  # Set default policy to DROP: Seguro
+fi
+$IPT -F               # Flush all chains
+$IPT -X               # Delete all chains
 for table in filter nat mangle ; do
-  $IPT -t $table -F	  # Delete the table's rules
-  $IPT -t $table -X	  # Delete the table's chains
-  $IPT -t $table -Z	  # Zero the table's counters
+  $IPT -t $table -F   # Delete the table's rules
+  $IPT -t $table -X   # Delete the table's chains
+  $IPT -t $table -Z   # Zero the table's counters
 done
 # Não tem roteamento, então fecha roteamento pelo kernel de pacotes IPV4
 echo 0 > /proc/sys/net/ipv4/ip_forward
