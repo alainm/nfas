@@ -2,6 +2,8 @@
 set -x
 
 # Scripts de configuração do Console
+# site: http://unix.stackexchange.com/questions/70996/highlighting-command-in-terminal
+#       http://www.thegeekstuff.com/2008/09/bash-shell-ps1-10-examples-to-make-your-linux-prompt-like-angelina-jolie/
 # Chamada:
 #   /script/network.sh --first          # Para primeira configuração
 #   /script/network.sh --newuser user   # when a new user was created
