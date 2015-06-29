@@ -39,6 +39,8 @@ fi
 /script/virtualbox.sh
 # Pergunta hostname e configura
 /script/hostname.sh --first
+# Console colorido
+/script/console.sh --first
 # Pergunta dados de Email
 /script/email.sh --first
 # Cria novo usuário
