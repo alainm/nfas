@@ -34,6 +34,9 @@ if [ $? -ne 0 ]; then
   echo -e "\n# NFAS: executa scripts de inicialização\n/script/autostart.sh\n" >> /etc/rc.d/rc.local
 fi
 
+# Cria link para menu do usuário
+ln -s /script/nfas.sh /usr/bin/nfas
+
 ##### Roda cada script de configuração
 # Roda as configuraçãoes próprias para o VirtualBox
 /script/virtualbox.sh
