@@ -2,11 +2,15 @@
 set -x
 
 # Scripts de configuração do Console
-# site: http://unix.stackexchange.com/questions/70996/highlighting-command-in-terminal
-#       http://www.thegeekstuff.com/2008/09/bash-shell-ps1-10-examples-to-make-your-linux-prompt-like-angelina-jolie/
+# A variável PS1 é configurada atravéz do srquivo $HOME/.bashrc
+#   isso garante funcionamento igual em diversas Distros, testado com CentOS e Debian/Ubuntu
+# sites:
+#   http://unix.stackexchange.com/questions/70996/highlighting-command-in-terminal
+#   http://www.thegeekstuff.com/2008/09/bash-shell-ps1-10-examples-to-make-your-linux-prompt-like-angelina-jolie/
+
 # Chamada:
 #   /script/network.sh --first          # Para primeira configuração
-#   /script/network.sh --newuser user   # when a new user was created
+#   /script/network.sh --newuser user   # logo dempois de criar um usuário
 
 # Guarda parametros
 CMD=$1
@@ -29,24 +33,19 @@ function AddColorToFile(){
   echo ''                                                                >> $1
 }
 
+#-----------------------------------------------------------------------
 # Altera Prompt para colorido:
-#   Vermelho/Amarelo para root
-#   Verde/Azul para usuário
+#   Vermelho/Amarelo para root, Verde/Azul para usuário
 if [ "$CMD" == "--first" ]; then
-  if [ "$DISTRO_NAME" == "CentOS" ]; then
-    # No CentOS basta alterar o /etc/bashrc
-    AddColorToFile /etc/bashrc
-  elif  [ "$DISTRO_NAME" == "Ubuntu" ]; then
-    # No Ubuntu tem que alterar cada $HOME/.bashrc, aqui altera apenas o
-    AddColorToFile /root/.bashrc
-  fi
+  # Altera o .bashrc do root, apenas uma vez
+  AddColorToFile /root/.bashrc
 fi
 
+#-----------------------------------------------------------------------
 # Altera ao criar usuário
-if [ "$CMD" == "--newuser" ]      && \
-   [ "$DISTRO_NAME" == "Ubuntu" ] && \
-   [ -n "$USR"];                      then
-  # No Ubuntu tem que alterar cada $HOME/.bashrc, aqui altera apenas o
+#   Vermelho/Amarelo para root, Verde/Azul para usuário
+if [ "$CMD" == "--newuser" ] && [ -n "$USR" ]; then
+  # Altera o .bashrc de cada usuário, sempre quando ele é criado
   AddColorToFile /home/$USR/.bashrc
 fi
 
