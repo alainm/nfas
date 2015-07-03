@@ -8,7 +8,7 @@ set -x
 # O mesmo Script é usado para a primeira vez e para alterar a configuração
 # Chamada: "/script/monit.sh <cmd>"
 # <cmd>: --first     durante primeira instalação, chamada pelo email.sh
-#        --email     alteradas configurações de email, só se alteração posterior
+#        --email     alteradas configurações de email, só se alteração posterior (não usado)
 #        --hostname  quando foi alterado hostname, só se alteração posterior
 
 # Testar configuração: monit validate
@@ -24,8 +24,6 @@ set -x
 
 #-----------------------------------------------------------------------
 # comandos manuais para verificação:
-# instala programas pequenos e úteis:
-yum -y install htop nmon
 
 # free                 # Mostra Memória realmente utilizada (sem os buffers)
 # df -h                # Uso dos discos
@@ -37,6 +35,7 @@ yum -y install htop nmon
 # Processa a linha de comando
 CMD=$1
 # usa as variaveis armazenadas
+[ -e /script/info/monit.var ] && . /script/info/monit.var
 . /script/info/hostname.var
 . /script/info/email.var
 . /script/info/distro.var
@@ -46,28 +45,35 @@ CMD=$1
 
 SRC=monit-5.13.tar.gz
 if [ "$CMD" == "--first" ]; then
+  # instala programas pequenos e úteis: htop nmon
   # pacotes para compilar e dependencias
-  yum -y install openssl openssl-devel pam pam-devel gcc make
-  # Compila num diretório próprio
-  mkdir -p /script/monit
-  pushd /script/monit      # Vai para diretório mas lembra do anterior
-  wget http://mmonit.com/monit/dist/$SRC
-  tar xfv $SRC
-  pwd;ls
-  # Diretório foi criado com nome da versão
-  cd $(echo $SRC | sed -n 's/\(.*\)\.tar\.gz/\1/p')
-  ./configure --prefix=/usr --sysconfdir=/etc/monit
-  make clean
-  make
-  make install
-  # OBS: o comando "monit -t" mostra onde deve estar o arquivo de configuração:
-  #   Cannot find the control file at ~/.monitrc, /etc/monitrc, /etc/monit/monitrc, /usr/local/etc/monitrc or at ./monitrc
+  yum -y install htop nmon openssl openssl-devel pam pam-devel gcc make
+  # Testa Versão atual do MONIT, evita compilar de novo
+  MONIT_VER=$(monit --version | grep "Monit version" | sed -n 's/.* \([0-9]*\.[0-9]*\).*/\1/p')
+  if [ "$MONIT_VER" != "5.13" ]; then
+    # Compila num diretório próprio
+    mkdir -p /script/monit
+    pushd /script/monit      # Vai para diretório mas lembra do anterior
+    wget http://mmonit.com/monit/dist/$SRC
+    tar xfv $SRC
+    pwd;ls
+    # Diretório foi criado com nome da versão
+    cd $(echo $SRC | sed -n 's/\(.*\)\.tar\.gz/\1/p')
+    ./configure --prefix=/usr --sysconfdir=/etc/monit
+    make clean
+    make
+    make install
+    popd      # Volta ao diretório original
+    rm -fd /script/monit
+    # OBS: o comando "monit -t" mostra onde deve estar o arquivo de configuração:
+    #   Cannot find the control file at ~/.monitrc, /etc/monitrc, /etc/monit/monitrc, /usr/local/etc/monitrc or at ./monitrc
+  fi
 
   #-----------------------------------------------------------------------
   # configuração básica
   mkdir -p /etc/monit
-  cp -afv monitrc /etc/monit/monitrc.orig   # Preserva o original
   ARQ="/etc/monit/monitrc"
+  [ -e $ARQ.orig ] || cp -afv $ARQ $ARQ.orig   # Preserva o original
   cat <<- EOF > $ARQ
 	###############################################################################
 	## Monit control file
@@ -124,16 +130,17 @@ if [ "$CMD" == "--first" ]; then
 	EOF
   fi
   chmod 600 $ARQ
-
-  popd      # Volta ao diretório original
-  rm -fd /script/monit
+  #----------
+  # Indica que já foi inicializado
+  MONIT_INIT="OK"
+  echo "MONIT_INIT=\"OK\""  2>/dev/null > /script/info/monit.var
 fi #--first
 
 #-----------------------------------------------------------------------
 # Envio de Email para o administrador
 
 ARQ="/etc/monit/monit.d/email.monit"
-if [ ! -e $ARQ ]; then
+if [ "$CMD" == "--first" ]; then
   cat <<- EOF > $ARQ
 	##################################################
 	##  Monit: Configuração de Email do admin
@@ -144,15 +151,15 @@ if [ ! -e $ARQ ]; then
 	  with timeout 30 seconds
 	set alert root@localhost with reminder on 30 cycles
 	EOF
+  chmod 600 $ARQ
 fi
-chmod 600 $ARQ
 
 #-----------------------------------------------------------------------
 # Monitoramento de recursos de CPU, disco e memória
 # Se o arquivo existe não altera!
 
 ARQ="/etc/monit/monit.d/system.monit"
-if [ ! -e $ARQ ]; then
+if [ "$CMD" == "--first" ]; then
   cat <<- EOF > $ARQ
 	##################################################
 	##  Monit: Configuração de Cpu, disco e memória
@@ -175,44 +182,49 @@ if [ ! -e $ARQ ]; then
 # else
 #   sed -i "/check system/s/\(.*system\.\).*/\1$HOSTNAME_INFO/g" $ARQ
 #   sed -i "/check filesystem/s/\(.*rootfs\.\)[^ ]*\( .*\)/\1$HOSTNAME_INFO\2/g" $ARQ
+  chmod 600 $ARQ
 fi
-chmod 600 $ARQ
 
 #-----------------------------------------------------------------------
 # Formatação do Email enviado
 # Se o arquivo existe não altera!
 
 ARQ="/etc/monit/monit.d/format.monit"
-if [ ! -e $ARQ ]; then
-  echo "##################################################"               >  $ARQ
-  echo "##  Monit: Formatação do email de notificação"                    >> $ARQ
-  echo "##################################################"               >> $ARQ
-  echo "##  Depois de criado, apenas a linha com o Hostname é alterada"   >> $ARQ
-  echo ""                                        >> $ARQ
-  echo "set mail-format {"                       >> $ARQ
-  echo "  from: monit@$HOSTNAME_INFO"            >> $ARQ
-  echo "  subject: [MONIT] \$SERVICE: \$EVENT"   >> $ARQ
-  echo "  message:"                              >> $ARQ
-  echo "Evento: \$EVENT"                         >> $ARQ
-  echo "Servico: \$SERVICE"                      >> $ARQ
-  echo ""                                        >> $ARQ
-  echo "  Descricao:	\$DESCRIPTION"           >> $ARQ
-  echo "  Host:		$HOSTNAME_INFO"              >> $ARQ
-  echo "  Action:		\$ACTION"                >> $ARQ
-  echo ""                                        >> $ARQ
-  echo "Data: \$DATE"                            >> $ARQ
-  echo "}"                                       >> $ARQ
-else
-  sed -i "/from:/s/\(.*@\)[^ ]*.*/\1$HOSTNAME_INFO/g" $ARQ
-  sed -i "/Host:/s/\(^[[:blank:]]*Host:[[:blank:]]*\)[^ ]*.*/\1$HOSTNAME_INFO/g" $ARQ
+if [ "$CMD" == "--first" ] || ([ "$CMD" == "--hostname" ] && [ "$MONIT_INIT" == "OK" ]); then
+  echo "monit.sh: Corrigindo format.monit 1"
+  if [ ! -e $ARQ ]; then
+    echo "monit.sh: Corrigindo format.monit 2"
+    echo "##################################################"               >  $ARQ
+    echo "##  Monit: Formatação do email de notificação"                    >> $ARQ
+    echo "##################################################"               >> $ARQ
+    echo "##  Depois de criado, apenas a linha com o Hostname é alterada"   >> $ARQ
+    echo ""                                        >> $ARQ
+    echo "set mail-format {"                       >> $ARQ
+    echo "  from: monit@$HOSTNAME_INFO"            >> $ARQ
+    echo "  subject: [MONIT] \$SERVICE: \$EVENT"   >> $ARQ
+    echo "  message:"                              >> $ARQ
+    echo "Evento: \$EVENT"                         >> $ARQ
+    echo "Servico: \$SERVICE"                      >> $ARQ
+    echo ""                                        >> $ARQ
+    echo "  Descricao:	\$DESCRIPTION"             >> $ARQ
+    echo "  Host:		$HOSTNAME_INFO"                >> $ARQ
+    echo "  Action:		\$ACTION"                    >> $ARQ
+    echo ""                                        >> $ARQ
+    echo "Data: \$DATE"                            >> $ARQ
+    echo "}"                                       >> $ARQ
+  else
+    echo "monit.sh: Corrigindo format.monit 3"
+    sed -i'' "/from:/s/\(.*@\)[^ ]*.*/\1$HOSTNAME_INFO/g" $ARQ
+    sed -i'' "/Host:/s/\(^[[:blank:]]*Host:[[:blank:]]*\)[^ ]*.*/\1$HOSTNAME_INFO/g" $ARQ
+  fi
+  chmod 600 $ARQ
 fi
-chmod 600 $ARQ
 
 #-----------------------------------------------------------------------
 # Monitora uso da Rede
 
 ARQ="/etc/monit/monit.d/network.monit"
-if [ ! -e $ARQ ]; then
+if [ "$CMD" == "--first" ]; then
   cat <<- EOF > $ARQ
 	##################################################
 	##  Monit: Configuração Uso da rede
@@ -236,14 +248,14 @@ if [ ! -e $ARQ ]; then
 	  if total upload > 5 MB in last minute then alert
 	  if saturation > 90% then alert
 	EOF
+  chmod 600 $ARQ
 fi
-chmod 600 $ARQ
 
 #-----------------------------------------------------------------------
 # Monitora uso da CPU com scripts externos
 
 ARQ="/etc/monit/monit.d/cpu.monit"
-if [ ! -e $ARQ ]; then
+if [ "$CMD" == "--first" ]; then
   cat <<- EOF > $ARQ
 	##################################################
 	##  Monit: Configuração Uso da CPU e dos Cores
@@ -260,35 +272,40 @@ if [ ! -e $ARQ ]; then
 	  # valor para teste: 2, usar 75 (por exemplo) em produção
 	  if status > 75 then alert
 	EOF
+  chmod 600 $ARQ
 fi
-chmod 600 $ARQ
 
 #-----------------------------------------------------------------------
 # Instala com o UPSTART
 # OBS: só para "CentOS 6" e talvez Ubuntu14.04, CentOS 7 usa SYSTEMD
 
-if [ "$DISTRO_NAME_VERS" == "CentOS 6" ]; then
-  # remove o arquivo do init.d se existir
-  [ -e /etc/init.d/monit ] && /etc/init.d/monit stop
-  rm -f /etc/init.d/monit
-  ARQ="/etc/init/monit.conf"
-  cat <<- EOF > $ARQ
-	#!upstart
+if [ "$CMD" == "--first" ]; then
+  if [ "$DISTRO_NAME_VERS" == "CentOS 6" ]; then
+    # remove o arquivo do init.d se existir
+    [ -e /etc/init.d/monit ] && /etc/init.d/monit stop
+    rm -f /etc/init.d/monit
+    ARQ="/etc/init/monit.conf"
+    cat <<- EOF > $ARQ
+			#!upstart
 
-	description "Monit"
+			description "Monit"
 
-	start on runlevel [2345]
-	stop on shutdown
-	respawn
+			start on runlevel [2345]
+			stop on shutdown
+			respawn
 
-	# Roda sem ser como daemon para o respawn funcionar
-	exec monit -I
+			# Roda sem ser como daemon para o respawn funcionar
+			exec monit -I
 	EOF
-  # Não pode usar "restart", precisa saber se está rodando para poder dar "stop"
-  if ( status monit | grep start ); then
-    stop monit
   fi
-  start monit
 fi
+
+#-----------------------------------------------------------------------
+# Restarta o serviço MONIT
+# Não pode usar "restart", precisa saber se está rodando para poder dar "stop"
+if ( status monit | grep start ); then
+  stop monit
+fi
+start monit
 
 #-----------------------------------------------------------------------

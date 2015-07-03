@@ -52,7 +52,7 @@ ln -s /script/nfas.sh /usr/bin/nfas
 /script/network.sh --first
 # Configura Postfix, usa dados de Email e Hostname
 /script/postfix.sh --first
-# Monitoramente da máquina
+# Monitoramente da máquina, tem que vir depois do hostname.sh e email.sh
 /script/monit.sh --first
 
 # ===== FIM do first.sh =====
