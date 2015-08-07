@@ -14,8 +14,8 @@
 MENU_IT=$(whiptail --title "NFAS - Node.js Full Application Server" \
     --menu "Selecione um comando de reconfiguração:" --fb 18 70 4   \
     "1" "Testar Email de notificação"  \
-    "2" "Alterar Hostname"             \
-    "3" "Alterar Email de notificação" \
+    "2" "Alterar Email de notificação" \
+    "3" "Alterar Hostname"             \
     "4" "Criar novo Usuário/aplicação" \
     3>&1 1>&2 2>&3)
 status=$?
@@ -39,9 +39,17 @@ if [ "$MENU_IT" == "1" ];then
   exit 0
 fi
 
+# Comando local: Altera dados do Email de notifucação
+if [ "$MENU_IT" == "2" ]; then
+  /script/email.sh
+fi
+
+# Comando local: alterar hostname
+if [ "$MENU_IT" == "3" ]; then
+  /script/hostname.sh
+fi
+
 # Chama cada comando
-[ "$MENU_IT" == "2" ] && echo "Alterar Hostname, não implementado"
-[ "$MENU_IT" == "3" ] && echo "Alterar email, não implementado"
 [ "$MENU_IT" == "4" ] && echo "Novo Usuário, não implementado"
 
 exit 0

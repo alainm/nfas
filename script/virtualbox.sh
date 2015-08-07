@@ -33,7 +33,7 @@ chkconfig acpid on
 service acpid start
 
 # Opção para DEBUG: deixar as portas abertas no firewall
-MSG="\nVocê está usando o VirtualBox.\n\nDeseja dixar as portas do Firewall abertas para facilitar o Debug?\n"
+MSG="\nVocê está usando o VirtualBox.\n\nDeseja deixar as portas do Firewall abertas para facilitar o Debug?\n"
 MSG+="Se responder Sim, todos os serviços estarão acessíveis diretamente\n"
 MSG+="\n(Esta opção não aparece fora do VirtualBox!)\n"
 # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail#Yes.2Fno_box

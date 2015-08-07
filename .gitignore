@@ -3,4 +3,5 @@ nfas.tags
 nfas.workspace
 nfas.workspace.session
 prj.project
-
+.project
+.codelite/*
