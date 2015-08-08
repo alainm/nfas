@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+# set -x
 
 # Script para perguntar email do administrador e servidor smtp
 # As perguntas são interativas através de TUI
