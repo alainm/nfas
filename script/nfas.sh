@@ -10,13 +10,18 @@
 # Lê configurações
 . /script/info/email.var
 
+# somente root pode executar este script
+if [ "$(id -u)" != "0" ]; then
+  echo "Somente root pode executar este comando"
+  exit 255
+fi
 # Mostra Menu
 MENU_IT=$(whiptail --title "NFAS - Node.js Full Application Server" \
     --menu "Selecione um comando de reconfiguração:" --fb 18 70 4   \
     "1" "Testar Email de notificação"  \
     "2" "Alterar Email de notificação" \
     "3" "Alterar Hostname"             \
-    "4" "Criar novo Usuário/aplicação" \
+    "4" "Configuração de SSH e acesso de ROOT" \
     3>&1 1>&2 2>&3)
 status=$?
 if [ $status != 0 ]; then
@@ -49,8 +54,13 @@ if [ "$MENU_IT" == "3" ]; then
   /script/hostname.sh
 fi
 
+# Comando local: alterar hostname
+if [ "$MENU_IT" == "4" ]; then
+  /script/ssh.sh
+fi
+
 # Chama cada comando
-[ "$MENU_IT" == "4" ] && echo "Novo Usuário, não implementado"
+[ "$MENU_IT" == "6" ] && echo "Novo Usuário, não implementado"
 
 exit 0
 
