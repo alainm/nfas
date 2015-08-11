@@ -64,7 +64,7 @@ else
     fi
     # Todas as funções ficam em Procedures
     [ "$MENU_IT" == "1" ] && AskNewKey root /root
-    [ "$MENU_IT" == "2" ] && echo "Não implementado"
+    [ "$MENU_IT" == "2" ] && DeleteKeys root /root
     [ "$MENU_IT" == "3" ] && echo "Não implementado"
     [ "$MENU_IT" == "4" ] && echo "Não implementado"
     [ "$MENU_IT" == "5" ] && echo "Não implementado"

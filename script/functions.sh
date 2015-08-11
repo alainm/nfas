@@ -103,6 +103,8 @@ function AskNewKey(){
       eval "sed -i '/"$(echo -n $TMP | cut -d' ' -f3)"/d' $DIR/.ssh/authorized_keys"
       # Acrescenta a nova publickey
       echo -e "\n$TMP" >> $DIR/.ssh/authorized_keys
+      # Tem que ter permissões bloqueadas
+      chmod 600 $DIR/.ssh/authorized_keys
       # Elimina linhas em branco
       sed -i '/^$/d' $DIR/.ssh/authorized_keys
       # Mensagem de confirmação
@@ -122,6 +124,43 @@ function AskNewKey(){
       fi
     fi
   done
+}
+
+#-----------------------------------------------------------------------
+# Importa PublicKeys existentes
+# Uso: DeleteKeys usuario diretorio
+function DeleteKeys(){
+  local I, LIN, MSG, AMSG, EXE, KEYS
+  local USR=$1
+  local DIR=$2
+  local TITLE="NFAS - Removendo Chaves Públicas do usuário $USR"
+    # Elimina linhas em branco
+    sed -i '/^$/d' $DIR/.ssh/authorized_keys
+    # Lista as chaves existentes e coloca numa array
+    I=0
+    while read LIN ; do
+      AMSG[$I]=$(echo $LIN | cut -d' ' -f3)
+      let I=I+1
+    done < $DIR/.ssh/authorized_keys
+    N_LIN=${#AMSG[*]} # Número de linhas
+    if [ "$N_LIN" == "0" ]; then
+      # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
+      whiptail --title "$TITLE" --msgbox "Não foi encontrada nenhuma Chave Pública para o usuário $USR.\n\nOK para continuar" 10 70
+      return 0
+    fi
+    EXE="whiptail --title \"$TITLE\""
+    EXE+=" --checklist \"\nSelecione as Chaves Públicas que deseja remover\" 22 75 $N_LIN"
+    for ((I=0; I<N_LIN; I++)); do
+      # Cria as mensagens para seleção das chaves que pretende remover
+      EXE+=" \"${AMSG[$I]}\" \"\" OFF"
+    done
+    KEYS=$(eval "$EXE 3>&1 1>&2 2>&3")
+    [ $? != 0 ] && return 0 # Cancelado
+    # Remove as chaves selecionadas
+    for K in $(echo $KEYS | tr -d '\"'); do
+      echo "Removendo chave: $K"
+      eval "sed -i '/"$K"/d' $DIR/.ssh/authorized_keys"
+    done
 }
 
 #-----------------------------------------------------------------------
