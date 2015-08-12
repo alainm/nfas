@@ -43,7 +43,7 @@ function GetNetwokState(){
 
 #-----------------------------------------------------------------------
 # Função para editar Arquivo de configuração, parametro separado por ":"
-# Formato doa parametros: "param:  valor" de separador é ":"
+# Formato dos parametros: "param:  valor" de separador é ":"
 # uso: EditConfColon <Arquivo> <param> <valor>
 # usa método de apagar e recriar, é mais seguro!
 #   (alguns caracteres poderiam ser interpretados pelo SED)
@@ -57,6 +57,44 @@ function EditConfColon(){
   fi
   # linha com parametro não existe, acrescenta linha
   echo "$PARAM:   $VAL" >> $ARQ
+}
+
+#-----------------------------------------------------------------------
+# Função para ler Arquivo de configuração, parametro separado por " "
+# Formato dos parametros: "param  valor" de separador é " "
+# uso: EditConfColon <Arquivo> <param>
+function GetConfSpace(){
+  local ARQ=$1
+  local PARAM=$2
+  # Le vaiável direto do arquivo
+  local TMP=$(eval "sed -n 's/^[[:blank:]]*"$PARAM"[[:blank:]]\+\(.*\)[[:blank:]]*$/\1/p'" $ARQ)
+  if [ -z "$TMP" ]; then
+    # Tenta ler em comentários, geralmente é o default
+    TMP=$(eval "sed -n 's/^[[:blank:]]*#\?[[:blank:]]*"$PARAM"[[:blank:]]\+\(.*\)[[:blank:]]*$/\1/p'" $ARQ)
+  fi
+  echo $TMP
+}
+
+#-----------------------------------------------------------------------
+# Função para editar Arquivo de configuração, parametro separado por " "
+# Formato dos parametros: "param:  valor" de separador é " "
+# uso: EditConfSpace <Arquivo> <param> <valor>
+# usa método de substituir, CUIDADO com caracteres que podeminterferir com o SED
+function EditConfSpace(){
+  local ARQ=$1
+  local PARAM=$2
+  local VAL=$3
+  if grep -E "^[[:blank:]]*$PARAM[[:blank:]]+" $ARQ; then
+    # linha já existe, substituir no local
+    # Cuidado no grep é "+" e no sed é "\+"
+    eval "sed -i 's/^\([[:blank:]]*$PARAM[[:blank:]]\+\).*/\1$VAL/;' $ARQ"
+   elif grep -E "^[[:blank:]]*#*[[:blank:]]*$PARAM[[:blank:]]+" $ARQ; then
+    # linha já existe, substituir no local, Retirar comentário
+    eval "sed -i 's/^[[:blank:]]*#\?\([[:blank:]]*$PARAM[[:blank:]]\+\).*/\1$VAL/;' $ARQ"
+  else
+    # linha com parametro não existe, acrescenta linha no final
+    echo "$PARAM   $VAL" >> $ARQ
+  fi
 }
 
 #-----------------------------------------------------------------------
@@ -91,8 +129,7 @@ function AskNewKey(){
         restorecon -Rv $DIR/.ssh
       fi
       # Testa se já existe uma PublicKey com essa identificação
-      OLD_N=$(eval "sed -n '/"$(echo -n $TMP | cut -d' ' -f3)"/p' $DIR/.ssh/authorized_keys | wc -l")
-      if [ $OLD_N -ne 0 ]; then
+sed -n 's/^[[:blank:]]*$PARAM[[:blank:]]* \(.*\)[[:blank:]]*$/\1/p'      if [ $OLD_N -ne 0 ]; then
         MSG="Já exisste uma Chave Pública (PublicKey) com esta identificação"
         MSG+="\n\n Deseja mesmo SUBSTITUÍ-LA?"
         if ( ! whiptail --title "Chave Pública do usuário $USR" --yesno "$MSG" 10 78) then
@@ -117,7 +154,7 @@ function AskNewKey(){
       MSG+="\n\n   ssh -i ~/.ssh/$USR@$(hostname).key $USR@$(ifconfig eth0 | GetIpFromIfconfig)"
       MSG+="\n\n==>> ANOTE este comando <<=="
       MSG+="\nRecomendamos que teste agora..."
-      MSG+="\n\n SIM para continuar, NÃO para repetir operação"
+      MSG+="\n\nOK? SIM para continuar, NÃO para repetir operação"
       if (whiptail --title "Chave Pública do usuário $USR" --yesno "$MSG" 17 78) then
         echo "Chave Pública cadastrada com sucesso"
         return 0

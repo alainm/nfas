@@ -47,28 +47,47 @@ else
   # Loop do Monu principal interativo
   while true; do
     # Mostra Menu
-    MSG_ROOT_SSH="Bloquear acesso de root pelo SSH,   ATUAL=permitido"
-    MSG_SSH_SENHA="Bloquear acesso pelo SSH com senha, ATUAL=permitido"
+    PASS_AUTH=$(GetConfSpace /etc/ssh/sshd_config PasswordAuthentication)
+    if [ "$PASS_AUTH" == "yes" ]; then
+      MSG_SSH_SENHA="Bloquear acesso pelo SSH com senha, ATUAL=permitido"
+    else
+      MSG_SSH_SENHA="Permitir acesso pelo SSH com senha, ATUAL=bloquado"
+    fi
+    R_LOGIN=$(GetConfSpace /etc/ssh/sshd_config PermitRootLogin)
+    if [ "$R_LOGIN" == "yes" ]; then
+      MSG_ROOT_SSH="Bloquear acesso de root pelo SSH,   ATUAL=permitido"
+    else
+      MSG_ROOT_SSH="Permitir acesso de root pelo SSH,   ATUAL=bloquado"
+    fi
     MENU_IT=$(whiptail --title "NFAS - Node.js Full Application Server" \
-        --menu "Selecione um comando de reconfiguração:" --fb 18 70 6   \
+        --menu "Selecione um comando de reconfiguração:" --fb 18 70 5   \
         "1" "Acrescentar Certificado PublicKey"  \
         "2" "Remover Certificado PublicKey"      \
-        "3" "$MSG_ROOT_SSH"                      \
-        "4" "$MSG_SSH_SENHA"                     \
-        "5" "Alterar senha de root"              \
+        "3" "$MSG_SSH_SENHA"                     \
+        "4" "$MSG_ROOT_SSH"                      \
         "6" "Reconfigurar PortKnock"             \
         3>&1 1>&2 2>&3)
     if [ $? != 0 ]; then
         echo "Seleção cancelada."
         exit 0
     fi
-    # Todas as funções ficam em Procedures
+    # Funções que ficam em Procedures
     [ "$MENU_IT" == "1" ] && AskNewKey root /root
     [ "$MENU_IT" == "2" ] && DeleteKeys root /root
-    [ "$MENU_IT" == "3" ] && echo "Não implementado"
-    [ "$MENU_IT" == "4" ] && echo "Não implementado"
+
+    # altera Acesso com senha
+    if [ "$MENU_IT" == "3" ];then
+      [ "$PASS_AUTH" == "yes" ] && TMP="no" || TMP="yes"
+      EditConfSpace /etc/ssh/sshd_config PasswordAuthentication $TMP
+    fi
+
+    # Altera acesso de root
+    if [ "$MENU_IT" == "4" ];then
+      [ "$R_LOGIN" == "yes" ] && TMP="no" || TMP="yes"
+      EditConfSpace /etc/ssh/sshd_config PermitRootLogin $TMP
+    fi
+
     [ "$MENU_IT" == "5" ] && echo "Não implementado"
-    [ "$MENU_IT" == "6" ] && echo "Não implementado"
     # read -p "Enter para continuar..." TMP
   done # loop menu principal
 fi # else --first
