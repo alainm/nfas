@@ -89,12 +89,16 @@ else
     if [ "$MENU_IT" == "3" ];then
       [ "$PASS_AUTH" == "yes" ] && TMP="no" || TMP="yes"
       EditConfSpace /etc/ssh/sshd_config PasswordAuthentication $TMP
+      # Recarrega o SSHD para usar novo paremetro
+      service sshd reload
     fi
 
     # Altera acesso de root
     if [ "$MENU_IT" == "4" ];then
       [ "$R_LOGIN" == "yes" ] && TMP="no" || TMP="yes"
       EditConfSpace /etc/ssh/sshd_config PermitRootLogin $TMP
+      # Recarrega o SSHD para usar novo paremetro
+      service sshd reload
     fi
 
     [ "$MENU_IT" == "5" ] && echo "Não implementado"
