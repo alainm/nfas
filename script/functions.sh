@@ -129,7 +129,8 @@ function AskNewKey(){
         restorecon -Rv $DIR/.ssh
       fi
       # Testa se já existe uma PublicKey com essa identificação
-sed -n 's/^[[:blank:]]*$PARAM[[:blank:]]* \(.*\)[[:blank:]]*$/\1/p'      if [ $OLD_N -ne 0 ]; then
+      OLD_N=$(eval "sed -n '/"$(echo -n $TMP | cut -d' ' -f3)"/p' $DIR/.ssh/authorized_keys | wc -l")
+      if [ $OLD_N -ne 0 ]; then
         MSG="Já exisste uma Chave Pública (PublicKey) com esta identificação"
         MSG+="\n\n Deseja mesmo SUBSTITUÍ-LA?"
         if ( ! whiptail --title "Chave Pública do usuário $USR" --yesno "$MSG" 10 78) then

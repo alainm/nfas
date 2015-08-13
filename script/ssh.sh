@@ -28,7 +28,7 @@ CMD=$1
 . /script/functions.sh
 # Lê dados anteriores se existirem
 . /script/info/distro.var
-VAR_FILE="/script/info/h.var"
+VAR_FILE="/script/info/ssh.var"
 [ -e $VAR_FILE ] && . $VAR_FILE
 
 #-----------------------------------------------------------------------
@@ -39,10 +39,18 @@ if [ "$(id -u)" != "0" ]; then
   echo "Somente root pode executar este comando"
   exit 255
 fi
+TITLE="NFAS - Configuração de SSH e acesso de ROOT"
 if [ "$CMD" == "--first" ]; then
   # Durante instalação não mostra menus
-  echo "1"
-
+  # Novo certificado de root
+  AskNewKey root /root
+  # mensagem para bloqueio de acesso mas tarde
+     MSG="\nPara fazer o bloqueio:"
+    MSG+="\n  Acesso via SSH por senha"
+    MSG+="\n  Acesso via SSH como usuário ROOT"
+  MSG+="\n\nutilize o comando \"nfas\" após terminar a instalação"
+  MSG+="\ne somente após testar os acessos!!!"
+  whiptail --title "$TITLE" --msgbox "$MSG" 13 70
 else
   # Loop do Monu principal interativo
   while true; do
@@ -59,20 +67,22 @@ else
     else
       MSG_ROOT_SSH="Permitir acesso de root pelo SSH,   ATUAL=bloquado"
     fi
-    MENU_IT=$(whiptail --title "NFAS - Node.js Full Application Server" \
-        --menu "Selecione um comando de reconfiguração:" --fb 18 70 5   \
-        "1" "Acrescentar Certificado PublicKey"  \
-        "2" "Remover Certificado PublicKey"      \
+    MENU_IT=$(whiptail --title "$TITLE" \
+        --menu "\nSelecione um comando de reconfiguração:" --fb 18 70 5   \
+        "1" "Acrescentar Chave Pública (PublicKey)"  \
+        "2" "Remover Chave Pública (PublicKey)"      \
         "3" "$MSG_SSH_SENHA"                     \
         "4" "$MSG_ROOT_SSH"                      \
-        "6" "Reconfigurar PortKnock"             \
+        "5" "Reconfigurar PortKnock"             \
         3>&1 1>&2 2>&3)
     if [ $? != 0 ]; then
         echo "Seleção cancelada."
         exit 0
     fi
     # Funções que ficam em Procedures
+    # Novo certificado de root
     [ "$MENU_IT" == "1" ] && AskNewKey root /root
+    # Remove certificado de root
     [ "$MENU_IT" == "2" ] && DeleteKeys root /root
 
     # altera Acesso com senha
