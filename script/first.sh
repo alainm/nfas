@@ -54,6 +54,8 @@ ln -s /script/nfas.sh /usr/bin/nfas
 /script/postfix.sh --first
 # Monitoramente da máquina, tem que vir depois do hostname.sh e email.sh
 /script/monit.sh --first
+# Configurações de SSH e acesso de ROOT
+/script/ssh.sh --first
 
 # ===== FIM do first.sh =====
 # => executa o /script/autostart.sh para iniciar
