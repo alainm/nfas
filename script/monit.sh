@@ -45,9 +45,6 @@ CMD=$1
 
 SRC=monit-5.13.tar.gz
 if [ "$CMD" == "--first" ]; then
-  # instala programas pequenos e úteis: htop nmon
-  # pacotes para compilar e dependencias
-  yum -y install htop nmon openssl openssl-devel pam pam-devel gcc make
   # Testa Versão atual do MONIT, evita compilar de novo
   MONIT_VER=$(monit --version | grep "Monit version" | sed -n 's/.* \([0-9]*\.[0-9]*\).*/\1/p')
   if [ "$MONIT_VER" != "5.13" ]; then

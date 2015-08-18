@@ -37,7 +37,6 @@ CMD=$1
 #-----------------------------------------------------------------------
 # Instala e faz cópia da configuração original
 
-yum -y install mailx cyrus-sasl-plain postfix-perl-scripts  # postfix já vem instalado
 if [ ! -e /etc/postfix/main.cf.orig ]; then
   cp -a /etc/postfix/main.cf /etc/postfix/main.cf.orig
 fi

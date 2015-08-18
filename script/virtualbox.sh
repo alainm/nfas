@@ -9,7 +9,7 @@ echo "Rodando o Script de inicialização: /script/virtualbox.sh"
 # Determina se está rodando em um VirtualBox
 # site: http://stackoverflow.com/questions/12874288/how-to-detect-if-the-script-is-running-on-a-virtual-machine
 # A variável fica guardada no diretório de dados, para usar deve ser incluida com o comando ". "
-yum -y install dmidecode
+# yum -y install dmidecode => foi para o first.sh
 dmidecode  | grep -i product | grep VirtualBox
 if [ $? -eq 0 ] ;then
   IS_VIRTUALBOX="Y"
