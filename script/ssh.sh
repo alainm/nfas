@@ -44,14 +44,39 @@ if [ "$CMD" == "--first" ]; then
   # Durante instalação não mostra menus
   # Novo certificado de root
   AskNewKey root /root
+  # Seta timeout para conexões SSH para 10 minutos sem responder
+  # http://www.cyberciti.biz/tips/open-ssh-server-connection-drops-out-after-few-or-n-minutes-of-inactivity.html
+  EditConfSpace /etc/ssh/sshd_config ClientAliveInterval 30
+  EditConfSpace /etc/ssh/sshd_config ClientAliveCountMax 20
+  service sshd reload
+  # Configura para que a Umask seja usada em todas as conexões
+  # Esta configuração parece que funciona tanto no CentOS quanto no Ubuntu
+  # http://serverfault.com/questions/228396/how-to-setup-sshs-umask-for-all-type-of-connections
+  # http://linux-pam.org/Linux-PAM-html/sag-pam_umask.html
+  UMASK=007
+  if ! grep "{NFAS-pamd.login}" /etc/pam.d/login; then
+    echo -e "\n#{NFAS-pamd.login} Setting UMASK for all ssh based connections (ssh, sftp, scp)" >> /etc/pam.d/login
+    echo "session    optional     pam_umask.so umask=$UMASK" >> /etc/pam.d/login
+  fi
+  if ! grep "{NFAS-pamd.sshd}" /etc/pam.d/sshd; then
+    echo -e "\n#{NFAS-pamd.sshd} Setting UMASK for all ssh based connections (ssh, sftp, scp)" >> /etc/pam.d/sshd
+    echo "session    optional     pam_umask.so umask=$UMASK" >> /etc/pam.d/sshd
+  fi
+  # Altera UMASK para o bash, senão sobrepõe o configurado no PAM.D
+  # Alterando o .bashrc funciona  tanto no CentOS quanto no Ubuntu
+  if ! grep "{NFAS-bash.umask}" /root/.bashrc; then
+    echo -e "\n#{NFAS-bash.umask} Configura máscara para criação de arquivos sem acesso a \"outros\"" >> /root/.bashrc
+    echo "umask $UMASK" >> /root/.bashrc
+  fi
   # mensagem para bloqueio de acesso mas tarde
      MSG="\nPara fazer o bloqueio:"
     MSG+="\n  Acesso via SSH por senha"
     MSG+="\n  Acesso via SSH como usuário ROOT"
   MSG+="\n\nutilize o comando \"nfas\" após terminar a instalação"
-  MSG+="\ne somente após testar os acessos!!!"
+    MSG+="\ne somente após testar os acessos!!!"
   whiptail --title "$TITLE" --msgbox "$MSG" 13 70
 else
+  #-----------------------------------------------------------------------
   # Loop do Monu principal interativo
   while true; do
     # Mostra Menu
