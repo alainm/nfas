@@ -32,6 +32,29 @@ VAR_FILE="/script/info/ssh.var"
 [ -e $VAR_FILE ] && . $VAR_FILE
 
 #-----------------------------------------------------------------------
+# Configura para que a Umask seja usada em todas as conexões
+# http://serverfault.com/questions/228396/how-to-setup-sshs-umask-for-all-type-of-connections
+# http://linux-pam.org/Linux-PAM-html/sag-pam_umask.html
+function SetUmask(){
+  local UMASK=$1
+  # Esta configuração funciona tanto no CentOS quanto no Ubuntu
+  if ! grep "{NFAS-pamd.login}" /etc/pam.d/login; then
+    echo -e "\n#{NFAS-pamd.login} Setting UMASK for all ssh based connections (ssh, sftp, scp)" >> /etc/pam.d/login
+    echo "session    optional     pam_umask.so umask=$UMASK" >> /etc/pam.d/login
+  fi
+  if ! grep "{NFAS-pamd.sshd}" /etc/pam.d/sshd; then
+    echo -e "\n#{NFAS-pamd.sshd} Setting UMASK for all ssh based connections (ssh, sftp, scp)" >> /etc/pam.d/sshd
+    echo "session    optional     pam_umask.so umask=$UMASK" >> /etc/pam.d/sshd
+  fi
+  # Altera UMASK para o bash, senão sobrepõe o configurado no PAM.D
+  # Alterando o .bashrc funciona  tanto no CentOS quanto no Ubuntu
+  if ! grep "{NFAS-bash.umask}" /root/.bashrc; then
+    echo -e "\n#{NFAS-bash.umask} Configura máscara para criação de arquivos sem acesso a \"outros\"" >> /root/.bashrc
+    echo "umask $UMASK" >> /root/.bashrc
+  fi
+}
+
+#-----------------------------------------------------------------------
 # main()
 
 # somente root pode executar este script
@@ -49,25 +72,8 @@ if [ "$CMD" == "--first" ]; then
   EditConfSpace /etc/ssh/sshd_config ClientAliveInterval 30
   EditConfSpace /etc/ssh/sshd_config ClientAliveCountMax 20
   service sshd reload
-  # Configura para que a Umask seja usada em todas as conexões
-  # Esta configuração parece que funciona tanto no CentOS quanto no Ubuntu
-  # http://serverfault.com/questions/228396/how-to-setup-sshs-umask-for-all-type-of-connections
-  # http://linux-pam.org/Linux-PAM-html/sag-pam_umask.html
-  UMASK=007
-  if ! grep "{NFAS-pamd.login}" /etc/pam.d/login; then
-    echo -e "\n#{NFAS-pamd.login} Setting UMASK for all ssh based connections (ssh, sftp, scp)" >> /etc/pam.d/login
-    echo "session    optional     pam_umask.so umask=$UMASK" >> /etc/pam.d/login
-  fi
-  if ! grep "{NFAS-pamd.sshd}" /etc/pam.d/sshd; then
-    echo -e "\n#{NFAS-pamd.sshd} Setting UMASK for all ssh based connections (ssh, sftp, scp)" >> /etc/pam.d/sshd
-    echo "session    optional     pam_umask.so umask=$UMASK" >> /etc/pam.d/sshd
-  fi
-  # Altera UMASK para o bash, senão sobrepõe o configurado no PAM.D
-  # Alterando o .bashrc funciona  tanto no CentOS quanto no Ubuntu
-  if ! grep "{NFAS-bash.umask}" /root/.bashrc; then
-    echo -e "\n#{NFAS-bash.umask} Configura máscara para criação de arquivos sem acesso a \"outros\"" >> /root/.bashrc
-    echo "umask $UMASK" >> /root/.bashrc
-  fi
+  # Configura para que a Umask
+  SetUmask 007
   # mensagem para bloqueio de acesso mas tarde
      MSG="\nPara fazer o bloqueio:"
     MSG+="\n  Acesso via SSH por senha"
