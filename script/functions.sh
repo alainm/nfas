@@ -47,6 +47,7 @@ function GetNetwokState(){
 # uso: EditConfColon <Arquivo> <param> <valor>
 # usa método de apagar e recriar, é mais seguro!
 #   (alguns caracteres poderiam ser interpretados pelo SED)
+# usado por: postfix (/etc/aliases)
 function EditConfColon(){
   local ARQ=$1
   local PARAM=$2
@@ -62,7 +63,8 @@ function EditConfColon(){
 #-----------------------------------------------------------------------
 # Função para ler Arquivo de configuração, parametro separado por " "
 # Formato dos parametros: "param  valor" de separador é " "
-# uso: EditConfColon <Arquivo> <param>
+# uso: GetConfSpace <Arquivo> <param>
+# usado por sshd.conf
 function GetConfSpace(){
   local ARQ=$1
   local PARAM=$2
@@ -80,6 +82,7 @@ function GetConfSpace(){
 # Formato dos parametros: "param:  valor" de separador é " "
 # uso: EditConfSpace <Arquivo> <param> <valor>
 # usa método de substituir, CUIDADO com caracteres que podeminterferir com o SED
+# usado por sshd.conf
 function EditConfSpace(){
   local ARQ=$1
   local PARAM=$2
@@ -94,6 +97,39 @@ function EditConfSpace(){
   else
     # linha com parametro não existe, acrescenta linha no final
     echo "$PARAM   $VAL" >> $ARQ
+  fi
+}
+
+#-----------------------------------------------------------------------
+# Função para editar Arquivo de configuração, parametro separado por "="
+# Formato dos parametros:
+#     [section]
+#     param = valor
+# uso: EditConfIgual <Arquivo> <section> <param> <valor>
+# usa método de substituir, CUIDADO com caracteres que podeminterferir com o SED
+# usado para: fail2ban
+function EditConfIgual(){
+  local ARQ=$1
+  local SECTION=$2
+  local PARAM=$3
+  local VAL=$4
+  local TMP=$(eval "sed -n '/[$SECTION]/,/\[.*/ { /^[[:blank:]]*$PARAM[[:blank:]]*=/p }' $ARQ")
+  if [ -n "$TMP" ]; then
+    # linha já existe, substituir no local
+    # Cuidado no grep é "+" e no sed é "\+"
+    # eval "sed -i 's/^\([[:blank:]]*$PARAM[[:blank:]]*=[[:blank:]]*\).*/\1$VAL/;' $ARQ"
+    eval "sed -i '/[$SECTION]/,/\[.*/ { s/^\([[:blank:]]*$PARAM[[:blank:]]*=[[:blank:]]*\).*/\1$VAL/ }' $ARQ"
+   else
+     # elif grep -E "^[[:blank:]]*#*[[:blank:]]*$PARAM[[:blank:]]*=[[:blank:]]*" $ARQ; then
+     TMP=$(eval "sed -n '/[$SECTION]/,/\[.*/ { /^[[:blank:]]*#[[:blank:]]*$PARAM[[:blank:]]*=/p }' $ARQ")
+     if [ -n "$TMP" ]; then
+       # linha já existe, substituir no local, Retirar comentário
+       # eval "sed -i 's/^[[:blank:]]*#\?\([[:blank:]]*$PARAM[[:blank:]]*=[[:blank:]]*\).*/\1$VAL/;' $ARQ"
+       eval "sed -i '/[$SECTION]/,/\[.*/ { s/^[[:blank:]]*#\?[[:blank:]]*\($PARAM[[:blank:]]*=[[:blank:]]*\).*/\1$VAL/ }' $ARQ"
+     else
+       # Arquivo do fail2ban é separado por [paragrafos], não pode acrescentar no final
+       false
+     fi
   fi
 }
 
