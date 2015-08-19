@@ -283,3 +283,21 @@ if [ "$CMD" != "--first" ]; then
 fi
 
 #-----------------------------------------------------------------------
+# Enviar Email de teste
+
+MSG="\nEnviado por Hostname: \"$(hostname -f)\""
+MSG+="\n para: $EMAIL_ADMIN"
+MSG+="\n\nServidor SMTP: $EMAIL_SMTP_URL"
+MSG+="\n usuário:      $EMAIL_USER_ID"
+MSG+="\n\nEnviado em: $(date +"%d/%m/%Y %H:%M:%S (%Z %z)")"
+echo -e $MSG | mail -s "Teste de Notificação" $EMAIL_ADMIN
+# mensagem na tela
+   MSG="\nTeste de Email de Notificação"
+  MSG+="\n  Email enviado para admin: $EMAIL_ADMIN"
+  MSG+="\n  usando servidor SMTP:     $EMAIL_SMTP_URL"
+  MSG+="\n  e usuário:                $EMAIL_USER_ID"
+MSG+="\n\nPara alterar,utilize o comando \"nfas\""
+  MSG+="\n após terminar a instalação"
+whiptail --title "$TITLE" --msgbox "$MSG" 15 70
+
+#-----------------------------------------------------------------------
