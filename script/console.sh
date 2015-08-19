@@ -28,9 +28,9 @@ function AddColorToFile(){
     echo '#{NFAS-prompt} configurado automáticamente: Prompt colorido'     >> $ARQ
     echo '# contribuição Marcos Carlos, quem desenvolveu estas cores...'   >> $ARQ
     echo 'if [ $(id -u) -eq 0 ]; then'                                     >> $ARQ
-    echo '  export PS1="\[$(tput bold)\]\[$(tput setaf 3)\][\[$(tput setaf 1)\]\u\[$(tput setaf 3)\]@\[$(tput setaf 1)\]\h \[$(tput setaf 3)\]\W\[$(tput setaf 3)\]]\[$(tput setaf 1)\]\\$ \[$(tput sgr0)\]"' >> $ARQ
+    echo '  export PS1="\[$(tput bold)\]\[$(tput setaf 3)\][\[$(tput setaf 1)\]\u\[$(tput setaf 3)\]@\[$(tput setaf 1)\]\h \[$(tput setaf 3)\]\W\[$(tput setaf 3)\]]\[$(tput setaf 1)\]\\$ \[$(tput sgr0)\]\[$(tput setaf 7)\]"' >> $ARQ
     echo 'else'                                                            >> $ARQ
-    echo '  export PS1="\[$(tput bold)\]\[$(tput setaf 2)\][\[$(tput setaf 4)\]\u\[$(tput setaf 2)\]@\[$(tput setaf 4)\]\h \[$(tput setaf 2)\]\W\[$(tput setaf 2)\]]\[$(tput setaf 2)\]\\$ \[$(tput sgr0)\]"' >> $ARQ
+    echo '  export PS1="\[$(tput bold)\]\[$(tput setaf 2)\][\[$(tput setaf 4)\]\u\[$(tput setaf 2)\]@\[$(tput setaf 4)\]\h \[$(tput setaf 2)\]\W\[$(tput setaf 2)\]]\[$(tput setaf 2)\]\\$ \[$(tput sgr0)\]\[$(tput setaf 7)\]"' >> $ARQ
     echo 'fi'                                                              >> $ARQ
     echo ''                                                                >> $ARQ
   fi
