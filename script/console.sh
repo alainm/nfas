@@ -21,16 +21,19 @@ USR=$2
 #--- Função para alterar arquivos
 # uso: AddColorToFile <aqruivo>
 function AddColorToFile(){
+  local ARQ=$1
   # Precisa usar echo com Aspas simples para evitar expansão da expressão
-  echo ''                                                                >> $1
-  echo '# NFAS: configurado automáticamente: Prompt colorido'            >> $1
-  echo '# contribuição Marcos Carlos, quem desenvolveu estas cores...'   >> $1
-  echo 'if [ $(id -u) -eq 0 ]; then'                                     >> $1
-  echo '  export PS1="\[$(tput bold)\]\[$(tput setaf 3)\][\[$(tput setaf 1)\]\u\[$(tput setaf 3)\]@\[$(tput setaf 1)\]\h \[$(tput setaf 3)\]\W\[$(tput setaf 3)\]]\[$(tput setaf 1)\]\\$ \[$(tput sgr0)\]"' >> $1
-  echo 'else'                                                            >> $1
-  echo '  export PS1="\[$(tput bold)\]\[$(tput setaf 2)\][\[$(tput setaf 4)\]\u\[$(tput setaf 2)\]@\[$(tput setaf 4)\]\h \[$(tput setaf 2)\]\W\[$(tput setaf 2)\]]\[$(tput setaf 2)\]\\$ \[$(tput sgr0)\]"' >> $1
-  echo 'fi'                                                              >> $1
-  echo ''                                                                >> $1
+  if ! grep "{NFAS-prompt}" $ARQ; then
+    echo ''                                                                >> $ARQ
+    echo '#{NFAS-prompt} configurado automáticamente: Prompt colorido'     >> $ARQ
+    echo '# contribuição Marcos Carlos, quem desenvolveu estas cores...'   >> $ARQ
+    echo 'if [ $(id -u) -eq 0 ]; then'                                     >> $ARQ
+    echo '  export PS1="\[$(tput bold)\]\[$(tput setaf 3)\][\[$(tput setaf 1)\]\u\[$(tput setaf 3)\]@\[$(tput setaf 1)\]\h \[$(tput setaf 3)\]\W\[$(tput setaf 3)\]]\[$(tput setaf 1)\]\\$ \[$(tput sgr0)\]"' >> $ARQ
+    echo 'else'                                                            >> $ARQ
+    echo '  export PS1="\[$(tput bold)\]\[$(tput setaf 2)\][\[$(tput setaf 4)\]\u\[$(tput setaf 2)\]@\[$(tput setaf 4)\]\h \[$(tput setaf 2)\]\W\[$(tput setaf 2)\]]\[$(tput setaf 2)\]\\$ \[$(tput sgr0)\]"' >> $ARQ
+    echo 'fi'                                                              >> $ARQ
+    echo ''                                                                >> $ARQ
+  fi
 }
 
 #-----------------------------------------------------------------------
