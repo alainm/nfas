@@ -140,13 +140,18 @@ if [ "$(id -u)" != "0" ]; then
 fi
 TITLE="NFAS - Configuração de SSH e acesso de ROOT"
 if [ "$CMD" == "--first" ]; then
+  ARQ=/etc/ssh/sshd_config
+  if [ ! -e $ARQ.orig ]; then
+    cp  $ARQ $ARQ.orig
+    chmod 600 $ARQ
+  fi
   # Durante instalação não mostra menus
   # Novo certificado de root
   AskNewKey root /root
   # Seta timeout para conexões SSH para 10 minutos sem responder
   # http://www.cyberciti.biz/tips/open-ssh-server-connection-drops-out-after-few-or-n-minutes-of-inactivity.html
-  EditConfSpace /etc/ssh/sshd_config ClientAliveInterval 30
-  EditConfSpace /etc/ssh/sshd_config ClientAliveCountMax 20
+  EditConfSpace $ARQ ClientAliveInterval 30
+  EditConfSpace $ARQ ClientAliveCountMax 20
   service sshd reload
   # Configura para que a Umask
   SetUmask 007

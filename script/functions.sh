@@ -137,7 +137,9 @@ function EditConfIgual(){
 # Importa uma PublicKey
 # Uso: AskNewKey usuario diretorio
 function AskNewKey(){
-  local TMP, MSG, OLD_N
+  local TMP
+  local MSG
+  local OLD_N
   local USR=$1
   local DIR=$2
   # loop só sai com return
