@@ -63,6 +63,8 @@ ln -s /script/nfas.sh /usr/bin/nfas
 /script/network.sh --first
 # Configura Postfix, usa dados de Email e Hostname
 /script/postfix.sh --first
+# Envia Email de confirmação de teste
+/script/email.sh --test
 # Monitoramente da máquina, tem que vir depois do hostname.sh e email.sh
 /script/monit.sh --first
 # Configurações de SSH e acesso de ROOT

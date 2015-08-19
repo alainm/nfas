@@ -4,6 +4,10 @@
 # Script para perguntar email do administrador e servidor smtp
 # As perguntas são interativas através de TUI
 # No final chama os scrips que necessitam de atualização
+# Uso: /script/email.sh <cmd>
+# <cmd>: --first      primeira instalação
+#        --test       envia email de teste
+#        <em branco>  modo interativo
 
 #-----------------------------------------------------------------------
 # Função para perguntar e verificar um Email
@@ -208,6 +212,24 @@ function AskEmailSmtpPasswd(){
   done
 }
 
+#-----------------------------------------------------------------------
+# Envia email de teste
+function SendTestEmail(){
+  MSG="\nEnviado por Hostname: \"$(hostname -f)\""
+  MSG+="\n para: $EMAIL_ADMIN"
+  MSG+="\n\nServidor SMTP: $EMAIL_SMTP_URL"
+  MSG+="\n usuário:      $EMAIL_USER_ID"
+  MSG+="\n\nEnviado em: $(date +"%d/%m/%Y %H:%M:%S (%Z %z)")"
+  echo -e $MSG | mail -s "Teste de Notificação" $EMAIL_ADMIN
+  # mensagem na tela
+     MSG="\nTeste de Email de Notificação"
+    MSG+="\n  Email enviado para admin: $EMAIL_ADMIN"
+    MSG+="\n  usando servidor SMTP:     $EMAIL_SMTP_URL"
+    MSG+="\n  e usuário:                $EMAIL_USER_ID"
+  MSG+="\n\nPara alterar,utilize o comando \"nfas\""
+    MSG+="\n após terminar a instalação"
+  whiptail --title "$TITLE" --msgbox "$MSG" 15 70
+}
 #==========================================================================
 # Começo
 #==========================================================================
@@ -219,6 +241,13 @@ INFO_FILE=/script/info/email.var
 CMD=$1
 # Lê dados anteriores
 . $INFO_FILE
+
+#-----------------------------------------------------------------------
+# Comando para enviar Email de teste
+  if [ "$CMD" == "--test" ]; then
+    SendTestEmail
+    exit 0
+  fi
 
 #-----------------------------------------------------------------------
 # Loop de perguntas
@@ -281,23 +310,5 @@ if [ "$CMD" != "--first" ]; then
   /script/postfix.sh --email
   /script/monit.sh --email
 fi
-
-#-----------------------------------------------------------------------
-# Enviar Email de teste
-
-MSG="\nEnviado por Hostname: \"$(hostname -f)\""
-MSG+="\n para: $EMAIL_ADMIN"
-MSG+="\n\nServidor SMTP: $EMAIL_SMTP_URL"
-MSG+="\n usuário:      $EMAIL_USER_ID"
-MSG+="\n\nEnviado em: $(date +"%d/%m/%Y %H:%M:%S (%Z %z)")"
-echo -e $MSG | mail -s "Teste de Notificação" $EMAIL_ADMIN
-# mensagem na tela
-   MSG="\nTeste de Email de Notificação"
-  MSG+="\n  Email enviado para admin: $EMAIL_ADMIN"
-  MSG+="\n  usando servidor SMTP:     $EMAIL_SMTP_URL"
-  MSG+="\n  e usuário:                $EMAIL_USER_ID"
-MSG+="\n\nPara alterar,utilize o comando \"nfas\""
-  MSG+="\n após terminar a instalação"
-whiptail --title "$TITLE" --msgbox "$MSG" 15 70
 
 #-----------------------------------------------------------------------
