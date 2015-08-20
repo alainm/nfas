@@ -89,6 +89,17 @@ function Fail2banConf(){
 			EOF
     fi
   fi
+  # Opção para fazer o ban com DROP
+  # https://github.com/fail2ban/fail2ban/issues/507
+  ARQ="/etc/fail2ban/action.d/iptables-common.local"
+  if [ ! -e "$ARQ" ]; then
+    cp /etc/fail2ban/action.d/iptables-common.conf $ARQ
+    chmod 600 $ARQ
+  fi
+  # blocktype define a maneira como é feito o bloqueio
+  # não responde nada (demora para o cliente retornar): DROP
+  # envia "Connection refused": REJECT --reject-with icmp-port-unreachable
+  EditConfIgual $ARQ Init blocktype "REJECT --reject-with icmp-port-unreachable"
   # Reinicia
   service fail2ban restart
   # Configura Logrotate (ver no monit.sh)
