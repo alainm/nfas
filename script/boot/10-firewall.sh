@@ -49,7 +49,7 @@ SYNOPT="-m limit --limit 5/second --limit-burst 10"
 # Endereços inválidos em qualquer lugar pela RFC 3330
 BADIP="0.0.0.0/8 172.16.0.0/12 255.255.255.255/32"
 # Endereços Locais que não podem vir da internet, também pela RFC 3330
-BADIP+=" 127.0.0.0/8 169.254.0.0/16 240.0.0.0/4 224.0.0.0/4 240.0.0.0/4"
+BADIP+=" 127.0.0.0/8 169.254.0.0/16 240.0.0.0/4 224.0.0.0/4"
 # Endereços Locais que não podem vir da internet, pela RFC 2365
 BADIP+=" 239.255.255.0/24"
 # Endereços IP da lista negra (IPs e Redes)
@@ -63,7 +63,7 @@ fi
 #-------------------------------------------------------------------
 # Limpa as regras de firewall já existentes
 #-------------------------------------------------------------------
-$IPT -P OUTPUT DROP   # Set default policy to DROP
+$IPT -P OUTPUT ACCEPT # Set default policy to ACCEPT
 $IPT -P FORWARD DROP  # Set default policy to DROP
 if [ "$OPEN_FIREWALL" == "Y" ]; then
   $IPT -P INPUT ACCEPT# Set default policy to ACCEPT: Debug
@@ -211,8 +211,7 @@ $IPT -A INPUT -j IN_FIREWALL
 #$IPT -A OUTPUT -p tcp -m state --state NEW -j LOG --log-prefix "IPT NEW OUT-F @@@@: "
 #$IPT -A OUTPUT -p tcp -m state --state RELATED -j LOG --log-prefix "IPT REL OUT-F @@@@: "
 $IPT -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
-# Por enquanto deixa saídas abertas, se quiser fechar atrapalha muito e não aumenta a segurança
-$IPT -A OUTPUT -j ACCEPT
+# A policy default é ACCEPT, isso facilita inserir comandos no final
 
 #--------------------------------------------------------------------------
 # Fim
