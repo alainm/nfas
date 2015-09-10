@@ -174,6 +174,7 @@ fi
 if [ "$CMD" != "--first" ]; then
   /script/postfix.sh --hostname
   /script/monit.sh --hostname
+  /script/ssh.sh --hostname
 fi
 
 #-----------------------------------------------------------------------

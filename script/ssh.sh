@@ -4,8 +4,9 @@ set -x
 # Script para Configurar SSH e acesso de ROOT
 # As perguntas são interativas através de TUI
 # Uso: /script/ssh.sh <cmd>
-# <cmd>: --first     primeira instalação, não mosta menu
-#        <em branco> Mostra menu interativo
+# <cmd>: --first       primeira instalação, não mosta menu
+#        --hostname    foi alerado o hostname (usado pelo fail2ban)
+#        <em branco>   Mostra menu interativo
 #
 # * acrescentar certificado publickey (--first)
 # * eliminar certificado publickey
@@ -231,6 +232,13 @@ if [ "$CMD" == "--first" ]; then
   whiptail --title "$TITLE" --msgbox "$MSG" 13 70
   # Configura FAIL2BAN
   Fail2banConf
+
+elif [ "$CMD" == "--hostname" ]; then
+  #-----------------------------------------------------------------------
+  # Foi alterado Hostname, precisa corrigir o fail2ban
+  eval "sed -i '/[ssh-iptables]/,/\[.*/ { s/^\(.*sender=fail2ban@\).*\(]\)$/\1$(hostname)\2/ }' /etc/fail2ban/jail.local"
+  service fail2ban reload
+
 else
   #-----------------------------------------------------------------------
   ARQ=/etc/ssh/sshd_config
