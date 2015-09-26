@@ -195,6 +195,17 @@ function GetFail2banEmail(){
 }
 
 #-----------------------------------------------------------------------
+# Salva variáveis de configuração
+# Neste módulo as variáveis são usadas sempre apartir do arquivo de configuração Real
+# Estas variáveis são guardadas apenas para recurso futuro de exportação
+function SaveSshVars(){
+  echo "SSH_PORT=\"$(GetConfSpace $SSHD_ARQ Port)\""                         2>/dev/null >  $VAR_FILE
+  echo "SSH_PASS_AUTH=\"$(GetConfSpace $SSHD_ARQ PasswordAuthentication)\""  2>/dev/null >> $VAR_FILE
+  echo "SSH_R_LOGIN=\"$(GetConfSpace $SSHD_ARQ PermitRootLogin)\""           2>/dev/null >> $VAR_FILE
+  echo "SSH_F2B_EMAIL=\"$(GetFail2banEmail)\""                               2>/dev/null >> $VAR_FILE
+}
+
+#-----------------------------------------------------------------------
 # main()
 
 # somente root pode executar este script
@@ -202,23 +213,30 @@ if [ "$(id -u)" != "0" ]; then
   echo "Somente root pode executar este comando"
   exit 255
 fi
+
+# Arquivo de Informação gerado
+VAR_FILE=/script/info/ssh.var
+. $VAR_FILE
+
+# Arquivo de configuração so SSHD
+SSHD_ARQ=/etc/ssh/sshd_config
+
 TITLE="NFAS - Configuração de SSH e acesso de ROOT"
 if [ "$CMD" == "--first" ]; then
-  ARQ=/etc/ssh/sshd_config
-  if [ ! -e $ARQ.orig ]; then
-    cp  $ARQ $ARQ.orig
-    chmod 600 $ARQ
+  if [ ! -e $SSHD_ARQ.orig ]; then
+    cp  $SSHD_ARQ $SSHD_ARQ.orig
+    chmod 600 $SSHD_ARQ
   fi
   # Durante instalação não mostra menus
   # Novo certificado de root
   AskNewKey root /root
   # Seta timeout para conexões SSH para 10 minutos sem responder
   # http://www.cyberciti.biz/tips/open-ssh-server-connection-drops-out-after-few-or-n-minutes-of-inactivity.html
-  EditConfSpace $ARQ ClientAliveInterval 30
-  EditConfSpace $ARQ ClientAliveCountMax 20
-  # Altera Porta do SSH
-  AskSshPort $ARQ
-  EditConfSpace $ARQ Port $SSH_PORT
+  EditConfSpace $SSHD_ARQ ClientAliveInterval 30
+  EditConfSpace $SSHD_ARQ ClientAliveCountMax 20
+  # Altera Porta do SSH, var: SSH_PORT
+  AskSshPort $SSHD_ARQ
+  EditConfSpace $SSHD_ARQ Port $SSH_PORT
   service sshd restart
   # Configura para que a Umask
   SetUmask 007
@@ -232,6 +250,8 @@ if [ "$CMD" == "--first" ]; then
   whiptail --title "$TITLE" --msgbox "$MSG" 13 70
   # Configura FAIL2BAN
   Fail2banConf
+  # Salva variáveis de configuração
+  SaveSshVars
 
 elif [ "$CMD" == "--hostname" ]; then
   #-----------------------------------------------------------------------
@@ -241,23 +261,22 @@ elif [ "$CMD" == "--hostname" ]; then
 
 else
   #-----------------------------------------------------------------------
-  ARQ=/etc/ssh/sshd_config
   # Loop do Monu principal interativo
   while true; do
     # Mostra Menu
-    PASS_AUTH=$(GetConfSpace $ARQ PasswordAuthentication)
+    PASS_AUTH=$(GetConfSpace $SSHD_ARQ PasswordAuthentication)
     if [ "$PASS_AUTH" == "yes" ]; then
       MSG_SSH_SENHA="Bloquear acesso pelo SSH com senha,     ATUAL=permitido"
     else
       MSG_SSH_SENHA="Permitir acesso pelo SSH com senha,     ATUAL=bloquado"
     fi
-    R_LOGIN=$(GetConfSpace $ARQ PermitRootLogin)
+    R_LOGIN=$(GetConfSpace $SSHD_ARQ PermitRootLogin)
     if [ "$R_LOGIN" == "yes" ]; then
       MSG_ROOT_SSH="Bloquear acesso de root pelo SSH,       ATUAL=permitido"
     else
       MSG_ROOT_SSH="Permitir acesso de root pelo SSH,       ATUAL=bloquado"
     fi
-    SSH_PORT=$(GetConfSpace $ARQ Port)
+    SSH_PORT=$(GetConfSpace $SSHD_ARQ Port)
     [ -z $SSH_PORT ] && SSH_PORT=22
       MSG_PORT_SSH="Porta TCP para acesso ao SSH,           ATUAL=$SSH_PORT"
     if [ "$(GetFail2banEmail)" == "Y" ]; then
@@ -287,7 +306,7 @@ else
     # altera Acesso com senha
     if [ "$MENU_IT" == "3" ]; then
       [ "$PASS_AUTH" == "yes" ] && TMP="no" || TMP="yes"
-      EditConfSpace $ARQ PasswordAuthentication $TMP
+      EditConfSpace $SSHD_ARQ PasswordAuthentication $TMP
       # Recarrega o SSHD para usar novo paremetro
       service sshd restart
     fi
@@ -295,18 +314,18 @@ else
     # Altera acesso de root
     if [ "$MENU_IT" == "4" ]; then
       [ "$R_LOGIN" == "yes" ] && TMP="no" || TMP="yes"
-      EditConfSpace $ARQ PermitRootLogin $TMP
+      EditConfSpace $SSHD_ARQ PermitRootLogin $TMP
       # Recarrega o SSHD para usar novo paremetro
       service sshd restart
     fi
 
     # Altera Porta do SSH
     if [ "$MENU_IT" == "5" ]; then
-      AskSshPort $ARQ
+      AskSshPort $SSHD_ARQ
       PORT_A=$(GetConfSpace $1 Port)
       if [ "$PORT_A" != "$SSH_PORT" ]; then
         # Altera porta do SSH
-        EditConfSpace $ARQ Port $SSH_PORT
+        EditConfSpace $SSHD_ARQ Port $SSH_PORT
         service sshd restart
         # Altera Porta do Fail2ban
         eval "sed -i '/\[ssh-iptables\]/,/\[.*/ { s/^\(.*port=\).*\(,.*\)$/\1$SSH_PORT\2/ }' /etc/fail2ban/jail.local"
@@ -322,6 +341,8 @@ else
       fi
       service fail2ban reload
     fi
+    # Salva variáveis de configuração
+    SaveSshVars
     # read -p "Enter para continuar..." TMP
   done # loop menu principal
 fi # --first
