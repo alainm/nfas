@@ -37,6 +37,8 @@ PKT+=" openssl openssl-devel pam pam-devel gcc make"
 PKT+=" mailx cyrus-sasl-plain postfix-perl-scripts"
 # Pacote para fail2ban
 PKT+=" fail2ban jwhois"
+# Pacote para relógio
+PKT+=" ntp"
 yum -y install $PKT
 
 # Altera o /etc/rc.d/rc.local para chamar o /script/autostart.sh

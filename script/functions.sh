@@ -42,6 +42,43 @@ function GetNetwokState(){
 }
 
 #-----------------------------------------------------------------------
+# Função para editar Arquivo de configuração, parametro separado por "="
+# Formato dos parametros: "param=valor", separador é "="
+# Estilo Bash, sem <space> antes/depois do "="
+# uso: EditConfColon <Arquivo> <param> <valor>
+# usado por: clock
+function EditConfEqual(){
+  local ARQ=$1
+  local PARAM=$2
+  local VAL=$3
+  if grep -E "^[[:blank:]]*$PARAM[[:blank:]]*=" $ARQ; then
+    # linha já existe, precisa apagar antes de criar de novo
+    sed -i /^[[:blank:]]*$PARAM[[:blank:]]*=/d $ARQ
+  fi
+  # linha com parametro não existe, acrescenta linha
+  echo "$PARAM=$VAL" >> $ARQ
+}
+
+#-----------------------------------------------------------------------
+# Função para editar Arquivo de configuração, parametro separado por "="
+# Formato dos parametros: "param=\"valor\"", separador é "="
+# Versão String: valor entre aspas
+# Estilo Bash, sem <space> antes/depois do "="
+# uso: EditConfColon <Arquivo> <param> <valor>
+# usado por: clock
+function EditConfEqualStr(){
+  local ARQ=$1
+  local PARAM=$2
+  local VAL=$3
+  if grep -E "^[[:blank:]]*$PARAM[[:blank:]]*=" $ARQ; then
+    # linha já existe, precisa apagar antes de criar de novo
+    sed -i /^[[:blank:]]*$PARAM[[:blank:]]*=/d $ARQ
+  fi
+  # linha com parametro não existe, acrescenta linha
+  echo "$PARAM=\"$VAL\"" >> $ARQ
+}
+
+#-----------------------------------------------------------------------
 # Função para editar Arquivo de configuração, parametro separado por ":"
 # Formato dos parametros: "param:  valor" de separador é ":"
 # uso: EditConfColon <Arquivo> <param> <valor>
