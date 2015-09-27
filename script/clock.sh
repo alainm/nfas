@@ -5,6 +5,7 @@ set -x
 # As perguntas são interativas através de TUI
 # Uso: /script/ssh.sh <cmd>
 # <cmd>: --first       primeira instalação
+#        --daily       chamado por /etc/cron.daily
 #        <em branco>   só altera localtime
 
 # O RTC tem que ficar ajustado e sincronizado por NTP
@@ -29,6 +30,13 @@ CMD=$1
 . /script/info/distro.var
 VAR_FILE="/script/info/clock.var"
 [ -e $VAR_FILE ] && . $VAR_FILE
+
+# o NTP chama o serviço de "ntp" no Debian/Ubuntu e "ntpd" no CentOS
+if [ "$DISTRO_NAME" == "CentOS" ]; then
+  NTP=ntpd
+else
+  NTP=ntp
+fi
 
 #-----------------------------------------------------------------------
 # Configura o RTC (harware) para UTC
@@ -62,7 +70,7 @@ function NtpConfigure(){
     chmod 600 $NTP_ARQ
   fi
   # para o ntpd para reconfigurar
-  service ntpd stop
+  service $NTP stop
   # Cria arquivo drift para habilitar a funcionalidade
   touch /etc/ntp.drift
   # a hora já foi sincronizada ao configurar UTC
@@ -118,7 +126,7 @@ function NtpConfigure(){
   fi
   chmod 600 $NTP_ARQ
   # re-ativa o ntpd
-  service ntpd start
+  service $NTP start
   # Mensagem de aviso informativo
      MSG="\nSeu relógio RTC (harware) foi configurado para UTC"
   MSG+="\n\nO Relógio ficará sicronizado usando o NTP"
@@ -137,10 +145,33 @@ if [ "$CMD" == "--first" ]; then
   RtcSetUtc
   # Configura NTP
   NtpConfigure
+  # cria chamada diária
+  ARQ=/etc/cron.daily/nfas-clock.sh
+    cat <<- EOF > $ARQ
+		#!/bin/bash
+
+		##################################################
+		##  Reconfiguração do RTC
+		##################################################
+
+		# Chama diariamente para sincronizar o RTC (hardware clock)
+
+		/script/clock.sh --daily
+
+		EOF
+  chmod 700 $ARQ
+
+
+elif [ "$CMD" == "--daily" ]; then
+  #-----------------------------------------------------------------------
+  # Ajustes diários, sincroniza relógio de harware
+  # https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/System_Administrators_Guide/sect-Configuring_the_Date_and_Time-hwclock.html
+  hwclock --systohc
+
 else
   #-----------------------------------------------------------------------
   # Ajuste interativo, só localtime
-
+	echo ""
 fi
 
 #-----------------------------------------------------------------------
