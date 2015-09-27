@@ -15,13 +15,6 @@ set -x
 # * alterar senha de root
 # * (re)configurar portknock (--first)
 
-#-----------------------------------------------------------------------
-# Grava Variáveis de configuração
-function SaveVars(){
-  echo "SSH_=\"$SSH_\""                        2>/dev/null >  $VAR_FILE
-  echo "SSH_=\"$SSH_\""                        2>/dev/null >> $VAR_FILE
-}
-
 #=======================================================================
 # Processa a linha de comando
 CMD=$1
@@ -213,10 +206,6 @@ if [ "$(id -u)" != "0" ]; then
   echo "Somente root pode executar este comando"
   exit 255
 fi
-
-# Arquivo de Informação gerado
-VAR_FILE=/script/info/ssh.var
-. $VAR_FILE
 
 # Arquivo de configuração so SSHD
 SSHD_ARQ=/etc/ssh/sshd_config
