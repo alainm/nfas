@@ -261,7 +261,7 @@ elif [ "$CMD" == "--hostname" ]; then
 
 else
   #-----------------------------------------------------------------------
-  # Loop do Monu principal interativo
+  # Loop do Menu principal interativo
   while true; do
     # Mostra Menu
     PASS_AUTH=$(GetConfSpace $SSHD_ARQ PasswordAuthentication)
