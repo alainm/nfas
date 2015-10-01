@@ -45,8 +45,8 @@ function GetNetwokState(){
 # Função para editar Arquivo de configuração, parametro separado por "="
 # Formato dos parametros: "param=valor", separador é "="
 # Estilo Bash, sem <space> antes/depois do "="
-# uso: EditConfColon <Arquivo> <param> <valor>
-# usado por: clock
+# uso: EditConfEqual <Arquivo> <param> <valor>
+# usado por: clock, function
 function EditConfEqual(){
   local ARQ=$1
   local PARAM=$2
@@ -64,8 +64,8 @@ function EditConfEqual(){
 # Formato dos parametros: "param=\"valor\"", separador é "="
 # Versão String: valor entre aspas
 # Estilo Bash, sem <space> antes/depois do "="
-# uso: EditConfColon <Arquivo> <param> <valor>
-# usado por: clock
+# uso: EditConfEqualStr <Arquivo> <param> <valor>
+# usado por: clock, function
 function EditConfEqualStr(){
   local ARQ=$1
   local PARAM=$2
@@ -76,6 +76,17 @@ function EditConfEqualStr(){
   fi
   # linha com parametro não existe, acrescenta linha
   echo "$PARAM=\"$VAL\"" 2>/dev/null >> $ARQ
+}
+
+#-----------------------------------------------------------------------
+# Le parametro de Arquivo de configuração, parametro separado por "="
+# uso: GetConfEqual <Arquivo>
+# Elimina as Aspas, se honverem. TODO: só se forem no começo/fim
+function GetConfEqual(){
+  local ARQ=$1
+  local PARAM=$2
+  local TMP=$(eval "sed -n 's|^[[:blank:]]*$PARAM=\(.*\)|\1|p' $ARQ | tr -d \"\\\"\"")
+  echo "$TMP"
 }
 
 #-----------------------------------------------------------------------
@@ -145,7 +156,7 @@ function EditConfSpace(){
 # uso: EditConfIgual <Arquivo> <section> <param> <valor>
 # usa método de substituir, CUIDADO com caracteres que podeminterferir com o SED
 # usado para: fail2ban
-function EditConfIgual(){
+function EditConfIgualSect(){
   local ARQ=$1
   local SECTION=$2
   local PARAM=$3
@@ -181,12 +192,23 @@ function SetLocaltime(){
     if [ "$DISTRO_NAME" == "CentOS" ]; then
       EditConfEqualStr /etc/sysconfig/clock ZONE "$NEW_TZ"
     else
-      echo "$NEW_TZ" > /etc/TimeZone
+      echo "$NEW_TZ" > /etc/timezone
     fi
     return 0
   else
     return 1
   fi
+}
+
+#-----------------------------------------------------------------------
+# Fornece o String do Time-Zone
+function GetLocaltime(){
+    if [ "$DISTRO_NAME" == "CentOS" ]; then
+      echo "$(GetConfEqual /etc/sysconfig/clock ZONE)"
+    else
+      cat /etc/timezone
+    fi
+
 }
 
 #-----------------------------------------------------------------------

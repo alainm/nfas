@@ -18,11 +18,12 @@ fi
 # Loop do Menu principal interativo
 while true; do
   MENU_IT=$(whiptail --title "NFAS - Node.js Full Application Server" \
-      --menu "Selecione um comando de reconfiguração:" --fb 18 70 4   \
+      --menu "Selecione um comando de reconfiguração:" --fb 18 70 5   \
       "1" "Testar Email de notificação"  \
       "2" "Alterar Email de notificação" \
       "3" "Alterar Hostname"             \
       "4" "Configuração de SSH e acesso de ROOT" \
+      "5" "Alterar Time Zone do sistema (localtime)" \
       3>&1 1>&2 2>&3)
   status=$?
   if [ $status != 0 ]; then
@@ -49,8 +50,12 @@ while true; do
   if [ "$MENU_IT" == "4" ]; then
     /script/ssh.sh
   fi
+
+  # Comando local: alterar Time Zone
+  if [ "$MENU_IT" == "5" ]; then
+    /script/clock.sh --localtime
+  fi
 done # loop menu principal
 
 exit 0
-
 

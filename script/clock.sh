@@ -47,7 +47,7 @@ function RtcSetUtc(){
   # no CentOS alterou /etc/adjtime (testar no Ubuntu)
   if [ "$DISTRO_NAME" == "CentOS" ]; then
     # Indica configuração UTC no /etc/sysconfig/clock
-    EditConfEqual /etc/sysconfig/clock UTC yes
+    EditConfEqualSafe /etc/sysconfig/clock UTC yes
   else
     # No Ubunttu é /etc/default/rcS
     # http://askubuntu.com/questions/115963/how-do-i-migrate-to-utc-hardware-clock
@@ -144,9 +144,12 @@ function NtpConfigure(){
 function SysLocaltime(){
   local NEW_TZ
   # Pergunta se quer ajustar UTC ou localtime
+     MSG="\nConfiguração do localtime ou Fuso Horário"
+  MSG+="\n\nO Fuso Horario atual é: $(GetLocaltime)"
+  MSG+="\n\nEste define a hora local do sistema e controla o agendamento do CRON"
+  MSG+="\nPara maior comodidade, pode ser usado o local do administrador"
   MENU_IT=$(whiptail --title "$TITLE" \
-      --menu "\nConfiguração do localtime ou Fuso Horário\n\nEste define a hora local do sistema e controla o agendamento do CRON\nPara maior comodidade, pode ser usado o local do administrador"\
-      --fb 18 74 2   \
+      --menu "$MSG" --fb 19 74 2   \
       "1" "Selecionar o Fuso Horário" \
       "2" "Usar a hora do sistema em UTC"  \
       3>&1 1>&2 2>&3)
