@@ -25,7 +25,7 @@ yum -y update
 # Repositório auxiliar: https://fedoraproject.org/wiki/EPEL
 yum -y install epel-release
 # Instalar pacotes extra
-PKT="man nano mcedit telnet bind-utils bc"
+PKT="man nano mcedit telnet bind-utils bc mlocate"
 PKT+=" openssl openssl-devel pam pam-devel gcc make"
 # pacote para ajudar a identificar o VirtualBox
 PKT+=" dmidecode"
@@ -40,6 +40,9 @@ PKT+=" fail2ban jwhois"
 # Pacote para relógio
 PKT+=" ntp"
 yum -y install $PKT
+
+# Cria banco de dados para locate, varre todos os nomes de arquivos
+updatedb
 
 # Altera o /etc/rc.d/rc.local para chamar o /script/autostart.sh
 cat /etc/rc.d/rc.local | grep "autostart.sh"

@@ -5,6 +5,7 @@ set -x
 # As perguntas são interativas através de TUI
 # Uso: /script/ssh.sh <cmd>
 # <cmd>: --first       primeira instalação
+#        --localtime   seleciona localtime
 #        --daily       chamado por /etc/cron.daily
 #        <em branco>   só altera localtime
 
@@ -41,8 +42,8 @@ fi
 #-----------------------------------------------------------------------
 # Configura o RTC (harware) para UTC
 function RtcSetUtc(){
-  # Altera RTC (hardware) para UTC
-  hwclock systohc --utc
+  # Altera RTC (hardware) para UTC (atualiza o /etc/adjtime)
+  hwclock --systohc --utc
   # no CentOS alterou /etc/adjtime (testar no Ubuntu)
   if [ "$DISTRO_NAME" == "CentOS" ]; then
     # Indica configuração UTC no /etc/sysconfig/clock
@@ -137,6 +138,48 @@ function NtpConfigure(){
 }
 
 #-----------------------------------------------------------------------
+# Configura o localtime - Fuso horário
+# http://unix.stackexchange.com/questions/189632/read-the-last-line-of-tzselect
+
+function SysLocaltime(){
+  local NEW_TZ
+  # Pergunta se quer ajustar UTC ou localtime
+  MENU_IT=$(whiptail --title "$TITLE" \
+      --menu "\nConfiguração do localtime ou Fuso Horário\n\nEste define a hora local do sistema e controla o agendamento do CRON\nPara maior comodidade, pode ser usado o local do administrador"\
+      --fb 18 74 2   \
+      "1" "Selecionar o Fuso Horário" \
+      "2" "Usar a hora do sistema em UTC"  \
+      3>&1 1>&2 2>&3)
+  if [ $? != 0 ]; then
+      echo "Seleção cancelada."
+      return 0
+  fi
+
+  # Pergunta Time Zone
+  if [ "$MENU_IT" == "1" ];then
+    while true; do
+      clear
+      NEW_TZ=$(tzselect)
+      SetLocaltime $NEW_TZ
+      # Pode retornar erro se o arquivo não existe
+      if [ $? == 0 ]; then
+        return 0
+      else
+        # Arquivo retornado por tzselect não existe
+           MSG="\nOcorreu um erro inesperado para esta Zona."
+        MSG+="\n\nSe o erro persistir, selecione outra..."
+        whiptail --title "$TITLE" --msgbox "$MSG" 9 70
+      fi
+    done # loop se erro
+  fi
+
+    # Sistema em UTC
+  if [ "$MENU_IT" == "2" ];then
+    SetLocaltime UTC
+  fi
+}
+
+#-----------------------------------------------------------------------
 # main()
 
 TITLE="NFAS - Configuração do Relógio"
@@ -160,7 +203,8 @@ if [ "$CMD" == "--first" ]; then
 
 		EOF
   chmod 700 $ARQ
-
+  # Seleciona o localtime
+  SysLocaltime
 
 elif [ "$CMD" == "--daily" ]; then
   #-----------------------------------------------------------------------
@@ -168,10 +212,16 @@ elif [ "$CMD" == "--daily" ]; then
   # https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/System_Administrators_Guide/sect-Configuring_the_Date_and_Time-hwclock.html
   hwclock --systohc
 
+elif [ "$CMD" == "--localtime" ]; then
+  #-----------------------------------------------------------------------
+  # Pode ser chamado externamente (pelo nfas.sh) para alterar Fuso Horário
+  SysLocaltime
+
 else
   #-----------------------------------------------------------------------
   # Ajuste interativo, só localtime
-	echo ""
+  SysLocaltime
+  echo ""
 fi
 
 #-----------------------------------------------------------------------

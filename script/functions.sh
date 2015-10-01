@@ -56,7 +56,7 @@ function EditConfEqual(){
     sed -i /^[[:blank:]]*$PARAM[[:blank:]]*=/d $ARQ
   fi
   # linha com parametro não existe, acrescenta linha
-  echo "$PARAM=$VAL" >> $ARQ
+  echo "$PARAM=$VAL" 2>/dev/null >> $ARQ
 }
 
 #-----------------------------------------------------------------------
@@ -75,7 +75,7 @@ function EditConfEqualStr(){
     sed -i /^[[:blank:]]*$PARAM[[:blank:]]*=/d $ARQ
   fi
   # linha com parametro não existe, acrescenta linha
-  echo "$PARAM=\"$VAL\"" >> $ARQ
+  echo "$PARAM=\"$VAL\"" 2>/dev/null >> $ARQ
 }
 
 #-----------------------------------------------------------------------
@@ -167,6 +167,25 @@ function EditConfIgual(){
        # Arquivo do fail2ban é separado por [paragrafos], não pode acrescentar no final
        false
      fi
+  fi
+}
+
+#-----------------------------------------------------------------------
+# Altera localtime do sistema
+# uso: SetLocaltime <zone>
+function SetLocaltime(){
+  local NEW_TZ=$1
+  if [ -e "/usr/share/zoneinfo/$NEW_TZ" ]; then
+    ln -sf /usr/share/zoneinfo/$NEW_TZ /etc/localtime
+    # altera arquivo de configuração, conforme a Distro
+    if [ "$DISTRO_NAME" == "CentOS" ]; then
+      EditConfEqualStr /etc/sysconfig/clock ZONE "$NEW_TZ"
+    else
+      echo "$NEW_TZ" > /etc/TimeZone
+    fi
+    return 0
+  else
+    return 1
   fi
 }
 
