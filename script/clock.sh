@@ -1,5 +1,7 @@
 #!/bin/bash
-set -x
+
+# Atenção, se deixat p "set -x" ativo, gera email diário do cron
+# set -x
 
 # Script para Configurar o RTC e localtime
 # As perguntas são interativas através de TUI
