@@ -298,6 +298,18 @@ if [ "$CMD" == "--first" ]; then
 fi
 
 #-----------------------------------------------------------------------
+# Avido final
+if [ "$CMD" == "--first" ]; then
+     MSG="\nFoi configurado o MONIT para monitoramento de recursos"
+  MSG+="\n\nSerão enviadas Emails de aviso relativos a:"
+    MSG+="\n  Uso de memória, CPU e Core mais usado"
+    MSG+="\n  Uso de Disco e de inodes"
+    MSG+="\n  Status do link e excesso de tráfego"
+  MSG+="\n\nLogs em /var/log/monit.log com logrotate"
+  whiptail --title "NFAS - Monitoramento de recursos" --msgbox "$MSG" 16 70
+fi
+
+#-----------------------------------------------------------------------
 # Restarta o serviço MONIT
 # Não pode usar "restart", precisa saber se está rodando para poder dar "stop"
 if ( status monit | grep start ); then
