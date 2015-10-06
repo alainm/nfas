@@ -1,13 +1,11 @@
 #!/bin/bash
-# set -x
+set -x
 
 echo "Executando 10-firewall.sh" >> /script/info/autostart.log
 
 # Carrega arquivo de configuração
-[-e /script/info/virtualbox.var ] && . /script/info/virtualbox.var
+[ -e /script/info/virtualbox.var ] && . /script/info/virtualbox.var
 
-# Primeiro firewall, mais simples e não muito seguro
-# fica ativo durante 30 segundos antes de ativar o firewall verdadeiro
 # ==================================================
 # ===== ATENÇÃO: nunca altere este arquivo !!! =====
 # ==================================================
@@ -66,9 +64,9 @@ fi
 $IPT -P OUTPUT ACCEPT # Set default policy to ACCEPT
 $IPT -P FORWARD DROP  # Set default policy to DROP
 if [ "$OPEN_FIREWALL" == "Y" ]; then
-  $IPT -P INPUT ACCEPT# Set default policy to ACCEPT: Debug
+  $IPT -P INPUT ACCEPT # Set default policy to ACCEPT: Debug
 else
-  $IPT -P INPUT DROP  # Set default policy to DROP: Seguro
+  $IPT -P INPUT DROP   # Set default policy to DROP: Seguro
 fi
 $IPT -F               # Flush all chains
 $IPT -X               # Delete all chains
@@ -132,6 +130,7 @@ $IPT -A INPUT -p tcp --tcp-flags ALL NONE -j BADFLAGS          # NULL packets
 $IPT -A INPUT -p tcp --tcp-flags ALL FIN,PSH,URG -j BADFLAGS
 $IPT -A INPUT -p tcp --tcp-flags ALL SYN,FIN,PSH,URG -j BADFLAGS
 $IPT -A INPUT -p tcp --tcp-flags ALL SYN,RST,ACK,FIN,URG -j BADFLAGS
+$IPT -A INPUT -p tcp --syn -j SYN_FLOOD
 # Drop sync perdido: NEW só pode ser com SYN+ACK
 $IPT -A INPUT -p tcp ! --syn -m state --state NEW -j BADFLAGS
 # Drop Pacotes fragmentados
@@ -183,11 +182,13 @@ $IPT -A OUTPUT -p icmp --icmp-type parameter-problem -j ACCEPT
 #==========================================================================
 # Estes comandos estão em Chains separadas para poderem ser alterados
 $IPT -N IN_FIREWALL
-# SSH fica aberto, por enquanto
-$IPT -A IN_FIREWALL -p tcp --dport 22 -m state --state NEW -j ACCEPT
 # Portas HTTP e HTTPS
 $IPT -A IN_FIREWALL -p tcp --dport 80  -m state --state NEW -j ACCEPT
 $IPT -A IN_FIREWALL -p tcp --dport 443 -m state --state NEW -j ACCEPT
+#==========================================================================
+# Chain especial para editar dinamicamente a porta do SSH
+$IPT -N IN_SSH
+# será configurado pelo /script/ssh.sh
 #==========================================================================
 
 #--------------------------------------------------------------------------
@@ -197,6 +198,8 @@ $IPT -A IN_FIREWALL -p tcp --dport 443 -m state --state NEW -j ACCEPT
 #$IPT -A INPUT -p tcp -m state --state NEW -j LOG --log-prefix "IPT NEW IN-F @@@@: "
 #$IPT -A INPUT -p tcp -m state --state RELATED -j LOG --log-prefix "IPT REL IN-F @@@@: "
 $IPT -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+# Cria uma chain para alterar dinamicamente a porta do SSH
+$IPT -A INPUT -j IN_SSH
 # Serviços abertos são controlados por uma outra chain
 $IPT -A INPUT -j IN_FIREWALL
 # Log de todo o resto
@@ -212,6 +215,12 @@ $IPT -A INPUT -j IN_FIREWALL
 #$IPT -A OUTPUT -p tcp -m state --state RELATED -j LOG --log-prefix "IPT REL OUT-F @@@@: "
 $IPT -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 # A policy default é ACCEPT, isso facilita inserir comandos no final
+
+#--------------------------------------------------------------------------
+# Reinstala as regras do Fail2ban e porta do SSH
+#--------------------------------------------------------------------------
+# Centralizadas no script onde são criadas/administradas
+/script/ssh.sh --firewall
 
 #--------------------------------------------------------------------------
 # Fim

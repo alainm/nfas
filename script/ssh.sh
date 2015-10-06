@@ -5,6 +5,7 @@ set -x
 # As perguntas são interativas através de TUI
 # Uso: /script/ssh.sh <cmd>
 # <cmd>: --first       primeira instalação, não mosta menu
+#        --firewall    chamado durante o boot pelo 10-firewall.sh
 #        --hostname    foi alerado o hostname (usado pelo fail2ban)
 #        <em branco>   Mostra menu interativo
 #
@@ -241,6 +242,13 @@ if [ "$CMD" == "--first" ]; then
   Fail2banConf
   # Salva variáveis de configuração
   SaveSshVars
+
+elif [ "$CMD" == "--firewall" ]; then
+  #-----------------------------------------------------------------------
+  # Durante o boot precisa reconfigurar a porta do SSH
+  /sbin/iptables -A IN_SSH -p tcp --dport $SSH_PORT -m state --state NEW -j ACCEPT
+  # Recria a chain no começo do INPUT
+  service fail2ban reload
 
 elif [ "$CMD" == "--hostname" ]; then
   #-----------------------------------------------------------------------
