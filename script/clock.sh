@@ -64,6 +64,7 @@ function RtcSetUtc(){
 # Brasil: http://ntp.br/guia-linux-avancado.php
 # USA: http://www.pool.ntp.org/zone/us
 # Europa: http://www.pool.ntp.org/pt/zone/europe
+# CentOS 7: talvez use chrony em vez do ntpd (?)
 
 function NtpConfigure(){
   local NTP_ARQ=/etc/ntp.conf
@@ -128,6 +129,8 @@ function NtpConfigure(){
 		EOF
   fi
   chmod 600 $NTP_ARQ
+  # Configura o NTP para próximo boot
+  chkconfig ntpd on
   # re-ativa o ntpd
   service $NTP start
   # Mensagem de aviso informativo
