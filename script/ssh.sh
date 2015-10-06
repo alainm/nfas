@@ -321,6 +321,9 @@ else
       AskSshPort $SSHD_ARQ
       PORT_A=$(GetConfSpace $1 Port)
       if [ "$PORT_A" != "$SSH_PORT" ]; then
+        # Reconfigura Firewall, chain especial
+        /sbin/iptables -F IN_SSH
+        /sbin/iptables -A IN_SSH -p tcp --dport $SSH_PORT -m state --state NEW -j ACCEPT
         # Altera porta do SSH
         EditConfSpace $SSHD_ARQ Port $SSH_PORT
         service sshd restart
@@ -330,6 +333,7 @@ else
       fi
     fi
 
+    # Envio de Emails do Fail2ban
     if [ "$MENU_IT" == "6" ]; then
       if [ "$(GetFail2banEmail)" == "Y" ]; then
         eval "sed -i '/[ssh-iptables]/,/\[.*/ { s/^\([[:blank:]]*sendmail.*\)/#\1/ }' /etc/fail2ban/jail.local"
