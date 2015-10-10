@@ -148,7 +148,7 @@ function Fail2banConf(){
   # envia "Connection refused": REJECT --reject-with icmp-port-unreachable
   EditConfIgualSect $ARQ Init blocktype "REJECT --reject-with icmp-port-unreachable"
   # Reinicia
-  service fail2ban restart
+  service fail2ban reload
   # Configura Logrotate (ver no monit.sh)
   ARQ="/etc/logrotate.d/fail2ban"
   if [ ! -e $ARQ ]; then
@@ -224,6 +224,8 @@ if [ "$CMD" == "--first" ]; then
   # http://www.cyberciti.biz/tips/open-ssh-server-connection-drops-out-after-few-or-n-minutes-of-inactivity.html
   EditConfSpace $SSHD_ARQ ClientAliveInterval 30
   EditConfSpace $SSHD_ARQ ClientAliveCountMax 20
+  # Garante uso exclusivo do protocolo v2
+  EditConfSpace $SSHD_ARQ Protocol 2
   # Altera Porta do SSH, var: SSH_PORT
   AskSshPort $SSHD_ARQ
   EditConfSpace $SSHD_ARQ Port $SSH_PORT
@@ -235,6 +237,7 @@ if [ "$CMD" == "--first" ]; then
     MSG+="\n  Acesso via SSH por senha"
     MSG+="\n  Acesso via SSH como usuário ROOT"
     MSG+="\n  Acesso ao SSH pela porta TCP=$SSH_PORT"
+    MSG+="\n  Uso exclusivo do protocolo v2"
   MSG+="\n\nutilize o comando \"nfas\" após terminar a instalação"
     MSG+="\ne somente após testar os acessos!!!"
   whiptail --title "$TITLE" --msgbox "$MSG" 13 70
