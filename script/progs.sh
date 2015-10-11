@@ -21,7 +21,7 @@ VAR_FILE="/script/info/progs.var"
 
 
 #-----------------------------------------------------------------------
-# Função para configurar o GIT
+# Rotina para configurar o GIT
 # faz apenas a configuração global de email e usuário=hostname
 function SetupGit(){
   local MSG
@@ -40,12 +40,46 @@ function SetupGit(){
 }
 
 #-----------------------------------------------------------------------
+# Rotina para instalar Node.js (latest)
+function NodeInstall(){
+  local NEW_NODE=$(curl --silent --location http://nodejs.org/dist/latest/ | sed -n 's/.*\(node.*linux-x64\.tar\.gz\).*/\1/p')
+  echo "Instalar Node: $NEW_NODE"
+  # baixa no diretório root
+  wget -r http://nodejs.org/dist/latest/$NEW_NODE -O /root/$NEW_NODE
+  pushd /usr/local
+  tar --strip-components 1 -xzf /root/$NEW_NODE
+  popd
+  # Mostra versões para debug
+  node -v
+  npm -v
+}
+
+#-----------------------------------------------------------------------
 # main()
 
 TITLE="NFAS - Configuração e Instalaçao de Utilitários"
 if [ "$CMD" == "--first" ]; then
-  # Configura o git
+  #--- Configura o git
   SetupGit
+  #--- Seleciona os programas a instalar
+  # Última versão do Node.js:
+  LAST_NODE="$(curl --silent --location http://nodejs.org/dist/latest/ | sed -n 's/.*\(node.*linux-x64\.tar\.gz\).*/\1/p' | sed -n 's/node-\(v[1-9\.]*\).*/\1/p')"
+  NODE_MSG=" versão $LAST_NODE (latest)"
+  OPTIONS=$(whiptail --title "$TITLE"                                   \
+    --checklist "\nSelecione os programas que deseja Instalar:" 22 75 1 \
+    'Node.js' "$NODE_MSG" YES   \
+    3>&1 1>&2 2>&3)
+  if [ $? == 0 ]; then
+    #--- Instala programas selecionados
+    for OPT in $(echo $OPTIONS | tr -d '\"'); do
+      echo "Instalação: $OPT"
+      case $OPT in
+        "Node.js")
+          NodeInstall
+        ;;
+      esac
+    done
+  fi
 
 #-----------------------------------------------------------------------
 elif [ "$CMD" == "--hostname" ]; then
