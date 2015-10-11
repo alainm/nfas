@@ -26,7 +26,7 @@ yum -y update
 yum -y install epel-release
 # Instalar pacotes extra
 PKT="man nano mcedit telnet bind-utils bc mlocate"
-PKT+=" openssl openssl-devel pam pam-devel gcc make"
+PKT+=" openssl openssl-devel pam pam-devel gcc gcc-c++ make git"
 # pacote para ajudar a identificar o VirtualBox
 PKT+=" dmidecode"
 # instala programas pequenos e úteis: htop nmon
