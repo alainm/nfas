@@ -19,7 +19,6 @@ CMD=$1
 VAR_FILE="/script/info/progs.var"
 [ -e $VAR_FILE ] && . $VAR_FILE
 
-
 #-----------------------------------------------------------------------
 # Rotina para configurar o GIT
 # faz apenas a configuração global de email e usuário=hostname
