@@ -123,7 +123,7 @@ function NewApp(){
     # OBS: useradd não cria o home directory no Ubuntu 14.04, só com "-m"
     useradd -m $NEW_NAME
     # OBS: --stdin só funciona no CentOS (não no Ubuntu 14.04)
-    echo "$NEW_PWD" | passwd --stdin $NEW_NAME
+    # echo "$NEW_PWD" | passwd --stdin $NEW_NAME
   fi
   /script/console.sh --newuser $NEW_NAME
   cp -a /script/auto.sh /home/$NEW_NAME
