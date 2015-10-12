@@ -220,6 +220,8 @@ function AskNewKey(){
   local OLD_N
   local USR=$1
   local DIR=$2
+  # Determina grupo do USR
+  local GRP=$(id -G -n  $USR | cut -d ' ' -f 1)
   # loop só sai com return
   while true; do
        MSG="\nForneca o Certificado Chave Pública (PublicKey) para acesso como \"$USR\""
@@ -238,7 +240,7 @@ function AskNewKey(){
       return 1
     else
       # Cria diretório caso não exista
-      mkdir -p $DIR/.ssh/; chmod 700 $DIR/.ssh/
+      mkdir -p $DIR/.ssh/; chown $USR:$GRP $DIR/.ssh/; chmod 700 $DIR/.ssh/
       if [ "$DISTRO_NAME" == "CentOS" ]; then
         ## >>CentOS<<: http://wiki.centos.org/HowTos/Network/SecuringSSH
         # Ensure the correct SELinux contexts are set:
@@ -258,6 +260,7 @@ function AskNewKey(){
       # Acrescenta a nova publickey
       echo -e "\n$TMP" >> $DIR/.ssh/authorized_keys
       # Tem que ter permissões bloqueadas
+      chown $USR:$GRP $DIR/.ssh/authorized_keys;
       chmod 600 $DIR/.ssh/authorized_keys
       # Elimina linhas em branco
       sed -i '/^$/d' $DIR/.ssh/authorized_keys
@@ -281,7 +284,7 @@ function AskNewKey(){
 }
 
 #-----------------------------------------------------------------------
-# Importa PublicKeys existentes
+# Remove PublicKeys existentes
 # Uso: DeleteKeys usuario diretorio
 function DeleteKeys(){
   local I, LIN, MSG, AMSG, EXE, KEYS

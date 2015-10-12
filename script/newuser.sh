@@ -4,6 +4,8 @@ set -x
 # Script para criar um novo usuário
 # Uso: /script/newuser.sh
 # <cmd>: --first       primeira instalação
+#        --newapp      cria nova aplicação
+#        --chgapp      altera acesso da aplicação
 #        <em branco>   modo interativo
 
 #=======================================================================
@@ -12,6 +14,8 @@ CMD=$1
 # Funções auxiliares
 . /script/functions.sh
 . /script/info/distro.var
+# variaval global
+APP_NAME=""
 
 #-----------------------------------------------------------------------
 # Função para perguntar e verificar nome da aplicação
@@ -120,25 +124,85 @@ function AskPasswd(){
 #-----------------------------------------------------------------------
 # Rotina para Criar uma Aplicação (usuário Linux)
 function NewApp(){
-  local NEW_NAME, NEW_PWD
-  AskName NEW_NAME "Nome da Aplicação"
+  local NEW_PWD
+  # APP_NAME é global
+  AskName APP_NAME "Nome da Aplicação"
   [ $? != 0 ] && return 1
   AskPasswd NEW_PWD "Senha do usuário Aplicação"
   [ $? != 0 ] && return 1
-  echo "Nova Aplicação: $NEW_NAME, passwd: $NEW_PWD"
+  echo "Nova Aplicação: $APP_NAME, passwd: $NEW_PWD"
   # criando usuários
   if [ "$DISTRO_NAME" == "CentOS" ]; then
-    useradd $NEW_NAME
-    echo "$NEW_PWD" | passwd --stdin $NEW_NAME
+    useradd $APP_NAME
+    echo "$NEW_PWD" | passwd --stdin $APP_NAME
   else
     # OBS: useradd não cria o home directory no Ubuntu 14.04, só com "-m"
-    useradd -m $NEW_NAME
+    useradd -m $APP_NAME
     # OBS: --stdin só funciona no CentOS (não no Ubuntu 14.04)
-    # echo "$NEW_PWD" | passwd --stdin $NEW_NAME
+    # echo "$NEW_PWD" | passwd --stdin $APP_NAME
   fi
-  /script/console.sh --newuser $NEW_NAME
-  cp -a /script/auto.sh /home/$NEW_NAME
-  chown $NEW_NAME:$NEW_NAME /home/$NEW_NAME/auto.sh
+  /script/console.sh --newuser $APP_NAME
+  cp -a /script/auto.sh /home/$APP_NAME
+  chown $APP_NAME:$APP_NAME /home/$APP_NAME/auto.sh
+  return 0
+}
+
+#-----------------------------------------------------------------------
+# Tela de seleção das Aplicações
+# usa como referências os diretórios em /home
+function SelectApp(){
+  local AUSR
+  local USR
+  local NUSR
+  local KEYS
+  APP_NAME="" # limpa variável de saída
+  # cria Array de usuários existentes
+  I=0
+  for USR in $(ls /home) ; do
+    id $USR
+    if [ $? -eq 0 ]; then
+      echo "Usuário encontrado: $USR"
+      AUSR[$I]=$USR
+      let I=I+1
+    fi
+  done
+  NUSR=${#AUSR[*]} # Número de linhas
+  if [ "$NUSR" == "0" ]; then
+    whiptail --title "$TITLE" --msgbox "Não foi encontrado nenhum Aplicação/Usuário.\n\nOK para continuar" 10 70
+    return 1
+  fi
+  # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
+  EXE="whiptail --title \"$TITLE\""
+  EXE+=" --menu \"\nSelecione a Aplicação/Usuário que deseja configurar\" 20 60 $NUSR"
+  for ((I=0; I<NUSR; I++)); do
+    # Cria as mensagens para seleção da aplicação
+    EXE+=" \"${AUSR[$I]}\" \"\""
+  done
+  KEYS=$(eval "$EXE 3>&1 1>&2 2>&3")
+  [ $? != 0 ] && return 2 # Cancelado
+  APP_NAME=$KEYS
+  echo "Aplicação selecionada: $APP_NAME"
+}
+
+#-----------------------------------------------------------------------
+# Submenu para configurar acessos à Aplicação
+# Entrada variável global: APP_NAME
+function ConfigApp(){
+  local MENU_IT
+  while true; do
+    MENU_IT=$(whiptail --title "$TITLE" \
+      --menu "\nSelecione um comando de reconfiguração:" --fb 18 70 6   \
+      "1" "Acrescentar Chave Pública (PublicKey)"  \
+      "2" "Remover Chave Pública (PublicKey)"      \
+      "3" "Criar Repositório GIT"\
+      3>&1 1>&2 2>&3)
+    [ $? != 0 ] && return 0 # Cancelado
+    # Funções que ficam em Procedures
+    # Novo certificado de acesso
+    [ "$MENU_IT" == "1" ] && AskNewKey $APP_NAME /home/$APP_NAME
+    # Remove certificado de root
+    [ "$MENU_IT" == "2" ] && DeleteKeys $APP_NAME /home/$APP_NAME
+  done
 }
 
 #-----------------------------------------------------------------------
@@ -147,16 +211,31 @@ function NewApp(){
 TITLE="NFAS - Configuração de Aplicações e Usuários"
 if [ "$CMD" == "--first" ]; then
   NewApp
+  if [ $? != 0 ]; then
+    ConfigApp $APP_NAME
+  fi
 
+#-----------------------------------------------------------------------
+elif [ "$CMD" == "--newapp" ]; then
+  # Chamado pelo menu do nfas.sh
+  NewApp
+
+#-----------------------------------------------------------------------
+elif [ "$CMD" == "--chgapp" ]; then
+  # Chamado pelo menu do nfas.sh
+  SelectApp
+  if [ $? == 0 ]; then
+    ConfigApp $APP_NAME
+  fi
 
 #-----------------------------------------------------------------------
 else
   # Loop do Menu principal interativo
   while true; do
     MENU_IT=$(whiptail --title "NFAS - Node.js Full Application Server" \
-        --menu "Selecione um comando de reconfiguração:" --fb 18 70 5   \
+        --menu "Selecione um comando de reconfiguração:" --fb 18 70 2   \
         "1" "Criar nova Aplicação (usuário Linux)"  \
-        "2" "Configurar a Aplicação" \
+        "2" "Configurar acesso à Aplicação" \
         3>&1 1>&2 2>&3)
     if [ $? != 0 ]; then
         echo "Seleção cancelada."
