@@ -211,7 +211,7 @@ function ConfigApp(){
 TITLE="NFAS - Configuração de Aplicações e Usuários"
 if [ "$CMD" == "--first" ]; then
   NewApp
-  if [ $? != 0 ]; then
+  if [ $? == 0 ]; then
     ConfigApp $APP_NAME
   fi
 
