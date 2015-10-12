@@ -47,9 +47,20 @@ function AskName(){
     # Testa combinações inválidas
     if [ "$NAME_TMP" != "" ] &&        # testa se vazio, pode ter sido recusado pela ER...
        [ "$NAME_TMP" == "$TMP" ]; then # Não foi alterado pela ER
-      # Nome aceito, Continua
-      eval "$VAR=$TMP"
-      return 0
+      # Nome válido, testa se já existe user
+      id $NAME_TMP
+      if [ $? -eq 0 ]; then
+        ERR_ST="Já existe um usuário Linux com este nome, por favor tente novamente"
+      else
+        # testa també se já existe grupo com esse nome
+        egrep -i "^$NAME_TMP" /etc/group
+        if [ $? -eq 0 ]; then
+          ERR_ST="Já existe um grupo Linux com este nome, por favor tente novamente"
+        else
+          eval "$VAR=$TMP"
+          return 0
+        fi
+      fi
     else
       ERR_ST="Nome inválido, por favor tente novamente"
     fi
