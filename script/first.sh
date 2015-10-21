@@ -74,6 +74,8 @@ ln -s /script/nfas.sh /usr/bin/nfas
 /script/email.sh --test
 # Monitoramente da máquina, tem que vir depois do hostname.sh e email.sh
 /script/monit.sh --first
+# Setup do relógio
+/script/clock.sh --first
 # Configurações de SSH e acesso de ROOT
 /script/ssh.sh --first
 # Cria novo usuário
