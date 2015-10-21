@@ -3,7 +3,7 @@
 
 # Script de inicialização geral, chamadao pelo boot.sh
 
-echo "Parabéns, você está rotando o /script/first.sh"
+echo "Parabéns, você está rodando o /script/first.sh"
 
 # Diretório de informações coletadas
 mkdir -p /script/info
@@ -18,6 +18,10 @@ if [ "$DISTRO_OK" != "Y" ]; then
   MSG="$MSG""As vesrões compatíveis são: \"$DISTRO_LIST\"\n\n   Abortando instalação..."
   whiptail --title "Instalação NFAS" --msgbox "\"$MSG"\" 11 60
   exit 1
+else
+  MSG="A distribuição encontrada é \"$DISTRO_NAME\" versão \"$DISTRO_VERSION\"\n\n"
+  MSG+="Acione OK para começar a instalação"
+  whiptail --title "Instalação NFAS" --msgbox "\"$MSG"\" 11 60
 fi
 
 # atualiza todo o sistema
@@ -62,8 +66,6 @@ ln -s /script/nfas.sh /usr/bin/nfas
 /script/console.sh --first
 # Pergunta dados de Email
 /script/email.sh --first
-# Cria novo usuário
-/script/newuser.sh
 # Configurações e alterações na Rede
 /script/network.sh --first
 # Configura Postfix, usa dados de Email e Hostname
@@ -74,6 +76,8 @@ ln -s /script/nfas.sh /usr/bin/nfas
 /script/monit.sh --first
 # Configurações de SSH e acesso de ROOT
 /script/ssh.sh --first
+# Cria novo usuário
+/script/newuser.sh
 
 # ===== FIM do first.sh =====
 # => executa o /script/autostart.sh para iniciar
