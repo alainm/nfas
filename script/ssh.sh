@@ -233,14 +233,14 @@ if [ "$CMD" == "--first" ]; then
   # Configura para que a Umask
   SetUmask 007
   # mensagem para bloqueio de acesso mas tarde
-     MSG="\nPara fazer o bloqueio:"
+     MSG="\nConfiguração inicial de acesso:"
     MSG+="\n  Acesso via SSH por senha"
     MSG+="\n  Acesso via SSH como usuário ROOT"
     MSG+="\n  Acesso ao SSH pela porta TCP=$SSH_PORT"
     MSG+="\n  Uso exclusivo do protocolo v2"
-  MSG+="\n\nutilize o comando \"nfas\" após terminar a instalação"
-    MSG+="\ne somente após testar os acessos!!!"
-  whiptail --title "$TITLE" --msgbox "$MSG" 13 70
+  MSG+="\n\nUtilize o comando \"nfas\" após terminar a instalação"
+    MSG+="\ne somente APÓS testar os acessos!!!"
+  whiptail --title "$TITLE" --msgbox "$MSG" 16 70
   # Configura FAIL2BAN
   Fail2banConf
   # Salva variáveis de configuração
