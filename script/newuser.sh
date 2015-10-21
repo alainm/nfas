@@ -191,10 +191,11 @@ function ConfigApp(){
   local MENU_IT
   while true; do
     MENU_IT=$(whiptail --title "$TITLE" \
-      --menu "\nSelecione um comando de reconfiguração:" --fb 18 70 6   \
+      --menu "\nSelecione um comando de reconfiguração:" --fb 18 70 4   \
       "1" "Acrescentar Chave Pública (PublicKey)"  \
       "2" "Remover Chave Pública (PublicKey)"      \
-      "3" "Criar Repositório GIT"\
+      "3" "Selecionar TimeZone, atual=..TODO.."    \
+      "4" "Criar Repositório GIT"                  \
       3>&1 1>&2 2>&3)
     [ $? != 0 ] && return 0 # Cancelado
     # Funções que ficam em Procedures
@@ -202,6 +203,10 @@ function ConfigApp(){
     [ "$MENU_IT" == "1" ] && AskNewKey $APP_NAME /home/$APP_NAME
     # Remove certificado de root
     [ "$MENU_IT" == "2" ] && DeleteKeys $APP_NAME /home/$APP_NAME
+    #
+    [ "$MENU_IT" == "3" ] && read -p "Não implementado, pressione Enter para continuar..." A
+    #
+    [ "$MENU_IT" == "4" ] && read -p "Não implementado, pressione Enter para continuar..." A
   done
 }
 
