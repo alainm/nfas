@@ -154,10 +154,11 @@ function SysLocaltime(){
   MSG+="\n\nO Fuso Horario atual é: $(GetLocaltime)"
   MSG+="\n\nEste define a hora local do sistema e controla o agendamento do CRON"
   MSG+="\nPara maior comodidade, pode ser usado o local do administrador"
-  MENU_IT=$(whiptail --title "$TITLE" \
-      --menu "$MSG" --fb 19 74 2   \
-      "1" "Selecionar o Fuso Horário" \
+  MENU_IT=$(whiptail --title "$TITLE"      \
+      --menu "$MSG" --fb 19 74 3           \
+      "1" "Selecionar o Fuso Horário"      \
       "2" "Usar a hora do sistema em UTC"  \
+      "3" "Manter a configuração Atual"    \
       3>&1 1>&2 2>&3)
   if [ $? != 0 ]; then
       echo "Seleção cancelada."
@@ -182,9 +183,13 @@ function SysLocaltime(){
     done # loop se erro
   fi
 
-    # Sistema em UTC
+  # Sistema em UTC
   if [ "$MENU_IT" == "2" ];then
     SetLocaltime UTC
+  fi
+  # Mantém atual
+  if [ "$MENU_IT" == "3" ];then
+    return 0
   fi
 }
 
