@@ -56,6 +56,7 @@ function RtcSetUtc(){
     echo "Ubuntu não implementado"
   fi
   # Acerta a nova hora usando servido ntp
+  service $NTP stop
   ntpdate 0.us.pool.ntp.org
 }
 

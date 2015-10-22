@@ -47,7 +47,7 @@ function GetNetwokState(){
 # Estilo Bash, sem <space> antes/depois do "="
 # uso: EditConfEqual <Arquivo> <param> <valor>
 # usado por: clock, function
-function EditConfEqual(){
+function EditConfEqualSafe(){
   local ARQ=$1
   local PARAM=$2
   local VAL=$3
