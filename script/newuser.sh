@@ -194,8 +194,8 @@ function ConfigApp(){
       --menu "\nSelecione um comando de reconfiguração:" --fb 18 70 4   \
       "1" "Acrescentar Chave Pública (PublicKey)"  \
       "2" "Remover Chave Pública (PublicKey)"      \
-      "3" "Selecionar TimeZone, atual=..TODO.."    \
-      "4" "Criar Repositório GIT"                  \
+      "3" "Selecionar TimeZone, atual=??(TODO)"    \
+      "4" "Criar Repositório GIT (TODO)"           \
       3>&1 1>&2 2>&3)
     [ $? != 0 ] && return 0 # Cancelado
     # Funções que ficam em Procedures
