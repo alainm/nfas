@@ -138,7 +138,7 @@ function NtpConfigure(){
      MSG="\nSeu relógio RTC (harware) foi configurado para UTC"
   MSG+="\n\nO Relógio ficará sicronizado usando o NTP"
     MSG+="\n  Foran configurados servidores que serão selecionados"
-    MSG+="\n  automáticamente em 4 continentes:"
+    MSG+="\n  automáticamente para intalações na núvem em 4 continentes:"
     MSG+="\n  Brasil, USA, Europa e Asia"
   whiptail --title "$TITLE" --msgbox "$MSG" 13 70
 }
