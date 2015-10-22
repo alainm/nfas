@@ -79,7 +79,7 @@ ln -s /script/nfas.sh /usr/bin/nfas
 # Configurações de SSH e acesso de ROOT
 /script/ssh.sh --first
 # Instala programas
-/script/progrs.sh --first
+/script/progs.sh --first
 # Cria novo usuário
 /script/newuser.sh
 
