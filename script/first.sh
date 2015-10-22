@@ -89,16 +89,16 @@ ln -s /script/nfas.sh /usr/bin/nfas
 
 # Lê flag pedindo reboot, pode ter sido setado se precisar
 . /script/info/needboot.var
-if [ "$NEED_BOOT" == "N" ]; then
-  # Não precisa rebootar, mas recomenda
-  MSG="\nA instalação está terminada..."
-  MSG+="\n\nRecomenda-se rebootar para maior segurança!"
-  whiptail --title "Instalação NFAS" --msgbox "$MSG" 11 50
-else
+# if [ "$NEED_BOOT" == "N" ]; then
+#   # Não precisa rebootar, mas recomenda
+#   MSG="\nA instalação está terminada..."
+#   MSG+="\n\nRecomenda-se rebootar para maior segurança!"
+#   whiptail --title "Instalação NFAS" --msgbox "$MSG" 11 50
+# else
   # Precisa rebootar para que as configurações econteçam
   MSG="\nA instalação está terminada..."
   MSG+="\n\nSerá necessário reiniciar para ativar e\nverificar todas as configurações"
   whiptail --title "Instalação NFAS" --msgbox "$MSG" 11 50
   # reboot forçado
   reboot
-fi
+# fi
