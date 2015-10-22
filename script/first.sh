@@ -78,6 +78,8 @@ ln -s /script/nfas.sh /usr/bin/nfas
 /script/clock.sh --first
 # Configurações de SSH e acesso de ROOT
 /script/ssh.sh --first
+# Instala programas
+/script/progrs.sh --first
 # Cria novo usuário
 /script/newuser.sh
 

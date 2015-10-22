@@ -6,6 +6,7 @@ set -x
 # <cmd>: --first       primeira instalação
 #        --hostname    Alterado hostname, usado por git
 #        --email       Alterado Email, usado por git
+#        <sem nada>    Modo interativo, usado pelo nfas
 
 #=======================================================================
 # Processa a linha de comando
@@ -54,13 +55,8 @@ function NodeInstall(){
 }
 
 #-----------------------------------------------------------------------
-# main()
-
-TITLE="NFAS - Configuração e Instalaçao de Utilitários"
-if [ "$CMD" == "--first" ]; then
-  #--- Configura o git
-  SetupGit
-  #--- Seleciona os programas a instalar
+# Instala programas pré configurados
+function ProgsInstall(){
   # Última versão do Node.js:
   LAST_NODE="$(curl --silent --location http://nodejs.org/dist/latest/ | sed -n 's/.*\(node.*linux-x64\.tar\.gz\).*/\1/p' | sed -n 's/node-\(v[1-9\.]*\).*/\1/p')"
   NODE_MSG=" versão $LAST_NODE (latest)"
@@ -79,6 +75,16 @@ if [ "$CMD" == "--first" ]; then
       esac
     done
   fi
+}
+#-----------------------------------------------------------------------
+# main()
+
+TITLE="NFAS - Configuração e Instalaçao de Utilitários"
+if [ "$CMD" == "--first" ]; then
+  #--- Configura o git
+  SetupGit
+  #--- Seleciona os programas a instalar
+  ProgsInstall
 
 #-----------------------------------------------------------------------
 elif [ "$CMD" == "--hostname" ]; then
@@ -90,4 +96,8 @@ elif [ "$CMD" == "--email" ]; then
   # Re-configura mesmo email que sistema
   git config --global user.email "$EMAIL_ADMIN"
 
+#-----------------------------------------------------------------------
+else
+  #--- Seleciona os programas a instalar
+  ProgsInstall
 fi

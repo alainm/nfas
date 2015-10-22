@@ -18,14 +18,15 @@ fi
 # Loop do Menu principal interativo
 while true; do
   MENU_IT=$(whiptail --title "NFAS - Node.js Full Application Server" \
-      --menu "Selecione um comando de reconfiguração:" --fb 18 70 7   \
+      --menu "Selecione um comando de reconfiguração:" --fb 20 70 8   \
       "1" "Testar Email de notificação"  \
       "2" "Alterar Email de notificação" \
       "3" "Alterar Hostname"             \
       "4" "Alterar Time Zone do sistema (localtime)" \
       "5" "Configuração de SSH e acesso de ROOT"     \
-      "6" "Criar nova Aplicação (usuário Linux)"     \
-      "7" "Configurar acesso a uma Aplicação"        \
+      "6" "Instalar programas pré-configurados"      \
+      "7" "Criar nova Aplicação (usuário Linux)"     \
+      "8" "Configurar acesso a uma Aplicação"        \
       3>&1 1>&2 2>&3)
   status=$?
   if [ $status != 0 ]; then
@@ -58,13 +59,18 @@ while true; do
     /script/ssh.sh
   fi
 
-  # Comando local: criar nova Aplicação
+  # Comando local: instalar programas
   if [ "$MENU_IT" == "6" ]; then
+    /script/progs.sh
+  fi
+
+  # Comando local: criar nova Aplicação
+  if [ "$MENU_IT" == "7" ]; then
     /script/newuser.sh --newapp
   fi
 
   # Comando local: Configurar acesso a uma Aplicação
-  if [ "$MENU_IT" == "7" ]; then
+  if [ "$MENU_IT" == "8" ]; then
     /script/newuser.sh --chgapp
   fi
 
