@@ -35,7 +35,7 @@ function SetupGit(){
      MSG=" Instalados utilitários de compilação: GCC, Make, etc.."
   MSG+="\n\nGIT foi instalado e configurado:"
     MSG+="\n  Nome e Email globais iguais ao do administrador,"
-    MSG+="\n  Criação de arquivos com máscara 0660 para acesso em grupo."
+    MSG+="\n  Criação de arquivos com máscara 660 para acesso em grupo."
   whiptail --title "$TITLE" --msgbox "$MSG" 13 70
 }
 
