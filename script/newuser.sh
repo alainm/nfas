@@ -40,7 +40,7 @@ function AskName(){
     # Acrescenta mensagem de erro
     MSG+="\n$ERR_ST"
     # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
-    TMP=$(whiptail --title "$"TITLE --inputbox "$MSG" 13 74 $TMP 3>&1 1>&2 2>&3)
+    TMP=$(whiptail --title "$TITLE" --inputbox "$MSG" 13 74 $TMP 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
       echo "Operação cancelada!"
       return 1
@@ -74,7 +74,7 @@ function AskName(){
 
 #-----------------------------------------------------------------------
 # Função para perguntar e verificar uma Senha
-# uso: AskName <VAR> "Tipo de senha"
+# uso: AskPasswd <VAR> "Tipo de senha"
 # VAR é a variável que vai receber o Email
 # NOME é para mostrar na tela
 # Retorna: 0=ok, 1=Aborta se <Cancelar>
