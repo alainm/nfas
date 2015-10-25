@@ -33,14 +33,16 @@ function AskName(){
   eval TMP=\$$VAR
   # loop só sai com return
   while true; do
-    MSG="\nQual o $SHOW (deve ser válido com usuário Linux)?\n"
-    if [ -n "$TMP" ]; then
-      MSG+="\n<Enter> para manter o anterior sendo mostrado\n"
-    fi
+    MSG="\n\nQual o $SHOW (deve ser válido com usuário Linux)?\n"
+    # if [ -n "$TMP" ]; then
+    #   MSG+="\n<Enter> para manter o anterior sendo mostrado"
+    # else
+    #   MSG+="\n"
+    # fi
     # Acrescenta mensagem de erro
-    MSG+="\n$ERR_ST"
+    MSG+="\n\n$ERR_ST\n"
     # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
-    TMP=$(whiptail --title "$TITLE" --inputbox "$MSG" 13 74 $TMP 3>&1 1>&2 2>&3)
+    TMP=$(whiptail --title "$TITLE" --inputbox "$MSG" 14 74 $TMP 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
       echo "Operação cancelada!"
       return 1
@@ -89,18 +91,19 @@ function AskPasswd(){
   eval TMP=\$$VAR
   # loop só sai com return
   while true; do
-    MSG="\nQual a senha de $SHOW (use senha segura...)?"
-    MSG+="\n Caracteres válidos: a-zA-Z0-9!@#$%^&*()_-+={};:,./?"
+    MSG="\nQual a senha de $SHOW"
+    MSG+="\n\nCaracteres válidos: a-zA-Z0-9!@#$%^&*()_-+={};:,./?"
+    MSG+="\n  (use senha segura...)?"
     # Acrescenta mensagem de erro
     MSG+="\n\n$ERR_ST"
     # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
-    PWD1=$(whiptail --passwordbox --title "$"TITLE  "$MSG" 13 70 3>&1 1>&2 2>&3)
+    PWD1=$(whiptail --passwordbox --title "$TITLE"  "$MSG" 14 74 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
       echo "Operação cancelada!"
       return 1
     fi
-    MSG="\nDigite novamente a senha para verificação\n\n\n"
-    PWD2=$(whiptail --passwordbox --title "$"TITLE  "$MSG" 13 70 3>&1 1>&2 2>&3)
+    MSG="\n\nDigite novamente a senha para verificação\n\n\n\n"
+    PWD2=$(whiptail --passwordbox --title "$TITLE"  "$MSG" 14 74 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
       echo "Operação cancelada!"
       return 1
@@ -128,7 +131,7 @@ function NewApp(){
   # APP_NAME é global
   AskName APP_NAME "Nome da Aplicação"
   [ $? != 0 ] && return 1
-  AskPasswd NEW_PWD "Senha do usuário Aplicação"
+  AskPasswd NEW_PWD "Senha do usuário \"$APP_NAME\""
   [ $? != 0 ] && return 1
   echo "Nova Aplicação: $APP_NAME, passwd: $NEW_PWD"
   # criando usuários
@@ -189,15 +192,28 @@ function SelectApp(){
 # Entrada variável global: APP_NAME
 function ConfigApp(){
   local MENU_IT
+  local MSG9
   while true; do
-    MENU_IT=$(whiptail --title "$TITLE" \
-      --menu "\nSelecione um comando de reconfiguração:" --fb 18 70 4   \
-      "1" "Acrescentar Chave Pública (PublicKey)"  \
-      "2" "Remover Chave Pública (PublicKey)"      \
-      "3" "Selecionar TimeZone, atual=??(TODO)"    \
-      "4" "Criar Repositório GIT (TODO)"           \
-      3>&1 1>&2 2>&3)
+    if [ "$CMD" == "--first" ]; then
+      MENU_IT=$(whiptail --title "$TITLE" \
+        --menu "\nSelecione um comando de reconfiguração:" --fb 18 70 5   \
+        "1" "Acrescentar Chave Pública (PublicKey)"  \
+        "2" "Remover Chave Pública (PublicKey)"      \
+        "3" "Selecionar TimeZone, atual=??(TODO)"    \
+        "4" "Criar Repositório GIT (TODO)"           \
+        "9" "Continuar..."                           \
+        3>&1 1>&2 2>&3)
+    else
+      MENU_IT=$(whiptail --title "$TITLE" \
+        --menu "\nSelecione um comando de reconfiguração:" --fb 18 70 4   \
+        "1" "Acrescentar Chave Pública (PublicKey)"  \
+        "2" "Remover Chave Pública (PublicKey)"      \
+        "3" "Selecionar TimeZone, atual=??(TODO)"    \
+        "4" "Criar Repositório GIT (TODO)"           \
+        3>&1 1>&2 2>&3)
+    fi
     [ $? != 0 ] && return 0 # Cancelado
+    [ "$MENU_IT" == "9" ] && return 0 # Fim
     # Funções que ficam em Procedures
     # Novo certificado de acesso
     [ "$MENU_IT" == "1" ] && AskNewKey $APP_NAME /home/$APP_NAME
