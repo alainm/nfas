@@ -55,7 +55,7 @@ BLAK_LIST=""
 # Se não for Virtualbox, bloqueia IPs locais
 . /script/info/virtualbox.var
 if [ "$IS_VIRTUALBOX" != "Y" ]; then
-  BADIP+=" 10.0.0.0/8 192.168.0.0/16"
+  BADIP+=" 10.0.0.0/8 192.168.0.0/16 172.16.0.0/16 169.254.0.0/16"
 fi
 
 #-------------------------------------------------------------------
