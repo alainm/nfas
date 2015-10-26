@@ -196,7 +196,7 @@ function ConfigApp(){
   while true; do
     if [ "$CMD" == "--first" ]; then
       MENU_IT=$(whiptail --title "$TITLE" \
-        --menu "\nSelecione um comando de reconfiguração:" --fb 18 70 5   \
+        --menu "\nComando de reconfiguração, aplicação: \"$APP_NAME\"" --fb 18 70 5   \
         "1" "Acrescentar Chave Pública (PublicKey)"  \
         "2" "Remover Chave Pública (PublicKey)"      \
         "3" "Selecionar TimeZone, atual=??(TODO)"    \
@@ -205,7 +205,7 @@ function ConfigApp(){
         3>&1 1>&2 2>&3)
     else
       MENU_IT=$(whiptail --title "$TITLE" \
-        --menu "\nSelecione um comando de reconfiguração:" --fb 18 70 4   \
+        --menu "\nComando de reconfiguração, aplicação: \"$APP_NAME\"" --fb 18 70 4   \
         "1" "Acrescentar Chave Pública (PublicKey)"  \
         "2" "Remover Chave Pública (PublicKey)"      \
         "3" "Selecionar TimeZone, atual=??(TODO)"    \
