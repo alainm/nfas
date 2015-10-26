@@ -41,12 +41,8 @@ function SetUmask(){
     echo -e "\n#{NFAS-pamd.sshd} Setting UMASK for all ssh based connections (ssh, sftp, scp)" >> /etc/pam.d/sshd
     echo "session    optional     pam_umask.so umask=$UMASK" >> /etc/pam.d/sshd
   fi
-  # Altera UMASK para o bash, senão sobrepõe o configurado no PAM.D
-  # Alterando o .bashrc funciona  tanto no CentOS quanto no Ubuntu
-  if ! grep "{NFAS-bash.umask}" /root/.bashrc; then
-    echo -e "\n#{NFAS-bash.umask} Configura máscara para criação de arquivos sem acesso a \"outros\"" >> /root/.bashrc
-    echo "umask $UMASK" >> /root/.bashrc
-  fi
+  # OBS: também tem que alterar o UMASK para o Bash, senão sobrepõe o configurado no PAM.D
+  #      a alteração do .bashrc, isso é feita pelo console.sh
 }
 
 #-----------------------------------------------------------------------

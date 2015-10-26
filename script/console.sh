@@ -18,7 +18,8 @@ USR=$2
 # usa as variaveis armazenadas
 . /script/info/distro.var
 
-#--- Função para alterar arquivos
+#-----------------------------------------------------------------------
+#--- Função para alterar arquivos: Cores
 # uso: AddColorToFile <aqruivo>
 # Existe um problema com o whiptail de deixar os caracteres invisíveis...
 #   infelizmente não me lembro como reproduz o problema.
@@ -40,10 +41,25 @@ function AddColorToFile(){
 }
 
 #-----------------------------------------------------------------------
+#--- Função para alterar arquivos: umask
+# uso: AddUmaskToFile <aqruivo>
+# Altera UMASK para o bash, senão sobrepõe o configurado no PAM.D
+# Alterando o .bashrc funciona  tanto no CentOS quanto no Ubuntu
+function AddUmaskToFile(){
+  local ARQ=$1
+  # Evita repetir a alteração
+  if ! grep "{NFAS-bash.umask}" $ARQ; then
+    echo -e "\n#{NFAS-bash.umask} Configura máscara para criação de arquivos sem acesso a \"outros\"" >> $ARQ
+    echo "umask 007" >> $ARQ
+  fi
+}
+
+#-----------------------------------------------------------------------
 # Altera Prompt para colorido:
 #   Vermelho/Amarelo para root, Verde/Azul para usuário
 if [ "$CMD" == "--first" ]; then
   # Altera o .bashrc do root, apenas uma vez
+  AddUmaskToFile /root/.bashrc
   AddColorToFile /root/.bashrc
 fi
 
@@ -52,6 +68,7 @@ fi
 #   Vermelho/Amarelo para root, Verde/Azul para usuário
 if [ "$CMD" == "--newuser" ] && [ -n "$USR" ]; then
   # Altera o .bashrc de cada usuário, sempre quando ele é criado
+  AddUmaskToFile /home/$USR/.bashrc
   AddColorToFile /home/$USR/.bashrc
 fi
 
