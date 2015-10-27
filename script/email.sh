@@ -222,13 +222,24 @@ function SendTestEmail(){
   MSG+="\n\nEnviado em: $(date +"%d/%m/%Y %H:%M:%S (%Z %z)")"
   echo -e $MSG | mail -s "Teste de Notificação" $EMAIL_ADMIN
   # mensagem na tela
-     MSG="\nTeste de Email de Notificação"
-    MSG+="\n  Email enviado para admin: $EMAIL_ADMIN"
-    MSG+="\n  usando servidor SMTP:     $EMAIL_SMTP_URL"
-    MSG+="\n  e usuário:                $EMAIL_USER_ID"
-  MSG+="\n\nPara alterar,utilize o comando \"nfas\""
-    MSG+="\n após terminar a instalação"
-  whiptail --title "$TITLE" --msgbox "$MSG" 15 70
+      MSG="\nTeste de Email de Notificação"
+     MSG+="\n  Email enviado para admin: $EMAIL_ADMIN"
+     MSG+="\n  usando servidor SMTP:     $EMAIL_SMTP_URL"
+     MSG+="\n  e usuário:                $EMAIL_USER_ID"
+  if [ "$CMD" == "--test" ]; then
+   MSG+="\n\n"
+    whiptail --title "$TITLE" --msgbox "$MSG" 15 70
+    return 0
+  else
+   MSG+="\n\nVerifique se envio foi bem sucedido."
+     MSG+="\nEm caso de Erro, acione \"Não\" para voltar à configuração"
+    whiptail --title "Configuração NFAS - Email" --yesno "$MSG" 15 78
+    if [ $? -eq 0 ]; then
+      echo "Erro no teste de envio"
+      return 1
+    fi
+    return 0
+  fi
 }
 #==========================================================================
 # Começo
@@ -278,12 +289,16 @@ while [ $FIM != "Y" ]; do
     MSG+="\n Esta operação pode ser refeita posteriormente!"
     whiptail --title "Configuração NFAS" --yesno --defaultno "$MSG" 10 78
     if [ $? -eq 0 ]; then
-      echo "Cadastramento de Email cancelado. Por favor configure os Email mais tarde!"
+      echo "Cadastramento de Email cancelado. Por favor configure o Email mais tarde!"
       exit 1
     fi
   else
-    # Terminou sem erros
-    FIM="Y"
+    # Envia Teste e pede confirmação
+    SendTestEmail
+    if [ $? -ne 0 ]; then
+      # Terminou sem erros
+      FIM="Y"
+    fi
   fi
 done # loop principal
 
