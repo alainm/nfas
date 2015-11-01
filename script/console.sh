@@ -9,7 +9,7 @@ set -x
 #   http://www.thegeekstuff.com/2008/09/bash-shell-ps1-10-examples-to-make-your-linux-prompt-like-angelina-jolie/
 
 # Chamada:
-#   /script/network.sh --first          # Para primeira configuração
+#   /script/network.sh --first          # Para primeira configuração, atualuza só root
 #   /script/network.sh --newuser user   # logo dempois de criar um usuário
 
 # Guarda parametros
@@ -21,6 +21,7 @@ USR=$2
 #-----------------------------------------------------------------------
 #--- Função para alterar arquivos: Cores
 # uso: AddColorToFile <aqruivo>
+# root usa LR+VM, usuário usa VD+VD
 # Existe um problema com o whiptail de deixar os caracteres invisíveis...
 #   infelizmente não me lembro como reproduz o problema.
 #   Esta é a segunda correção, testaura a cor antes de voltar ao default, parece ok
@@ -31,13 +32,23 @@ function AddColorToFile(){
     echo ''                                                                >> $ARQ
     echo '#{NFAS-prompt} configurado automáticamente: Prompt colorido'     >> $ARQ
     echo '# contribuição Marcos Carlos, quem desenvolveu estas cores...'   >> $ARQ
-    echo 'if [ $(id -u) -eq 0 ]; then'                                     >> $ARQ
-    echo '  export PS1="\[$(tput bold)\]\[$(tput setaf 3)\][\[$(tput setaf 1)\]\u\[$(tput setaf 3)\]@\[$(tput setaf 1)\]\h \[$(tput setaf 3)\]\W\[$(tput setaf 3)\]]\[$(tput setaf 1)\]\\$ \[$(tput setaf 7)\]\[$(tput sgr0)\]"' >> $ARQ
-    echo 'else'                                                            >> $ARQ
-    echo '  export PS1="\[$(tput bold)\]\[$(tput setaf 2)\][\[$(tput setaf 4)\]\u\[$(tput setaf 2)\]@\[$(tput setaf 4)\]\h \[$(tput setaf 2)\]\W\[$(tput setaf 2)\]]\[$(tput setaf 2)\]\\$ \[$(tput setaf 7)\]\[$(tput sgr0)\]"' >> $ARQ
+    # Quando o GIT usa o SSH usa terminal tipo "dumb" que não aceita comando tput
+    #   e as mensagens de erro atrapalham o protocolo do git
+    echo 'if [ "$TERM" != "dumb" ]; then'                                  >> $ARQ
+    if [ "$ARQ" == "/root/.bashrc" ]; then
+      echo '  export PS1="\[$(tput bold)\]\[$(tput setaf 3)\][\[$(tput setaf 1)\]\u\[$(tput setaf 3)\]@\[$(tput setaf 1)\]\h \[$(tput setaf 3)\]\W\[$(tput setaf 3)\]]\[$(tput setaf 1)\]\\$ \[$(tput setaf 7)\]\[$(tput sgr0)\]"' >> $ARQ
+    else
+      echo '  export PS1="\[$(tput bold)\]\[$(tput setaf 2)\][\[$(tput setaf 4)\]\u\[$(tput setaf 2)\]@\[$(tput setaf 4)\]\h \[$(tput setaf 2)\]\W\[$(tput setaf 2)\]]\[$(tput setaf 2)\]\\$ \[$(tput setaf 7)\]\[$(tput sgr0)\]"' >> $ARQ
+    fi
     echo 'fi'                                                              >> $ARQ
     echo ''                                                                >> $ARQ
   fi
+  # Esta versão também resolve eliminando as mensagens de erro (para usuário)
+  # PS1="\[$(tput bold 2>/dev/null)\]\[$(tput setaf 2 2>/dev/null)\][\[$(tput setaf 4 2>/dev/null)\]"
+  # PS1+="\u\[$(tput setaf 2 2>/dev/null)\]@\[$(tput setaf 4 2>/dev/null)\]\h \[$(tput setaf 2 2>/dev/null)\]"
+  # PS1+="\W\[$(tput setaf 2 2>/dev/null)\]]\[$(tput setaf 2 2>/dev/null)\]\\$ \[$(tput sgr0 2>/dev/null)\]"
+  # PS1+="\[$(tput setaf 7 2>/dev/null)\]"
+  # export PS1
 }
 
 #-----------------------------------------------------------------------
