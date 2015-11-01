@@ -14,8 +14,9 @@ CMD=$1
 # Funções auxiliares
 . /script/functions.sh
 . /script/info/distro.var
-# variaval global
+# variaveis globais
 APP_NAME=""
+REPO_DIR=""
 
 #-----------------------------------------------------------------------
 # Função para perguntar e verificar nome da aplicação
@@ -188,28 +189,79 @@ function SelectApp(){
 }
 
 #-----------------------------------------------------------------------
+# Pergunta nome do diretório GIT
+# uso: AskRepoName <VAR> Aplicação
+# VAR é a variável que vai receber a resposta
+function AskRepoName(){
+  local VAR=$1
+  local USR=$2
+  local TMP
+  local DIR_TMP
+  while true; do
+     MSG="\nQual o diretório para o repositório a ser criado?"
+    MSG+="\n  (será criado o diretório dentro de /home/$USR)\n"
+    MSG+="\n\n$ERR_ST\n"
+    # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
+    TMP=$(whiptail --title "$TITLE" --inputbox "$MSG" 14 74 $TMP 3>&1 1>&2 2>&3)
+    if [ $? -ne 0 ]; then
+      echo "Operação cancelada!"
+      return 1
+    fi
+    # Testa se só tem caracteres válidos
+    # http://serverfault.com/questions/73084/what-characters-should-i-use-or-not-use-in-usernames-on-linux
+    REPO_TMP=$(echo $TMP | grep -E '^[a-zA-Z0-9_][a-zA-Z0-9_-.]*[a-zA-Z0-9_]$')
+    # Testa combinações inválidas
+    if [ "$REPO_TMP" != "" ] &&        # testa se vazio, pode ter sido recusado pela ER...
+       [ "$REPO_TMP" == "$TMP" ]; then # Não foi alterado pela ER
+      # Nome válido, verifica se já existe este nome
+      ls /home/$USR/$REPO_TMP  &> /dev/null
+      if [ $? -eq 0 ]; then
+        # Nome para diretório está em uso
+        ERR_ST="Este nome já está em uso, por favor tente novamente"
+      else
+        eval "$VAR=/home/$USR/$REPO_TMP"
+        return 0
+      fi
+    else
+      ERR_ST="Nome inválido, por favor tente novamente"
+    fi
+  done
+}
+
+#-----------------------------------------------------------------------
+# Cria Repositório GIT
+# uso: CreateRepo <user>
+function CreateRepo(){
+  local USR=$1
+  # Le o nome do diretório e já testa se existe
+  AskRepoName REPO_DIR $USR
+  # Cria diretório do repositório, tem que criar como usuário
+  su $USR -l -c "mkdir -p $REPO_DIR"
+
+}
+#-----------------------------------------------------------------------
 # Submenu para configurar acessos à Aplicação
 # Entrada variável global: APP_NAME
 function ConfigApp(){
   local MENU_IT
   local MSG9
   while true; do
+    # na primeira vez tem uma opção "Continuar.." para melhor compreensão
+    # opção não implementada:  "3" "Selecionar TimeZone, atual=??(TODO)"
     if [ "$CMD" == "--first" ]; then
-      MENU_IT=$(whiptail --title "$TITLE" \
-        --menu "\nComando de reconfiguração, aplicação: \"$APP_NAME\"" --fb 18 70 5   \
-        "1" "Acrescentar Chave Pública (PublicKey)"  \
-        "2" "Remover Chave Pública (PublicKey)"      \
-        "3" "Selecionar TimeZone, atual=??(TODO)"    \
-        "4" "Criar Repositório GIT (TODO)"           \
-        "9" "Continuar..."                           \
-        3>&1 1>&2 2>&3)
-    else
       MENU_IT=$(whiptail --title "$TITLE" \
         --menu "\nComando de reconfiguração, aplicação: \"$APP_NAME\"" --fb 18 70 4   \
         "1" "Acrescentar Chave Pública (PublicKey)"  \
         "2" "Remover Chave Pública (PublicKey)"      \
-        "3" "Selecionar TimeZone, atual=??(TODO)"    \
-        "4" "Criar Repositório GIT (TODO)"           \
+        "3" "Criar Repositório GIT"                  \
+        "9" "Continuar..."                           \
+        3>&1 1>&2 2>&3)
+    else
+      MENU_IT=$(whiptail --title "$TITLE" \
+        --menu "\nComando de reconfiguração, aplicação: \"$APP_NAME\"" --fb 18 70 3   \
+        "1" "Acrescentar Chave Pública (PublicKey)"  \
+        "2" "Remover Chave Pública (PublicKey)"      \
+        "3" "Criar Repositório GIT"                  \
         3>&1 1>&2 2>&3)
     fi
     [ $? != 0 ] && return 0 # Cancelado
@@ -219,8 +271,8 @@ function ConfigApp(){
     [ "$MENU_IT" == "1" ] && AskNewKey $APP_NAME /home/$APP_NAME
     # Remove certificado de root
     [ "$MENU_IT" == "2" ] && DeleteKeys $APP_NAME /home/$APP_NAME
-    #
-    [ "$MENU_IT" == "3" ] && read -p "Não implementado, pressione Enter para continuar..." A
+    # Cria Repositório GIR
+    [ "$MENU_IT" == "3" ] && CreateRepo $APP_NAME
     #
     [ "$MENU_IT" == "4" ] && read -p "Não implementado, pressione Enter para continuar..." A
   done
