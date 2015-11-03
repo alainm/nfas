@@ -294,6 +294,7 @@ if [ "$CMD" == "--first" ]; then
 			# Roda sem ser como daemon para o respawn funcionar
 			exec monit -I
 	EOF
+  initctl reload-configuration
   fi
 fi
 
