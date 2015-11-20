@@ -110,7 +110,7 @@ function Fail2banConf(){
 		findtime  = 120
 
 		# "maxretry" é o numero de tentativas permitidas +1
-		maxretry = 5
+		maxretry = 4
 
 
 		##################################################
