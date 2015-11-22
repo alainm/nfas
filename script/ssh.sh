@@ -185,6 +185,17 @@ function GetFail2banEmail(){
 }
 
 #-----------------------------------------------------------------------
+# Reconfigura IPTABLES para o SSH
+# http://www.cyberciti.biz/tips/linux-unix-bsd-openssh-server-best-practices.html
+function SetSshIptables(){
+  # Limita conexões a 5 por minuto
+  /sbin/iptables -A IN_SSH -p tcp --dport $SSH_PORT -m state --state NEW -m recent --set
+  /sbin/iptables -A IN_SSH -p tcp --dport $SSH_PORT -m state --state NEW -m recent --update --seconds 60 --hitcount 5 -j DROP
+  # Libera acesso à porta usada pelo SSH
+  /sbin/iptables -A IN_SSH -p tcp --dport $SSH_PORT -m state --state NEW -j ACCEPT
+}
+
+#-----------------------------------------------------------------------
 # Salva variáveis de configuração
 # Neste módulo as variáveis são usadas sempre apartir do arquivo de configuração Real
 # Estas variáveis são guardadas apenas para recurso futuro de exportação
@@ -222,9 +233,16 @@ if [ "$CMD" == "--first" ]; then
   EditConfSpace $SSHD_ARQ ClientAliveCountMax 20
   # Garante uso exclusivo do protocolo v2
   EditConfSpace $SSHD_ARQ Protocol 2
+  # Bloqueia modo antigo de autenticação simplificada
+  EditConfSpace $SSHD_ARQ IgnoreRhosts yes
+  # Evita Senhas em branco
+  EditConfSpace $SSHD_ARQ PermitEmptyPasswords no
   # Altera Porta do SSH, var: SSH_PORT
   AskSshPort $SSHD_ARQ
   EditConfSpace $SSHD_ARQ Port $SSH_PORT
+  # Reconfigura iptables, caso tenha atualização
+  /sbin/iptables -F IN_SSH
+  SetSshIptables
   service sshd restart
   # Configura para que a Umask
   SetUmask 007
@@ -234,9 +252,12 @@ if [ "$CMD" == "--first" ]; then
     MSG+="\n  Acesso via SSH como usuário ROOT"
     MSG+="\n  Acesso ao SSH pela porta TCP=$SSH_PORT"
     MSG+="\n  Uso exclusivo do protocolo v2"
+    MSG+="\n  Não usar de senha vazia"
+    MSG+="\n  Bloquada autenticalçao Rhost (antiga)"
+    MSG+="\n  Bloquada mais que 5 acessos por minuto (por IP)"
   MSG+="\n\nUtilize o comando \"nfas\" após terminar a instalação"
     MSG+="\ne somente APÓS testar os acessos!!!"
-  whiptail --title "$TITLE" --msgbox "$MSG" 16 70
+  whiptail --title "$TITLE" --msgbox "$MSG" 19 70
   # Configura FAIL2BAN
   Fail2banConf
   # Salva variáveis de configuração
@@ -245,7 +266,7 @@ if [ "$CMD" == "--first" ]; then
 elif [ "$CMD" == "--firewall" ]; then
   #-----------------------------------------------------------------------
   # Durante o boot precisa reconfigurar a porta do SSH
-  /sbin/iptables -A IN_SSH -p tcp --dport $SSH_PORT -m state --state NEW -j ACCEPT
+  SetSshIptables
   # Recria a chain no começo do INPUT
   service fail2ban reload
 
@@ -320,10 +341,11 @@ else
       AskSshPort $SSHD_ARQ
       PORT_A=$(GetConfSpace $1 Port)
       if [ "$PORT_A" != "$SSH_PORT" ]; then
-        # Reconfigura Firewall, chain especial
+        # Limpa chain especial do SSH, chain especial
         /sbin/iptables -F IN_SSH
-        /sbin/iptables -A IN_SSH -p tcp --dport $SSH_PORT -m state --state NEW -j ACCEPT
-        # Altera porta do SSH
+        # Reconfigura Firewall, chain especial
+        SetSshIptables
+         # Altera porta do SSH
         EditConfSpace $SSHD_ARQ Port $SSH_PORT
         service sshd restart
         # Altera Porta do Fail2ban
