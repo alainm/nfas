@@ -264,6 +264,8 @@ function AskNewKey(){
       chmod 600 $DIR/.ssh/authorized_keys
       # Elimina linhas em branco
       sed -i '/^$/d' $DIR/.ssh/authorized_keys
+      # Envia Email com instruções de acesso
+      /script/ssh.sh --email $USR
       # Mensagem de confirmação
       if [ $OLD_N -eq 0 ]; then
         MSG="\nA sua Chave Pública (PublicKey) foi acrescentada para acesso seguro."
@@ -272,7 +274,7 @@ function AskNewKey(){
       fi
       MSG+="\nO seu comando para acessar este servidor por SSH é:"
       MSG+="\n\n   ssh -i ~/.ssh/$USR@$(hostname).key $USR@$(ifconfig eth0 | GetIpFromIfconfig)"
-      MSG+="\n\n==>> ANOTE este comando <<=="
+      MSG+="\n\n==>> Um email foi enviado com estas instruções <<=="
       MSG+="\nRecomendamos que teste agora..."
       MSG+="\n\nOK? SIM para continuar, NÃO para repetir operação"
       if (whiptail --title "Chave Pública do usuário $USR" --yesno "$MSG" 17 78) then

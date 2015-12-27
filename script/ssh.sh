@@ -7,6 +7,7 @@ set -x
 # <cmd>: --first       primeira instalação, não mosta menu
 #        --firewall    chamado durante o boot pelo 10-firewall.sh
 #        --hostname    foi alerado o hostname (usado pelo fail2ban)
+#        --email <user> Envia email com instruções de acesso
 #        <em branco>   Mostra menu interativo
 #
 # * acrescentar certificado publickey (--first)
@@ -23,6 +24,7 @@ CMD=$1
 . /script/functions.sh
 # Lê dados anteriores se existirem
 . /script/info/distro.var
+. /script/info/email.var
 VAR_FILE="/script/info/ssh.var"
 [ -e $VAR_FILE ] && . $VAR_FILE
 
@@ -186,7 +188,6 @@ function GetFail2banEmail(){
 
 #-----------------------------------------------------------------------
 # Reconfigura IPTABLES para o SSH
-# http://www.cyberciti.biz/tips/linux-unix-bsd-openssh-server-best-practices.html
 function SetSshIptables(){
   # Limita conexões a 5 por minuto
   /sbin/iptables -A IN_SSH -p tcp --dport $SSH_PORT -m state --state NEW -m recent --set
@@ -204,6 +205,54 @@ function SaveSshVars(){
   echo "SSH_PASS_AUTH=\"$(GetConfSpace $SSHD_ARQ PasswordAuthentication)\""  2>/dev/null >> $VAR_FILE
   echo "SSH_R_LOGIN=\"$(GetConfSpace $SSHD_ARQ PermitRootLogin)\""           2>/dev/null >> $VAR_FILE
   echo "SSH_F2B_EMAIL=\"$(GetFail2banEmail)\""                               2>/dev/null >> $VAR_FILE
+}
+
+#-----------------------------------------------------------------------
+# Envia Email com as configurações de acesso SSH
+# uso: SendEmailSshConf <user>
+function SendEmailSshConf(){
+  local USR=$1
+  local NAME
+  if [ "$USR" == "root" ]; then
+    NAME=$(hostname -s)
+  else
+    NAME=$USR
+  fi
+  cat >/tmp/emailMsg.txt <<-EOT
+
+	O seu comando para acesso remoto com chaves Pública/Privada por SSH é:
+	----------
+	    ssh -i ~/.ssh/$USR@$(hostname).key $USR@$(ifconfig eth0 | GetIpFromIfconfig)
+	----------
+
+	Preferívelmente configure seu aquivo .ssh/config para acesso simplificado.
+	----------arquivo ~/.ssh/config
+	# Configurações gerais recomendadas
+	Host \*
+	    ServerAliveInterval 30
+	    IdentitiesOnly yes
+	# Configuração de cada acesso (escolha um nome para Host)
+	Host $NAME
+	    User $USR
+	    HostName $(ifconfig eth0 | GetIpFromIfconfig)
+	    Port $SSH_PORT
+	    IdentityFile ~/.ssh/$USR@$(hostname).key
+	----------
+
+	----------comando simplificado (mesmo nome que Host acima):
+	    ssh $NAME
+	----------
+
+	ATENÇÃO: sua chave Privada foi gerada na sua própria máquina
+	 no arquivo: .ssh/$USR@$(hostname).key
+	 este arquivo fornece acesso total ao seu servidor. NÃO faça cópias!
+	Gere uma chave diferente em cada máquina, assim é possível restringir
+	  o acesso em caso de perda/roubo usando o comando "nfas"
+
+	Enviado em: $(date +"%d/%m/%Y %H:%M:%S (%Z %z)")
+	EOT
+  # Envia usando email do sistema:
+  cat /tmp/emailMsg.txt | mail -s "Comandos de Acesso - SSH" $EMAIL_ADMIN
 }
 
 #-----------------------------------------------------------------------
@@ -252,7 +301,7 @@ if [ "$CMD" == "--first" ]; then
     MSG+="\n  Acesso via SSH como usuário ROOT"
     MSG+="\n  Acesso ao SSH pela porta TCP=$SSH_PORT"
     MSG+="\n  Uso exclusivo do protocolo v2"
-    MSG+="\n  Não usar de senha vazia"
+    MSG+="\n  Não usar senha vazia"
     MSG+="\n  Bloquada autenticalçao Rhost (antiga)"
     MSG+="\n  Bloquada mais que 5 acessos por minuto (por IP)"
   MSG+="\n\nUtilize o comando \"nfas\" após terminar a instalação"
@@ -276,6 +325,10 @@ elif [ "$CMD" == "--hostname" ]; then
   eval "sed -i '/[ssh-iptables]/,/\[.*/ { s/^\(.*sender=fail2ban@\).*\(]\)$/\1$(hostname)\2/ }' /etc/fail2ban/jail.local"
   service fail2ban reload
 
+elif [ "$CMD" == "--email" ]; then
+  #-----------------------------------------------------------------------
+  # Envia Email com instruções de acesso
+  SendEmailSshConf $2
 else
   #-----------------------------------------------------------------------
   # Loop do Menu principal interativo
@@ -303,12 +356,12 @@ else
     fi
     MENU_IT=$(whiptail --title "$TITLE" \
         --menu "\nSelecione um comando de reconfiguração:" --fb 18 70 6   \
-        "1" "Acrescentar Chave Pública (PublicKey)"  \
-        "2" "Remover Chave Pública (PublicKey)"      \
-        "3" "$MSG_SSH_SENHA"                         \
-        "4" "$MSG_ROOT_SSH"                          \
-        "5" "$MSG_PORT_SSH"                          \
-        "6" "$MSG_F2B_MAIL"                          \
+        "1" "Acrescentar Chave Pública (PublicKey)"    \
+        "2" "Listar/Remover Chave Pública (PublicKey)" \
+        "3" "$MSG_SSH_SENHA"                           \
+        "4" "$MSG_ROOT_SSH"                            \
+        "5" "$MSG_PORT_SSH"                            \
+        "6" "$MSG_F2B_MAIL"                            \
         3>&1 1>&2 2>&3)
     if [ $? != 0 ]; then
         echo "Seleção cancelada."
