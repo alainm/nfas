@@ -253,6 +253,7 @@ function SendEmailSshConf(){
 	EOT
   # Envia usando email do sistema:
   cat /tmp/emailMsg.txt | mail -s "Comandos de Acesso - SSH" $EMAIL_ADMIN
+  rm -f /tmp/emailMsg.txt
 }
 
 #-----------------------------------------------------------------------
