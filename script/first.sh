@@ -64,8 +64,6 @@ ln -s /script/nfas.sh /usr/bin/nfas
 /script/hostname.sh --first
 # Console colorido
 /script/console.sh --first
-# Pergunta dados de Email
-/script/email.sh --first
 # Configurações e alterações na Rede
 /script/network.sh --first
 # Configura Postfix, usa dados de Email e Hostname
