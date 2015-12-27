@@ -227,14 +227,15 @@ function AskNewKey(){
        MSG="\nForneca o Certificado Chave Pública (PublicKey) para acesso como \"$USR\""
       MSG+="\n (deixe em branco se não pretende usar)"
     MSG+="\n\nUse estes comandos no Linux para gerar as chaves com identificação"
-      MSG+="\n(Linha muito longa, copiar com <Ctrl+Shift+C> em duas vezes)"
+      MSG+="\n(ATENÇÃO: linha muito longa, copiar com <Ctrl+Shift+C> <Ctrl+Shift+V>"
+      MSG+="\n   em duas vezes e garantir UM <SPACE> entre os trechos...)"
     MSG+="\n\n   ssh-keygen -t rsa -b 4096 -f ~/.ssh/$USR@$(hostname).key"
       MSG+="\n         -C \"\$USER@\$(hostname).key.pub\""
     MSG+="\n\nComando para mostrar na tela e poder copiar:"
       MSG+="\n   cat ~/.ssh/$USR@$(hostname).key.pub"
     MSG+="\n"
     # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
-    TMP=$(whiptail --title "Chave Pública do usuário $USR" --inputbox "$MSG" 20 78 3>&1 1>&2 2>&3)
+    TMP=$(whiptail --title "Chave Pública do usuário $USR" --inputbox "$MSG" 21 78 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ] || [ -z "$TMP" ]; then
       echo "Operação cancelada!"
       return 1
