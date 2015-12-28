@@ -144,6 +144,7 @@ function NewApp(){
     # OBS: --stdin só funciona no CentOS (não no Ubuntu 14.04)
     # http://ccm.net/faq/790-changing-password-via-a-script
     # echo "$NEW_PWD" | passwd --stdin $APP_NAME
+    echo "Ubuntu..."
   fi
   # outros scripts que precisam reconfigurar
   /script/console.sh --newuser $APP_NAME
