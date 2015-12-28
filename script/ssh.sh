@@ -275,8 +275,6 @@ if [ "$CMD" == "--first" ]; then
     chmod 600 $SSHD_ARQ
   fi
   # Durante instalação não mostra menus
-  # Novo certificado de root
-  AskNewKey root /root
   # Seta timeout para conexões SSH para 10 minutos sem responder
   # http://www.cyberciti.biz/tips/open-ssh-server-connection-drops-out-after-few-or-n-minutes-of-inactivity.html
   EditConfSpace $SSHD_ARQ ClientAliveInterval 30
@@ -290,6 +288,10 @@ if [ "$CMD" == "--first" ]; then
   # Altera Porta do SSH, var: SSH_PORT
   AskSshPort $SSHD_ARQ
   EditConfSpace $SSHD_ARQ Port $SSH_PORT
+  # Precisa salvar para Email que será enviado com dados de acesso
+  SaveSshVars
+  # Novo certificado de root
+  AskNewKey root /root
   # Reconfigura iptables, caso tenha atualização
   /sbin/iptables -F IN_SSH
   SetSshIptables
