@@ -163,7 +163,8 @@ function AskEmailSmtpPasswd(){
   local PW1=""
   local PW2=""
   local TMP=""
-  MSG="\nQual a Senha do usuário para LOGIN?\n"
+  MSG="\nQual a Senha do usuário para LOGIN?"
+  MSG+="\n (para gmail usar \"senha de aplicativo\")\n"
   if [ -n "$EMAIL_USER_PASSWD" ]; then
     MSG+="\n Deixe em branco para manter a senha anterior"
   fi
