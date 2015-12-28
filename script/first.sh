@@ -37,7 +37,7 @@ PKT+=" dmidecode"
 PKT+=" htop nmon"
 # pacotes para compilar MONIT e dependencias
 PKT+=" openssl openssl-devel pam pam-devel gcc make"
-# pacotes para POSTFIX
+# pacotes para POSTFIX (para Ubuntu: libsasl2-modules)
 PKT+=" mailx cyrus-sasl-plain postfix-perl-scripts"
 # Pacote para fail2ban
 PKT+=" fail2ban jwhois"
@@ -64,12 +64,12 @@ ln -s /script/nfas.sh /usr/bin/nfas
 /script/hostname.sh --first
 # Console colorido
 /script/console.sh --first
+# Configura Postfix, usa Hostname mas não Email
+/script/postfix.sh --first
 # Pergunta dados de Email
 /script/email.sh --first
 # Configurações e alterações na Rede
 /script/network.sh --first
-# Configura Postfix, usa dados de Email e Hostname
-#/script/postfix.sh --first
 # Monitoramente da máquina, tem que vir depois do hostname.sh e email.sh
 /script/monit.sh --first
 # Setup do relógio

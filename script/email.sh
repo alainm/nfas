@@ -333,7 +333,6 @@ cat $INFO_FILE
 
 if [ "$CMD" != "--first" ]; then
   # Envio de email
-  /script/postfix.sh --email
   /script/monit.sh --email
   /script/progs.sh --email
 fi

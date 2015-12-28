@@ -136,16 +136,19 @@ function NewApp(){
   [ $? != 0 ] && return 1
   echo "Nova Aplicação: $APP_NAME, passwd: $NEW_PWD"
   # criando usuários
+  # OBS: useradd não cria o home directory no Ubuntu 14.04, só com "-m"
+  useradd -m $APP_NAME
   if [ "$DISTRO_NAME" == "CentOS" ]; then
-    useradd $APP_NAME
     echo "$NEW_PWD" | passwd --stdin $APP_NAME
   else
-    # OBS: useradd não cria o home directory no Ubuntu 14.04, só com "-m"
-    useradd -m $APP_NAME
     # OBS: --stdin só funciona no CentOS (não no Ubuntu 14.04)
+    # http://ccm.net/faq/790-changing-password-via-a-script
     # echo "$NEW_PWD" | passwd --stdin $APP_NAME
   fi
+  # outros scripts que precisam reconfigurar
   /script/console.sh --newuser $APP_NAME
+  /script/postfix.sh --newuser $APP_NAME
+  # Script de inicialização
   cp -a /script/auto.sh /home/$APP_NAME
   chown $APP_NAME:$APP_NAME /home/$APP_NAME/auto.sh
   return 0
