@@ -64,12 +64,12 @@ ln -s /script/nfas.sh /usr/bin/nfas
 /script/hostname.sh --first
 # Console colorido
 /script/console.sh --first
+# Pergunta dados de Email
+/script/email.sh --first
 # Configurações e alterações na Rede
 /script/network.sh --first
 # Configura Postfix, usa dados de Email e Hostname
-/script/postfix.sh --first
-# Envia Email de confirmação de teste
-/script/email.sh --test
+#/script/postfix.sh --first
 # Monitoramente da máquina, tem que vir depois do hostname.sh e email.sh
 /script/monit.sh --first
 # Setup do relógio

@@ -4,7 +4,7 @@ set -x
 # Script para (re)configurar o envio de Email usando o POSTFIX
 # O mesmo Script é usado para a primeira vez e para alterar a configuração
 # Chamada: "/script/postfix.sh <cmd>"
-# <cmd>: --first     durante primeira instalação, chamada pelo email.sh
+# <cmd>: --first     durante primeira instalação
 #        --email     alteradas configurações de email, só se alteração posterior
 #        --hostname  quando foi alterado hostname, só se alteração posterior
 #

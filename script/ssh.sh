@@ -189,9 +189,9 @@ function GetFail2banEmail(){
 #-----------------------------------------------------------------------
 # Reconfigura IPTABLES para o SSH
 function SetSshIptables(){
-  # Limita conexões a 5 por minuto
-  /sbin/iptables -A IN_SSH -p tcp --dport $SSH_PORT -m state --state NEW -m recent --set
-  /sbin/iptables -A IN_SSH -p tcp --dport $SSH_PORT -m state --state NEW -m recent --update --seconds 60 --hitcount 5 -j DROP
+  # Limita conexões a 5 por minuto => Eliminado, gera mais problemas que resolve
+  # /sbin/iptables -A IN_SSH -p tcp --dport $SSH_PORT -m state --state NEW -m recent --set
+  # /sbin/iptables -A IN_SSH -p tcp --dport $SSH_PORT -m state --state NEW -m recent --update --seconds 60 --hitcount 5 -j DROP
   # Libera acesso à porta usada pelo SSH
   /sbin/iptables -A IN_SSH -p tcp --dport $SSH_PORT -m state --state NEW -j ACCEPT
 }
@@ -303,8 +303,8 @@ if [ "$CMD" == "--first" ]; then
     MSG+="\n  Acesso ao SSH pela porta TCP=$SSH_PORT"
     MSG+="\n  Uso exclusivo do protocolo v2"
     MSG+="\n  Não usar senha vazia"
-    MSG+="\n  Bloquada autenticalçao Rhost (antiga)"
-    MSG+="\n  Bloquada mais que 5 acessos por minuto (por IP)"
+    MSG+="\n  Bloquada autenticaçao Rhost (antiga)"
+    # MSG+="\n  Bloquada mais que 5 acessos por minuto (por IP)"
   MSG+="\n\nUtilize o comando \"nfas\" após terminar a instalação"
     MSG+="\ne somente APÓS testar os acessos!!!"
   whiptail --title "$TITLE" --msgbox "$MSG" 19 70

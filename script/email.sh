@@ -241,6 +241,20 @@ function SendTestEmail(){
     return 0
   fi
 }
+
+#-----------------------------------------------------------------------
+# Salva Dados de Email
+function SaveEmailVar(){
+  echo "EMAIL_ADMIN=\"$EMAIL_ADMIN\""                        2>/dev/null >  $INFO_FILE
+  echo "EMAIL_SMTP_URL=\"$EMAIL_SMTP_URL\""                  2>/dev/null >> $INFO_FILE
+  echo "EMAIL_SMTP_PORT=\"$EMAIL_SMTP_PORT\""                2>/dev/null >> $INFO_FILE
+  echo "EMAIL_SMTP_STARTTLS=\"$EMAIL_SMTP_STARTTLS\""        2>/dev/null >> $INFO_FILE
+  echo "EMAIL_USER_ID=\"$EMAIL_USER_ID\""                    2>/dev/null >> $INFO_FILE
+  echo "EMAIL_USER_PASSWD=\"$EMAIL_USER_PASSWD\""            2>/dev/null >> $INFO_FILE
+  # evita acesso às senhas pelos usuários
+  chmod 600 $INFO_FILE
+}
+
 #==========================================================================
 # Começo
 #==========================================================================
@@ -293,6 +307,10 @@ while [ $FIM != "Y" ]; do
       exit 1
     fi
   else
+    # Salva Dados recebidos
+    SaveEmailVar
+    # Reconfigura o postfix (também funciona na primeira vez)
+    /script/postfix.sh --email
     # Envia Teste e pede confirmação
     SendTestEmail
     if [ $? -ne 0 ]; then
@@ -306,15 +324,8 @@ done # loop principal
 # Escreve valores obtidos
 #-----------------------------------------------------------------------
 
-echo "EMAIL_ADMIN=\"$EMAIL_ADMIN\""                        2>/dev/null >  $INFO_FILE
-echo "EMAIL_SMTP_URL=\"$EMAIL_SMTP_URL\""                  2>/dev/null >> $INFO_FILE
-echo "EMAIL_SMTP_PORT=\"$EMAIL_SMTP_PORT\""                2>/dev/null >> $INFO_FILE
-echo "EMAIL_SMTP_STARTTLS=\"$EMAIL_SMTP_STARTTLS\""        2>/dev/null >> $INFO_FILE
-echo "EMAIL_USER_ID=\"$EMAIL_USER_ID\""                    2>/dev/null >> $INFO_FILE
-echo "EMAIL_USER_PASSWD=\"$EMAIL_USER_PASSWD\""            2>/dev/null >> $INFO_FILE
+SaveEmailVar
 cat $INFO_FILE
-# evita acesso às senhas pelos usuários
-chmod 600 $INFO_FILE
 
 #-----------------------------------------------------------------------
 # Chama scripts que dependem do Email
