@@ -170,7 +170,7 @@ function Fail2banConf(){
   chmod 600 $ARQ
   # mensagem de confirmação
      MSG="\nProteção fail2ban configurada para"
-  MSG+="\n\n  3 tentativas de login em 2 minutos que falharem"
+  MSG+="\n\n  3 tentativas de login que falharem em 2 minutos"
     MSG+="\n  bloqueiam acesso daquele IP por 10 minutos"
   MSG+="\n\n  configuração manual em /etc/fail2ban/jail.local"
   whiptail --title "$TITLE" --msgbox "$MSG" 13 70

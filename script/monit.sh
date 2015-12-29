@@ -302,8 +302,8 @@ fi
 # Avido final
 if [ "$CMD" == "--first" ]; then
      MSG="\nFoi configurado o MONIT para monitoramento de recursos"
-  MSG+="\n\nSerão enviadas Emails de aviso relativos a:"
-    MSG+="\n  Uso de memória, CPU e Core mais usado"
+    MSG+="\nSerão enviadas Emails de aviso relativos a:"
+  MSG+="\n\n  Uso de memória, CPU e Core mais usado"
     MSG+="\n  Uso de Disco e de inodes"
     MSG+="\n  Status do link, ping e excesso de tráfego"
   MSG+="\n\nLogs em /var/log/monit.log com logrotate"
