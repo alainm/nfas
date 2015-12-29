@@ -224,9 +224,9 @@ function SendTestEmail(){
   echo -e $MSG | mail -s "Teste de Notificação" $EMAIL_ADMIN
   # mensagem na tela
       MSG="\nTeste de Email de Notificação"
-     MSG+="\n  Email enviado para admin: $EMAIL_ADMIN"
-     MSG+="\n  usando servidor SMTP:     $EMAIL_SMTP_URL"
-     MSG+="\n  e usuário:                $EMAIL_USER_ID"
+     MSG+="\n    Email enviado para admin: $EMAIL_ADMIN"
+     MSG+="\n    usando servidor SMTP:     $EMAIL_SMTP_URL"
+     MSG+="\n    e usuário:                $EMAIL_USER_ID"
   if [ "$CMD" == "--test" ]; then
    MSG+="\n\n"
     whiptail --title "$TITLE" --msgbox "$MSG" 15 70
