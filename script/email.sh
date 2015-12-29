@@ -296,6 +296,7 @@ while [ $FIM != "Y" ]; do
 
   # ----- Confirma Abortar
   if [ $ABORT == "Y" ]; then
+		ABORT="N"
     # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail#Yes.2Fno_box
     MSG="Deseja MESMO cancelar cadastramente de Email?\n"
     if [ "$CMD" == "--first" ]; then
