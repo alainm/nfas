@@ -227,12 +227,11 @@ function AskNewKey(){
        MSG="\nForneca o Certificado Chave Pública (PublicKey) para acesso como \"$USR\""
       MSG+="\n (deixe em branco se não pretende usar)"
     MSG+="\n\nUse estes comandos no Linux para gerar as chaves com identificação"
-      MSG+="\n(ATENÇÃO: linha muito longa, copiar com <Ctrl+Shift+C> <Ctrl+Shift+V>"
-      MSG+="\n   em duas vezes e garantir UM <SPACE> entre os trechos...)"
-    MSG+="\n\n   ssh-keygen -t rsa -b 4096 -f ~/.ssh/$USR@$(hostname).key"
-      MSG+="\n         -C \"\$USER@\$(hostname).key.pub\""
-    MSG+="\n\nComando para mostrar na tela e poder copiar:"
+      MSG+="\n(copiar e executar uma linha por vez com <Ctrl+Shift+C> <Ctrl+Shift+V>)"
+    MSG+="\n\n   ARQ=\"\$USER@\$(hostname).key.pub\""
+      MSG+="\n   ssh-keygen -t rsa -b 4096 -f ~/.ssh/$USR@$(hostname).key -C $ARQ"
       MSG+="\n   cat ~/.ssh/$USR@$(hostname).key.pub"
+    MSG+="\n\nCopie o resultado no campo abaixo (começando em \"ssh-rsa\" até \".pub\"):"
     MSG+="\n"
     # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
     TMP=$(whiptail --title "Chave Pública do usuário $USR" --inputbox "$MSG" 21 78 3>&1 1>&2 2>&3)
