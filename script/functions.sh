@@ -229,7 +229,7 @@ function AskNewKey(){
     MSG+="\n\nUse estes comandos no Linux para gerar as chaves com identificação"
       MSG+="\n(copiar e executar uma linha por vez com <Ctrl+Shift+C> <Ctrl+Shift+V>)"
     MSG+="\n\n   ARQ=\"\$USER@\$(hostname).key.pub\""
-      MSG+="\n   ssh-keygen -t rsa -b 4096 -f ~/.ssh/$USR@$(hostname).key -C $ARQ"
+      MSG+="\n   ssh-keygen -t rsa -b 4096 -f ~/.ssh/$USR@$(hostname).key -C \$ARQ"
       MSG+="\n   cat ~/.ssh/$USR@$(hostname).key.pub"
     MSG+="\n\nCopie o resultado no campo abaixo (começando em \"ssh-rsa\" até \".pub\"):"
     MSG+="\n"
