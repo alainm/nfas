@@ -1,5 +1,5 @@
 #!/bin/bash
-# set -x
+set -x
 
 # Script para alterar o nome da máquina: hostname
 #  1) Durante instalação: /script/hostname.sh --first
@@ -21,28 +21,28 @@
 function AskHostname(){
   if [ "$CMD" == "--first" ]; then
     MSG="\nQual o NOME da máquina (hostname)?\n"
-    MSG+="\n(deixe em branco para \"$OLD_HOSTNAME\""
+    MSG+="\n(acione <Enter> para manter \"$OLD_HOSTNAME\""
     if [ "$NEW_HOSTNAME" == "localhost.localdomain" ]; then
       MSG+="- não recomendado)"
     else
       MSG+=")"
     fi
   else
-    MSG="\nO hostname atual é: \"$OLD_HOSTNAME\"\n"
-    MSG+="Qual o novo hostname?\n"
-    MSG+="\n(deixe em branco para não alterar, mas corrigir o /etc/hosts)"
+    MSG="\nO hostname atual é: \"$OLD_HOSTNAME\""
+    MSG+="\n\nQual o novo hostname?"
+    MSG+="\n(acione <Enter> para não alterar, mas corrigir o /etc/hosts)"
   fi
   # Acrescenta mensagem de erro
-  MSG+="\n$1"
+  MSG+="\n\n$1"
   # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
-  NEW_HOSTNAME=$(whiptail --title "Configuração NFAS" --inputbox "$MSG" 13 74  3>&1 1>&2 2>&3)
+  NEW_HOSTNAME=$(whiptail --title "Configuração NFAS" --inputbox "$MSG" 13 74 "$OLD_HOSTNAME" 3>&1 1>&2 2>&3)
   if [ $? -ne 0 ]; then
-    echo "Operação cancelada!"
-    exit 1
+      echo "Operação cancelada!"
+      return 1
   fi
   if [ -z "$NEW_HOSTNAME" ]; then
-    echo "Hostname inalterado"
-    return 1
+    echo "Hostname inalterado, usa o anterior"
+    NEW_HOSTNAME=$OLD_HOSTNAME
   fi
   # Validação do nome
   # Site ajudou: http://www.linuxquestions.org/questions/programming-9/bash-regex-for-validating-computername-872683/
@@ -87,10 +87,14 @@ if [ -z "$NEW_HOSTNAME" ]; then
     if [ $ERR -eq 1 ]; then
       # Hostname em branco intencionalmente
       NEW_HOSTNAME="$OLD_HOSTNAME"
-      echo "Hostname continua sendo \"$OLD_HOSTNAME\", nada a ser feito..."
-      # Guarda Hostname fornecido, pode ser necessário no --first ou se houver diferença
-      echo "HOSTNAME_INFO=\"$NEW_HOSTNAME\""  2>/dev/null >  $INFO_FILE
-      ERR=0;
+      if [ "$CMD" == "--first" ]; then
+        ERR_ST="Durante a primeira instalação não pode cancelar"
+      else
+        echo "Hostname continua sendo \"$OLD_HOSTNAME\", nada a ser feito..."
+        # Guarda Hostname fornecido, pode ser necessário no --first ou se houver diferença
+        echo "HOSTNAME_INFO=\"$NEW_HOSTNAME\""  2>/dev/null >  $INFO_FILE
+        ERR=0;
+      fi
     elif [ $ERR -eq 0 ]; then
       # testa se é FQDN, tem que ter "." no hostname
       if echo "$NEW_HOSTNAME" | grep -qv "\."; then
