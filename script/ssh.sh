@@ -379,10 +379,26 @@ else
 
     # altera Acesso com senha
     if [ "$MENU_IT" == "3" ]; then
-      [ "$PASS_AUTH" == "yes" ] && TMP="no" || TMP="yes"
-      EditConfSpace $SSHD_ARQ PasswordAuthentication $TMP
-      # Recarrega o SSHD para usar novo paremetro
-      service sshd restart
+      if [ "$PASS_AUTH" != "yes" ]; then
+        # Libera acesso por senha
+        EditConfSpace $SSHD_ARQ PasswordAuthentication yes
+        # Recarrega o SSHD para usar novo paremetro
+        service sshd restart
+      else
+        # Le o tipo de Login: password ou publickey
+        LOGIN_TYPE=$(GetLoginType)
+        if [ "$LOGIN_TYPE" == "publickey" ]; then
+          EditConfSpace $SSHD_ARQ PasswordAuthentication no
+          # Recarrega o SSHD para usar novo paremetro
+          service sshd restart
+        else
+             MSG="\nVocê precisa ter feito um login com chaves Píblica/Privada"
+            MSG+="\n  para poder setar esta opção..."
+          MSG+="\n\nEsta é uma medida de segurança para evitar"
+            MSG+="\n  que você se tranque para fora ;)"
+          whiptail --title "$TITLE" --msgbox "$MSG" 12 70
+        fi
+      fi
     fi
 
     # Altera acesso de root
