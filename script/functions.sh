@@ -1,6 +1,7 @@
 #
 # Arquivo Com funções básicas, incluído por diversos scripts
 #
+# set -x
 
 # Uso: atraves do comando ". " (ponto espaço)
 # . /script/functions.sh
@@ -40,6 +41,22 @@ function GetNetwokState(){
     fi
   fi
 }
+
+#-----------------------------------------------------------------------
+# Função para determinar se login foi password ou publickey
+function GetLoginType(){
+  # Determina porta de retorno da conexão atual
+  local LOG_PORT=$(echo $SSH_CONNECTION | cut -d' ' -f2)
+  if [ -z "$LOG_PORT" ]; then
+    echo "NotSsh"
+  else
+    # Pega mensagem de log da conexão atual
+    local LOG_MSG=$(grep "Accepted [password|publickey]" /var/log/secure | grep -m1 "port $LOG_PORT"| tail -1)
+    # retorna palavra chave
+    echo  "$LOG_MSG" | sed -n 's/.*\(password\|publickey\).*/\1/p'
+  fi
+}
+
 
 #-----------------------------------------------------------------------
 # Função para editar Arquivo de configuração, parametro separado por "="
