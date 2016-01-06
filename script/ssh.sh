@@ -301,11 +301,11 @@ if [ "$CMD" == "--first" ]; then
   SetUmask 007
   # mensagem para bloqueio de acesso mas tarde
      MSG="\nConfiguração inicial de acesso:"
-    MSG+="\n  Acesso via SSH por senha"
-    MSG+="\n  Acesso via SSH como usuário ROOT"
+    MSG+="\n  Acesso via SSH por senha: permitido"
+    MSG+="\n  Acesso via SSH como usuário ROOT: permitido"
     MSG+="\n  Acesso ao SSH pela porta TCP=$SSH_PORT"
     MSG+="\n  Uso exclusivo do protocolo v2"
-    MSG+="\n  Não usar senha vazia"
+    MSG+="\n  Não permite usar senha vazia"
     MSG+="\n  Bloquada autenticaçao Rhost (antiga)"
     # MSG+="\n  Bloquada mais que 5 acessos por minuto (por IP)"
   MSG+="\n\nUtilize o comando \"nfas\" após terminar a instalação"

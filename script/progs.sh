@@ -58,7 +58,7 @@ function NodeInstall(){
 # Instala programas pré configurados
 function ProgsInstall(){
   # Última versão do Node.js:
-  LAST_NODE="$(curl --silent --location http://nodejs.org/dist/latest/ | sed -n 's/.*\(node.*linux-x64\.tar\.gz\).*/\1/p' | sed -n 's/node-\(v[1-9\.]*\).*/\1/p')"
+  LAST_NODE="$(curl --silent --location http://nodejs.org/dist/latest/ | sed -n 's/.*\(node.*linux-x64\.tar\.gz\).*/\1/p' | sed -n 's/node-\(v[0-9\.]*\).*/\1/p')"
   NODE_MSG=" versão $LAST_NODE (latest)"
   OPTIONS=$(whiptail --title "$TITLE"                                   \
     --checklist "\nSelecione os programas que deseja Instalar:" 22 75 1 \
