@@ -72,12 +72,13 @@ function NtpConfigure(){
   # Guarda arquivo original
   if [ ! -e $NTP_ARQ.orig ]; then
     cp  $NTP_ARQ $NTP_ARQ.orig
-    chmod 600 $NTP_ARQ
+    chmod 600 $NTP_ARQ.orig
   fi
   # para o ntpd para reconfigurar
   service $NTP stop
   # Cria arquivo drift para habilitar a funcionalidade
-  touch /etc/ntp.drift
+  #   http://magazine.redhat.com/2007/02/06/why-do-i-get-cant-open-etcntpdrifttemp-permission-denied-entries-in-varlogmessages-when-i-use-ntpd/
+  touch /var/lib/ntp/drift
   # a hora já foi sincronizada ao configurar UTC
   #(não) ntpdate 0.us.pool.ntp.org
   # cria arquivo de configuração
@@ -89,7 +90,7 @@ function NtpConfigure(){
 		##  Depois de criado, não é mais alterado
 
 		# "memoria" para o ajuste automático da frequencia do micro
-		driftfile /etc/ntp.drift
+		driftfile /var/lib/ntp/drift
 
 		# estatisticas não configuradas
 
