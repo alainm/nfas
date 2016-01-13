@@ -45,6 +45,14 @@ PKT+=" fail2ban jwhois"
 PKT+=" ntp"
 yum -y install $PKT
 
+if [ $? -ne 0 ]; then
+     MSG=" Ocorreu um erro atualizando pacotes."
+  MSG+="\n\nSua conexão deve estar com problemas,"
+    MSG+="\n  tente novamente mais tarde..."
+  whiptail --title "Instalação NFAS" --msgbox "$MSG" 11 60
+  exit 1
+fi
+
 # Cria banco de dados para locate, varre todos os nomes de arquivos
 updatedb
 
