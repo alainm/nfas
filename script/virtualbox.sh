@@ -16,6 +16,20 @@ if [ $? -eq 0 ] ;then
 else
   IS_VIRTUALBOX="N"
 fi
+
+if [ "$IS_VIRTUALBOX" == "Y" ]; then
+      MSG=" Todos os pacotes foram atualizados e instalados"
+    MSG+="\nDeseja abortar a instalação para salvar uma imagem?"
+  MSG+="\n\n(Esta opção não aparece fora do VirtualBox!)"
+  # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail#Yes.2Fno_box
+  whiptail --title "Configuração NFAS" --yesno --defaultno "$MSG" 10 78
+  if [ $? -eq 0 ]; then
+    # Aborta instalação e mantém imagem do VirtualBox
+    exit 1
+  fi
+fi
+
+
 echo "IS_VIRTUALBOX=$IS_VIRTUALBOX" > /script/info/virtualbox.var
 
 # Se não é VirtualBox, retorna sem erro
@@ -35,7 +49,7 @@ service acpid start
 # Opção para DEBUG: deixar as portas abertas no firewall
 MSG="\nVocê está usando o VirtualBox.\n\nDeseja deixar as portas do Firewall abertas para facilitar o Debug?\n"
 MSG+="Se responder Sim, todos os serviços estarão acessíveis diretamente\n"
-MSG+="\n(Esta opção não aparece fora do VirtualBox!)\n"
+MSG+="\n(Esta opção não aparece fora do VirtualBox!)"
 # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail#Yes.2Fno_box
 whiptail --title "Configuração NFAS" --yesno --defaultno "$MSG" 13 78
 if [ $? -eq 0 ]; then
@@ -43,3 +57,5 @@ if [ $? -eq 0 ]; then
 else
   echo "OPEN_FIREWALL=N" >> /script/info/virtualbox.var
 fi
+
+exit 0

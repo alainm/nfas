@@ -68,6 +68,8 @@ ln -s /script/nfas.sh /usr/bin/nfas
 ##### Roda cada script de configuração
 # Roda as configuraçãoes próprias para o VirtualBox
 /script/virtualbox.sh
+# aborta instalação e preserva a VM
+[ $? -ne 0 ] && exit 1
 # Pergunta hostname e configura
 /script/hostname.sh --first
 # Console colorido
