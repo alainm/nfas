@@ -32,7 +32,7 @@ yum -y install epel-release
 PKT="man nano mcedit mc telnet bind-utils bc mlocate"
 PKT+=" openssl openssl-devel pam pam-devel gcc gcc-c++ make git"
 # pacote para ajudar a identificar o VirtualBox
-PKT+=" dmidecode"
+PKT+=" dmidecode acpid"
 # instala programas pequenos e úteis: htop nmon
 PKT+=" htop nmon"
 # pacotes para compilar MONIT e dependencias
@@ -67,7 +67,7 @@ ln -s /script/nfas.sh /usr/bin/nfas
 
 ##### Roda cada script de configuração
 # Roda as configuraçãoes próprias para o VirtualBox
-/script/virtualbox.sh
+/script/virtualbox.sh --first
 # aborta instalação e preserva a VM
 [ $? -ne 0 ] && exit 1
 # Pergunta hostname e configura
