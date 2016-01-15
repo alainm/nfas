@@ -52,8 +52,6 @@ BADIP+=" 127.0.0.0/8 169.254.0.0/16 240.0.0.0/4 224.0.0.0/4"
 BADIP+=" 239.255.255.0/24"
 # Endereços IP da lista negra (IPs e Redes)
 BLAK_LIST=""
-# Se não for Virtualbox, bloqueia IPs locais
-. /script/info/virtualbox.var
 if [ "$IS_VIRTUALBOX" != "Y" ]; then
   BADIP+=" 10.0.0.0/8 192.168.0.0/16 172.16.0.0/16 169.254.0.0/16"
 fi

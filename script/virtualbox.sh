@@ -52,7 +52,8 @@ if [ "$CMD" == "--first" ]; then
   #----- No CentOS a Rede vem desabilitada por default, precisa habilitar
   if [ "$DISTRO_NAME" == "CentOS" ]; then
     # VirtualBox: configura a ETH0 para default sempre ligada
-    sed '/ONBOOT/s/no/yes/g' -i /etc/sysconfig/network-scripts/ifcfg-eth0
+    sed '/ONBOOT/s/no/yes/g'        -i /etc/sysconfig/network-scripts/ifcfg-eth0
+    sed '/NM_CONTROLLED/s/yes/no/g' -i /etc/sysconfig/network-scripts/ifcfg-eth0
     # VistualBox: habilita ACPI para fechamento da VM do VitrualBox
     # site: http://virtbjorn.blogspot.com.br/2012/12/how-to-make-your-vm-respond-to-acpi.html?m=1
     # movido para first.sh: yum -y install acpid

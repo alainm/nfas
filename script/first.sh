@@ -70,16 +70,18 @@ ln -s /script/nfas.sh /usr/bin/nfas
 /script/virtualbox.sh --first
 # aborta instalação e preserva a VM
 [ $? -ne 0 ] && exit 1
-# Pergunta hostname e configura
-/script/hostname.sh --first
 # Console colorido
 /script/console.sh --first
-# Configura Postfix, usa Hostname mas não Email
-/script/postfix.sh --first
-# Pergunta dados de Email
-/script/email.sh --first
 # Configurações e alterações na Rede
 /script/network.sh --first
+# Configura Postfix, usa Hostname mas não Email
+/script/postfix.sh --first
+# Pergunta se quer IP fixo, so se VirtualBox
+# /script/network.sh --ipfixo
+# Pergunta hostname e configura
+/script/hostname.sh --first
+# Pergunta dados de Email
+/script/email.sh --first
 # Monitoramente da máquina, tem que vir depois do hostname.sh e email.sh
 /script/monit.sh --first
 # Setup do relógio

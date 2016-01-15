@@ -15,6 +15,37 @@ function GetIpFromIfconfig(){
 }
 
 #-----------------------------------------------------------------------
+# Função para extrair o IPv4 de um dispositivo
+# uso: IP=$(GetIPv4 eth0)
+function GetIPv4(){
+  local DEV=$1
+  [ -z "$DEV" ] && echo "DevInvalido"
+  LANG=C ifconfig $DEV | GetIpFromIfconfig
+}
+
+#-----------------------------------------------------------------------
+# Função para extrair o NetMask4 de um dispositivo
+# uso: IP=$(GetIPv4 eth0)
+function GetMask4(){
+  local DEV=$1
+  [ -z "$DEV" ] && echo "DevInvalido"
+  LANG=C ifconfig $DEV | grep "inet addr:" | sed -n 's/.*Mask:\([0-9.]*\).*/\1/p'
+}
+#-----------------------------------------------------------------------
+# Função para extrair o GATEWAY
+# uso GW=$(GetGateway)
+function GetGateway(){
+  route -n | grep -E "^0.0.0.0.*UG.*" | tr -s ' ' | cut -d' ' -f2 | tail -1
+}
+#-----------------------------------------------------------------------
+# Função para extrair o DNS
+# uso GW=$(GetDnsServer)
+function GetDnsServer(){
+  # cat /etc/resolv.conf | grep -m 1 -E "^nameserver" | sed -n 's/.* \([0-9.]*\)/\1/p'
+  cat /etc/resolv.conf | grep -E "^nameserver" | sed -n 's/.* \([0-9.]*\)/\1/p' | tr  '\n' ' '
+}
+
+#-----------------------------------------------------------------------
 # Função para testar de network está UP ou DOWN
 # uso: NET=$(GetNetworkState eth0)
 # retorna na variável "UP" ou "DOWN"
@@ -97,7 +128,7 @@ function EditConfEqualStr(){
 
 #-----------------------------------------------------------------------
 # Le parametro de Arquivo de configuração, parametro separado por "="
-# uso: GetConfEqual <Arquivo>
+# uso: GetConfEqual <Arquivo> <param>
 # Elimina as Aspas, se honverem. TODO: só se forem no começo/fim
 function GetConfEqual(){
   local ARQ=$1
