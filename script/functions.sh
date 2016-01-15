@@ -93,8 +93,8 @@ function GetLoginType(){
 # Função para editar Arquivo de configuração, parametro separado por "="
 # Formato dos parametros: "param=valor", separador é "="
 # Estilo Bash, sem <space> antes/depois do "="
-# uso: EditConfEqual <Arquivo> <param> <valor>
-# usado por: clock, function
+# uso: EditConfEqualSafe <Arquivo> <param> <valor>
+# usado por: clock, function, network
 function EditConfEqualSafe(){
   local ARQ=$1
   local PARAM=$2

@@ -23,6 +23,7 @@ CMD=$1
 # Pergunta se altera para IP fixo, apenas no VirtualBox
 # Usa todos os dados obtidos anteriormente com DHCP
 function AskIpFixo(){
+  local IP_TMP, IP_OK, IP_ABORT, IP_FIM, MSG, ERR_ST
   local NET_ARQ=/etc/sysconfig/network-scripts/ifcfg-eth0
   NET_BOOT=$(GetConfEqual $NET_ARQ BOOTPROTO)
   [ "$NET_BOOT" != "static" ] && NET_BOOT="DHCP" || NET_BOOT="STATIC"
@@ -40,21 +41,49 @@ function AskIpFixo(){
   MSG+="\n\n(Esta opção não aparece fora do VirtualBox!)"
   # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail#Yes.2Fno_box
   whiptail --title "Configuração NFAS" --yesno --defaultno "$MSG" 16 78
+
   if [ $? -eq 0 ]; then
-    # Sim:
-    FIM="N"
-    while [ $FIM != "Y" ]; do
-         MSG="\nForneça o novo IP, a configuração abaixo será mantida:"
-        MSG+="\n   NetMask=$NET_MASK"
-        MSG+="\n   Gateway=$NET_GW"
-        MSG+="\n   DNS=$NET_DNS"
-      MSG+="\n\nSugestão de compatibilidade: altere apenas a parte final do IP"
-      TMP=$(whiptail --title "Configuração NFAS" --inputbox "$MSG" 14 74 $NET_IP 3>&1 1>&2 2>&3)
-      if [ $? -eq 0 ]; then
-        FIM="Y"
+    # Sim: Vai alterar IP
+    IP_OK="N"; IP_ABORT="N"; ERR_ST=""
+    while [ "$IP_OK" != "Y" ]; do
+      IP_TMP="$NET_IP"
+      IP_FIM="N"
+      while [ "$IP_FIM" != "Y" ]; do
+           MSG="\nForneça o novo IP, a configuração abaixo será mantida:"
+          MSG+="\n   NetMask=$NET_MASK"
+          MSG+="\n   Gateway=$NET_GW"
+          MSG+="\n   DNS=$NET_DNS"
+        MSG+="\n\nSugestão de compatibilidade: altere apenas a parte final do IP"
+        MSG+="\n\n$ERR_ST"
+        IP_TMP=$(whiptail --title "Configuração NFAS" --inputbox "$MSG" 16 74 $IP_TMP 3>&1 1>&2 2>&3)
+        if [ $? -eq 0 ]; then
+          IP_FIM="Y"
+        fi
+      done #IP_FIM
+      echo "Novo IP=$IP_TMP"
+      # Verifica se IP é válido usando ipcalc
+      ipcalc -c $IP_TMP
+      if [ $? -ne 0 ]; then
+        ERR_ST="IP é inválido, por vafor tente novamente"
+        continue
       fi
-    done # loop principal
-    echo "Novo IP=$TMP"
+      # Usando ipcalc calcula o endereço de rede dos IPs velho e novo, tem que ser igual
+      local TMP1=$(ipcalc -n $NET_IP $NET_MASK)
+      local TMP2=$(ipcalc -n $IP_TMP $NET_MASK)
+      if [ "$TMP1" != "$TMP2" ]; then
+        ERR_ST="IP fornecido não pertence à MESMA REDE, por vafor tente novamente"
+        continue
+      fi
+      NET_IP=$IP_TMP
+      IP_OK="Y"
+      echo "Novo IP=$IP_TMP"
+      # Atualiza IP no arquivo de configuração: /etc/sysconfig/network-scripts/ifcfg-eth0
+      EditConfEqualSafe $NET_ARQ BOOTPROTO static
+      EditConfEqualSafe $NET_ARQ IPADDR $NET_IP
+      EditConfEqualSafe $NET_ARQ NETMASK $NET_MASK
+      # Atualiza IP no arquivo de configuração: /etc/sysconfig/network
+      EditConfEqualSafe /etc/sysconfig/network GATEWAY $NET_GW
+    done #IP_OK
   fi
 }
 
