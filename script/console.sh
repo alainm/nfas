@@ -18,6 +18,7 @@ CMD=$1
 USR=$2
 # usa as variaveis armazenadas
 . /script/info/distro.var
+. /script/info/network.var
 # Funções auxiliares
 . /script/functions.sh
 
@@ -126,6 +127,9 @@ if [ "$CMD" == "--first" ]; then
 elif [ "$CMD" == "--wellcome" ]; then
   # Mensagem inicial
   SayWellcome
+  if [ "$NEW_IP_CONTINUE" == "Y" ]; then
+    /script/first.sh --ip-continue
+  fi
 fi
 
 #-----------------------------------------------------------------------

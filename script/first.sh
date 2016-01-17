@@ -2,82 +2,98 @@
 # set -x
 
 # Script de inicialização geral, chamadao pelo boot.sh
+# Chamada:
+# /script/first.sh                Faz a primeira instalação
+# /script/first.sh --ip-continue  Continua instalação interrompida por troca de IP
+
+# Inclui funções básicas
+. /script/functions.sh
 
 echo "Parabéns, você está rodando o /script/first.sh"
 
-# Diretório de informações coletadas
-mkdir -p /script/info
-echo "NEED_BOOT=\"N\""  2>/dev/null >  /script/info/needboot.var
+# Pode ser continuação de instalação interrompida pela troca de IP
+if [ "$1" != "--ip-continue" ]; then
 
-# Primeiro verifica se a Distribuição é compatível,
-# executa o script e importa as variáveis resultantes
-/script/distro.sh
-. /script/info/distro.var
-if [ "$DISTRO_OK" != "Y" ]; then
-  MSG="A distribuição encontrada é \"$DISTRO_NAME\" versão \"$DISTRO_VERSION\"\n"
-  MSG="$MSG""As vesrões compatíveis são: \"$DISTRO_LIST\"\n\n   Abortando instalação..."
-  whiptail --title "Instalação NFAS" --msgbox "\"$MSG"\" 11 60
-  exit 1
+  # Diretório de informações coletadas
+  mkdir -p /script/info
+  echo "NEED_BOOT=\"N\""  2>/dev/null >  /script/info/needboot.var
+
+  # Primeiro verifica se a Distribuição é compatível,
+  # executa o script e importa as variáveis resultantes
+  /script/distro.sh
+  . /script/info/distro.var
+  if [ "$DISTRO_OK" != "Y" ]; then
+    MSG="A distribuição encontrada é \"$DISTRO_NAME\" versão \"$DISTRO_VERSION\"\n"
+    MSG="$MSG""As vesrões compatíveis são: \"$DISTRO_LIST\"\n\n   Abortando instalação..."
+    whiptail --title "Instalação NFAS" --msgbox "\"$MSG"\" 11 60
+    exit 1
+  else
+    MSG="A distribuição encontrada é \"$DISTRO_NAME\" versão \"$DISTRO_VERSION\"\n\n"
+    MSG+="Acione OK para começar a instalação"
+    whiptail --title "Instalação NFAS" --msgbox "\"$MSG"\" 11 60
+  fi
+
+  # atualiza todo o sistema
+  yum -y update
+  # Repositório auxiliar: https://fedoraproject.org/wiki/EPEL
+  yum -y install epel-release
+  # Instalar pacotes extra
+  PKT="man nano mcedit mc telnet bind-utils bc mlocate"
+  PKT+=" openssl openssl-devel pam pam-devel gcc gcc-c++ make git"
+  # pacote para ajudar a identificar o VirtualBox
+  PKT+=" dmidecode acpid"
+  # instala programas pequenos e úteis: htop nmon
+  PKT+=" htop nmon"
+  # pacotes para compilar MONIT e dependencias
+  PKT+=" openssl openssl-devel pam pam-devel gcc make"
+  # pacotes para POSTFIX (para Ubuntu: libsasl2-modules)
+  PKT+=" mailx cyrus-sasl-plain postfix-perl-scripts"
+  # Pacote para fail2ban
+  PKT+=" fail2ban jwhois"
+  # Pacote para relógio
+  PKT+=" ntp"
+  yum -y install $PKT
+
+  if [ $? -ne 0 ]; then
+       MSG=" Ocorreu um erro atualizando pacotes."
+    MSG+="\n\nSua conexão deve estar com problemas,"
+      MSG+="\n  tente novamente mais tarde..."
+    whiptail --title "Instalação NFAS" --msgbox "$MSG" 11 60
+    exit 1
+  fi
+
+  # Cria banco de dados para locate, varre todos os nomes de arquivos
+  updatedb
+
+  # Altera o /etc/rc.d/rc.local para chamar o /script/autostart.sh
+  cat /etc/rc.d/rc.local | grep "autostart.sh"
+  if [ $? -ne 0 ]; then
+    echo -e "\n# NFAS: executa scripts de inicialização\n/script/autostart.sh\n" >> /etc/rc.d/rc.local
+  fi
+
+  # Cria link para menu do usuário
+  ln -s /script/nfas.sh /usr/bin/nfas
+
+  ##### Roda cada script de configuração
+  # Roda as configuraçãoes próprias para o VirtualBox
+  /script/virtualbox.sh --first
+  # aborta instalação e preserva a VM
+  [ $? -ne 0 ] && exit 1
+  # Console colorido
+  /script/console.sh --first
+  # Configurações e alterações na Rede
+  /script/network.sh --first
+  # Configura Postfix, usa Hostname mas não Email
+  /script/postfix.sh --first
+  # Pergunta se quer IP fixo, so se VirtualBox
+  /script/network.sh --ipfixo
 else
-  MSG="A distribuição encontrada é \"$DISTRO_NAME\" versão \"$DISTRO_VERSION\"\n\n"
-  MSG+="Acione OK para começar a instalação"
-  whiptail --title "Instalação NFAS" --msgbox "\"$MSG"\" 11 60
-fi
-
-# atualiza todo o sistema
-yum -y update
-# Repositório auxiliar: https://fedoraproject.org/wiki/EPEL
-yum -y install epel-release
-# Instalar pacotes extra
-PKT="man nano mcedit mc telnet bind-utils bc mlocate"
-PKT+=" openssl openssl-devel pam pam-devel gcc gcc-c++ make git"
-# pacote para ajudar a identificar o VirtualBox
-PKT+=" dmidecode acpid"
-# instala programas pequenos e úteis: htop nmon
-PKT+=" htop nmon"
-# pacotes para compilar MONIT e dependencias
-PKT+=" openssl openssl-devel pam pam-devel gcc make"
-# pacotes para POSTFIX (para Ubuntu: libsasl2-modules)
-PKT+=" mailx cyrus-sasl-plain postfix-perl-scripts"
-# Pacote para fail2ban
-PKT+=" fail2ban jwhois"
-# Pacote para relógio
-PKT+=" ntp"
-yum -y install $PKT
-
-if [ $? -ne 0 ]; then
-     MSG=" Ocorreu um erro atualizando pacotes."
-  MSG+="\n\nSua conexão deve estar com problemas,"
-    MSG+="\n  tente novamente mais tarde..."
-  whiptail --title "Instalação NFAS" --msgbox "$MSG" 11 60
-  exit 1
-fi
-
-# Cria banco de dados para locate, varre todos os nomes de arquivos
-updatedb
-
-# Altera o /etc/rc.d/rc.local para chamar o /script/autostart.sh
-cat /etc/rc.d/rc.local | grep "autostart.sh"
-if [ $? -ne 0 ]; then
-  echo -e "\n# NFAS: executa scripts de inicialização\n/script/autostart.sh\n" >> /etc/rc.d/rc.local
-fi
-
-# Cria link para menu do usuário
-ln -s /script/nfas.sh /usr/bin/nfas
-
-##### Roda cada script de configuração
-# Roda as configuraçãoes próprias para o VirtualBox
-/script/virtualbox.sh --first
-# aborta instalação e preserva a VM
-[ $? -ne 0 ] && exit 1
-# Console colorido
-/script/console.sh --first
-# Configurações e alterações na Rede
-/script/network.sh --first
-# Configura Postfix, usa Hostname mas não Email
-/script/postfix.sh --first
-# Pergunta se quer IP fixo, so se VirtualBox
-# /script/network.sh --ipfixo
+  # Deslifa flag de continuação
+  EditConfEqualSafe /script/info/network.var NEW_IP_CONTINUE N
+  MSG="\n Continuando a instalação..."
+  MSG+="\n\n                   ...depois da troca de IP"
+  whiptail --title "Instalação NFAS" --msgbox "$MSG" 11 50
+fi # --ip-continue
 # Pergunta hostname e configura
 /script/hostname.sh --first
 # Pergunta dados de Email

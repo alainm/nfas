@@ -13,7 +13,12 @@ set -x
 # Processa a linha de comando
 
 CMD=$1
+# Arquivo de Informação gerado
+VAR_FILE=/script/info/network.var
+# Lê dados anteriores, se existirem
+[ -e $VAR_FILE ] && . $VAR_FILE
 # usa as variaveis armazenadas
+. /script/info/network.var
 . /script/info/distro.var
 . /script/info/virtualbox.var
 # Inclui funções básicas
@@ -75,7 +80,6 @@ function AskIpFixo(){
         continue
       fi
       NET_IP=$IP_TMP
-      IP_OK="Y"
       echo "Novo IP=$IP_TMP"
       # Atualiza IP no arquivo de configuração: /etc/sysconfig/network-scripts/ifcfg-eth0
       EditConfEqualSafe $NET_ARQ BOOTPROTO static
@@ -83,8 +87,35 @@ function AskIpFixo(){
       EditConfEqualSafe $NET_ARQ NETMASK $NET_MASK
       # Atualiza IP no arquivo de configuração: /etc/sysconfig/network
       EditConfEqualSafe /etc/sysconfig/network GATEWAY $NET_GW
+      # Prepara para Reboot: Salva vatiáveis
+      NEW_IP_CONTINUE="Y"
+      SaveNetVars
+
+      set +x
+      echo -e "\n         ┌──────────────────────────────────────────────┐"
+      echo -e   "         │         A VM vai rebootar, aguarde...        │"
+      echo -e   "         │                                              │"
+      echo -e   "         │           Reconecte com O NOVO IP            │"
+      echo -e   "         │          para continuar a instalação         │"
+      echo -e   "         └──────────────────────────────────────────────┘\n"
+      # Determina o PID desta conexão do SSHD
+      PID_SSH=$(ps aux | grep "ssh" | grep "@${SSH_TTY:5}" |  awk '{print $2}'); \
+      # Executa se interrupsão quando desconectar
+      nohup $( kill $PID_SSH; reboot) &
+
+      IP_OK="Y"
     done #IP_OK
   fi
+}
+
+#-----------------------------------------------------------------------
+# Salva variáveis de informações coletadas, outros pacotes vão utilizar
+function SaveNetVars(){
+  # Verifica se variáveis existem, só a primeira é garantida
+  [ -z "$NET_IP" ] && NET_IP="DHCP"
+  [ -z "$NEW_IP_CONTINUE" ] && NEW_IP_CONTINUE="N"
+  echo "NET_IP=$NET_IP"                            2>/dev/null >  $VAR_FILE
+  echo "NEW_IP_CONTINUE=$NEW_IP_CONTINUE"          2>/dev/null >> $VAR_FILE
 }
 
 #-----------------------------------------------------------------------
