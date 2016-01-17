@@ -88,6 +88,7 @@ if [ "$1" != "--ip-continue" ]; then
   # Pergunta se quer IP fixo, so se VirtualBox
   /script/network.sh --ipfixo
 else
+  echo "Continuando instalação após troca de IP"
   # Deslifa flag de continuação
   EditConfEqualSafe /script/info/network.var NEW_IP_CONTINUE N
   MSG="\n Continuando a instalação..."
