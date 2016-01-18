@@ -112,7 +112,8 @@ function AskIpFixo(){
       PID_SSH=$(ps aux | grep "ssh" | grep "@${SSH_TTY:5}" |  awk '{print $2}')
       # Executa sem interrupsão após desconectar
       nohup bash -c "kill $PID_SSH; reboot" &> /dev/null < /dev/null &
-
+      # Encerra execução do script, o reboot roda em segundo plano!
+      exit 1
       IP_OK="Y"
     done #IP_OK
   fi

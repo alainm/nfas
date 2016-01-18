@@ -38,7 +38,7 @@ if [ "$1" != "--ip-continue" ]; then
   # Repositório auxiliar: https://fedoraproject.org/wiki/EPEL
   yum -y install epel-release
   # Instalar pacotes extra
-  PKT="man nano mcedit mc telnet bind-utils bc mlocate"
+  PKT="man nano mc telnet bind-utils bc mlocate"
   PKT+=" openssl openssl-devel pam pam-devel gcc gcc-c++ make git"
   # pacote para ajudar a identificar o VirtualBox
   PKT+=" dmidecode acpid"
@@ -85,10 +85,10 @@ if [ "$1" != "--ip-continue" ]; then
   /script/network.sh --first
   # Configura Postfix, usa Hostname mas não Email
   /script/postfix.sh --first
-  # Pergunta se quer IP fixo, so se VirtualBox
+  # Pergunta se quer IP fixo, so se VirtualBox. Encerra se reboot
   /script/network.sh --ipfixo
+  [ $? -ne 0 ]; exit 1
 else
-  echo "Continuando instalação após troca de IP"
   # Deslifa flag de continuação
   EditConfEqualSafe /script/info/network.var NEW_IP_CONTINUE N
   MSG="\n Continuando a instalação..."

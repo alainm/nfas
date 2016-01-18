@@ -68,6 +68,12 @@ function AddColorToFile(){
       echo 'export PS1="\[$(tput bold)\]\[$(tput setaf 2)\][\[$(tput setaf 4)\]\u\[$(tput setaf 2)\]@\[$(tput setaf 4)\]\h \[$(tput setaf 2)\]\W\[$(tput setaf 2)\]]\[$(tput setaf 2)\]\\$ \[$(tput setaf 7)\]\[$(tput sgr0)\]"' >> $ARQ
       echo '# Mensagem de segurança e boas vindas, precisa do sudo para acesso ao Log'    >> $ARQ
       echo 'sudo -E /script/console.sh --wellcome'                                        >> $ARQ
+      echo 'if [ "$TERM" != "linux" ] && [ -n "$SSH_TTY" ]; then'                         >> $ARQ
+      echo '  # Só executa se login pelo SSH'                                             >> $ARQ
+      echo '  /script/console.sh --wellcome'                                              >> $ARQ
+      echo 'else'                                                                         >> $ARQ
+      echo '  echo -e "\n Acesso seguro via CONSOLE! Bemvindo ao \"$(hostname)\"\n"'      >> $ARQ
+      echo 'fi'                                                                           >> $ARQ
     fi
     echo ''                                                                               >> $ARQ
   fi
@@ -127,7 +133,7 @@ if [ "$CMD" == "--first" ]; then
 elif [ "$CMD" == "--wellcome" ]; then
   # Mensagem inicial
   SayWellcome
-  if [ "$NEW_IP_CONTINUE" == "Y" ]; then
+  if [ "$NEW_IP_CONTINUE" == "Y" ] && [ -n "$SSH_TTY" ]; then
     /script/first.sh --ip-continue
   fi
 fi
