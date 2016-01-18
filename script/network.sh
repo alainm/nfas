@@ -99,9 +99,9 @@ function AskIpFixo(){
       echo -e   "         │          para continuar a instalação         │"
       echo -e   "         └──────────────────────────────────────────────┘\n"
       # Determina o PID desta conexão do SSHD
-      PID_SSH=$(ps aux | grep "ssh" | grep "@${SSH_TTY:5}" |  awk '{print $2}'); \
+      PID_SSH=$(ps aux | grep "ssh" | grep "@${SSH_TTY:5}" |  awk '{print $2}')
       # Executa se interrupsão quando desconectar
-      nohup $( kill $PID_SSH; reboot) &
+      nohup bash -c "kill $PID_SSH; reboot)" &> /dev/null < /dev/null &
 
       IP_OK="Y"
     done #IP_OK
