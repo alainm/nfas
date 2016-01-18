@@ -81,16 +81,26 @@ function AskIpFixo(){
       fi
       NET_IP=$IP_TMP
       echo "Novo IP=$IP_TMP"
-      # Atualiza IP no arquivo de configuração: /etc/sysconfig/network-scripts/ifcfg-eth0
-      EditConfEqualSafe $NET_ARQ BOOTPROTO static
-      EditConfEqualSafe $NET_ARQ IPADDR $NET_IP
-      EditConfEqualSafe $NET_ARQ NETMASK $NET_MASK
-      # Atualiza IP no arquivo de configuração: /etc/sysconfig/network
-      EditConfEqualSafe /etc/sysconfig/network GATEWAY $NET_GW
+      if [ "$DISTRO_NAME" == "CentOS" ]; then
+        # Atualiza IP no arquivo de configuração: /etc/sysconfig/network-scripts/ifcfg-eth0
+        EditConfEqualSafe $NET_ARQ BOOTPROTO static
+        EditConfEqualSafe $NET_ARQ IPADDR $NET_IP
+        EditConfEqualSafe $NET_ARQ NETMASK $NET_MASK
+        # Atualiza IP no arquivo de configuração: /etc/sysconfig/network
+        EditConfEqualSafe /etc/sysconfig/network GATEWAY $NET_GW
+      else
+        # os arquivos de configuração do Ubuntu são outros
+        echo "Ubuntu não implementado"
+      fi
       # Prepara para Reboot: Salva vatiáveis
       NEW_IP_CONTINUE="Y"
       SaveNetVars
-
+      # Avisa que vai rebootar
+         MSG="\n O Sistema precisa rebootar com o NOVO IP..."
+      MSG+="\n\n Aguarde o fim da inicialização e conecte novamente."
+        MSG+="\n   A instalação vai continuar automáticamente."
+      whiptail --title "Instalação NFAS" --msgbox "$MSG" 12 60
+      # Mensagem no terminal após desconexão
       set +x
       echo -e "\n         ┌──────────────────────────────────────────────┐"
       echo -e   "         │         A VM vai rebootar, aguarde...        │"
@@ -100,8 +110,8 @@ function AskIpFixo(){
       echo -e   "         └──────────────────────────────────────────────┘\n"
       # Determina o PID desta conexão do SSHD
       PID_SSH=$(ps aux | grep "ssh" | grep "@${SSH_TTY:5}" |  awk '{print $2}')
-      # Executa se interrupsão quando desconectar
-      nohup bash -c "kill $PID_SSH; reboot)" &> /dev/null < /dev/null &
+      # Executa sem interrupsão após desconectar
+      nohup bash -c "kill $PID_SSH; reboot" &> /dev/null < /dev/null &
 
       IP_OK="Y"
     done #IP_OK
