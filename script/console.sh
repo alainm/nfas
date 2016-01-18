@@ -102,14 +102,20 @@ function SayWellcome(){
   local PASS_AUTH=$(GetConfSpace /etc/ssh/sshd_config PasswordAuthentication)
   if [ "$LOGIN_TYPE" == "password" ]; then
     # Acesso foi inseguro usando senha
-    echo -e "\nATENÇÃO: seu login foi feito com SENHA, isto não é seguro!!!"
-    echo -e "\nCadastre uma chave pública para acesso e comece a usá-la."
-    echo -e "  Utilize o comando nfas (como root) para fazê-lo.\n"
+    echo -e "\n         ┌──────────────────────────────────────┐"
+    echo -e   "         │     Esta Conexão não é SEGURA ...    │"
+    echo -e   "         └──────────────────────────────────────┘"
+    echo -e "Seu login foi feito com SENHA"
+    echo -e "Cadastre uma chave pública para acesso e comece a usá-la."
+    echo -e "Utilize o comando nfas (como root) para fazê-lo.\n"
   elif [ "$LOGIN_TYPE" == "publickey" ]; then
     if [ "$PASS_AUTH" == "yes" ]; then
       # Acesso foi seguro usando PublicKey mas senha está habilitada
-      echo -e "\nATENÇÃO: você usou uma Chave Pública, mas o acesso por SENHA é permitido!!!"
-      echo -e "ISTO NÃO É SEGURO, utilize o comando nfas (como root) para deshabilitar.\n"
+      echo -e "\n         ┌──────────────────────────────────────┐"
+      echo -e   "         │     Esta Conexão não é SEGURA ...    │"
+      echo -e   "         └──────────────────────────────────────┘"
+      echo -e "Você usou uma Chave Pública, mas o acesso por SENHA está habilitado!!!"
+      echo -e "Utilize o comando nfas (como root) para deshabilitar acesso por SENHA.\n"
     else
       # Acesso com PublicKey ok
       echo -e "\n Acesso seguro por Chave Pública!"
