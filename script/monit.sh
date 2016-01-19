@@ -61,7 +61,7 @@ if [ "$CMD" == "--first" ]; then
     make
     make install
     popd      # Volta ao diretório original
-    rm -fd /script/monit
+    rm -fr /script/monit
     # OBS: o comando "monit -t" mostra onde deve estar o arquivo de configuração:
     #   Cannot find the control file at ~/.monitrc, /etc/monitrc, /etc/monit/monitrc, /usr/local/etc/monitrc or at ./monitrc
   fi
