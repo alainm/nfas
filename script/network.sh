@@ -46,77 +46,75 @@ function AskIpFixo(){
   MSG+="\n\n(Esta opção não aparece fora do VirtualBox!)"
   # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail#Yes.2Fno_box
   whiptail --title "Configuração NFAS" --yesno --defaultno "$MSG" 16 78
-
-  if [ $? -eq 0 ]; then
-    # Sim: Vai alterar IP
-    IP_OK="N"; IP_ABORT="N"; ERR_ST=""
-    while [ "$IP_OK" != "Y" ]; do
-      IP_TMP="$NET_IP"
-      IP_FIM="N"
-      while [ "$IP_FIM" != "Y" ]; do
-           MSG="\nForneça o novo IP, a configuração abaixo será mantida:"
-          MSG+="\n   NetMask=$NET_MASK"
-          MSG+="\n   Gateway=$NET_GW"
-          MSG+="\n   DNS=$NET_DNS"
-        MSG+="\n\nSugestão de compatibilidade: altere apenas a parte final do IP"
-        MSG+="\n\n$ERR_ST"
-        IP_TMP=$(whiptail --title "Configuração NFAS" --inputbox "$MSG" 16 74 $IP_TMP 3>&1 1>&2 2>&3)
-        if [ $? -eq 0 ]; then
-          IP_FIM="Y"
-        fi
-      done #IP_FIM
-      echo "Novo IP=$IP_TMP"
-      # Verifica se IP é válido usando ipcalc
-      ipcalc -c $IP_TMP
-      if [ $? -ne 0 ]; then
-        ERR_ST="IP é inválido, por vafor tente novamente"
-        continue
-      fi
-      # Usando ipcalc calcula o endereço de rede dos IPs velho e novo, tem que ser igual
-      local TMP1=$(ipcalc -n $NET_IP $NET_MASK)
-      local TMP2=$(ipcalc -n $IP_TMP $NET_MASK)
-      if [ "$TMP1" != "$TMP2" ]; then
-        ERR_ST="IP fornecido não pertence à MESMA REDE, por vafor tente novamente"
-        continue
-      fi
-      NET_IP=$IP_TMP
-      echo "Novo IP=$IP_TMP"
-      if [ "$DISTRO_NAME" == "CentOS" ]; then
-        # Atualiza IP no arquivo de configuração: /etc/sysconfig/network-scripts/ifcfg-eth0
-        EditConfEqualSafe $NET_ARQ BOOTPROTO static
-        EditConfEqualSafe $NET_ARQ IPADDR $NET_IP
-        EditConfEqualSafe $NET_ARQ NETMASK $NET_MASK
-        # Atualiza IP no arquivo de configuração: /etc/sysconfig/network
-        EditConfEqualSafe /etc/sysconfig/network GATEWAY $NET_GW
-      else
-        # os arquivos de configuração do Ubuntu são outros
-        echo "Ubuntu não implementado"
-      fi
-      # Prepara para Reboot: Salva vatiáveis
-      NEW_IP_CONTINUE="Y"
-      SaveNetVars
-      # Avisa que vai rebootar
-         MSG="\n O Sistema precisa rebootar com o NOVO IP..."
-      MSG+="\n\n Aguarde o fim da inicialização e conecte novamente."
-        MSG+="\n   A instalação vai continuar automáticamente."
-      whiptail --title "Instalação NFAS" --msgbox "$MSG" 12 60
-      # Mensagem no terminal após desconexão
-      set +x
-      echo -e "\n         ┌──────────────────────────────────────────────┐"
-      echo -e   "         │         A VM vai rebootar, aguarde...        │"
-      echo -e   "         │                                              │"
-      echo -e   "         │           Reconecte com O NOVO IP            │"
-      echo -e   "         │          para continuar a instalação         │"
-      echo -e   "         └──────────────────────────────────────────────┘\n"
-      # Determina o PID desta conexão do SSHD
-      PID_SSH=$(ps aux | grep "ssh" | grep "@${SSH_TTY:5}" |  awk '{print $2}')
-      # Executa sem interrupsão após desconectar
-      nohup bash -c "kill $PID_SSH; reboot" &> /dev/null < /dev/null &
-      # Encerra execução do script, o reboot roda em segundo plano!
-      exit 1
-      IP_OK="Y"
-    done #IP_OK
+  if [ $? -ne 0 ]; then
+    exit 0
   fi
+
+  # Sim: Vai alterar IP
+  IP_OK="N"; IP_ABORT="N"; ERR_ST=""
+  while [ "$IP_OK" != "Y" ]; do
+    IP_TMP="$NET_IP"
+       MSG="\nForneça o novo IP, a configuração abaixo será mantida:"
+      MSG+="\n   NetMask=$NET_MASK"
+      MSG+="\n   Gateway=$NET_GW"
+      MSG+="\n   DNS=$NET_DNS"
+    MSG+="\n\nSugestão de compatibilidade: altere apenas a parte final do IP"
+    MSG+="\n\n$ERR_ST"
+    IP_TMP=$(whiptail --title "Configuração NFAS" --inputbox "$MSG" 16 74 $IP_TMP 3>&1 1>&2 2>&3)
+    if [ $? -ne 0 ]; then
+      exit 0
+    fi
+    echo "Novo IP=$IP_TMP"
+    # Verifica se IP é válido usando ipcalc
+    ipcalc -c $IP_TMP
+    if [ $? -ne 0 ]; then
+      ERR_ST="IP é inválido, por vafor tente novamente"
+      continue
+    fi
+    # Usando ipcalc calcula o endereço de rede dos IPs velho e novo, tem que ser igual
+    local TMP1=$(ipcalc -n $NET_IP $NET_MASK)
+    local TMP2=$(ipcalc -n $IP_TMP $NET_MASK)
+    if [ "$TMP1" != "$TMP2" ]; then
+      ERR_ST="IP fornecido não pertence à MESMA REDE, por vafor tente novamente"
+      continue
+    fi
+    NET_IP=$IP_TMP
+    echo "Novo IP=$IP_TMP"
+    if [ "$DISTRO_NAME" == "CentOS" ]; then
+      # Atualiza IP no arquivo de configuração: /etc/sysconfig/network-scripts/ifcfg-eth0
+      EditConfEqualSafe $NET_ARQ BOOTPROTO static
+      EditConfEqualSafe $NET_ARQ IPADDR $NET_IP
+      EditConfEqualSafe $NET_ARQ NETMASK $NET_MASK
+      # Atualiza IP no arquivo de configuração: /etc/sysconfig/network
+      EditConfEqualSafe /etc/sysconfig/network GATEWAY $NET_GW
+    else
+      # os arquivos de configuração do Ubuntu são outros
+      echo "Ubuntu não implementado"
+    fi
+    # Prepara para Reboot: Salva vatiáveis
+    NEW_IP_CONTINUE="Y"
+    SaveNetVars
+    # Avisa que vai rebootar
+       MSG="\n O Sistema precisa rebootar com o NOVO IP..."
+    MSG+="\n\n Aguarde o fim da inicialização e conecte novamente."
+      MSG+="\n   A instalação vai continuar automáticamente."
+    whiptail --title "Instalação NFAS" --msgbox "$MSG" 12 60
+    # Mensagem no terminal após desconexão
+    set +x
+    echo -e "\n         ┌──────────────────────────────────────────────┐"
+    echo -e   "         │         A VM vai rebootar, aguarde...        │"
+    echo -e   "         │                                              │"
+    echo -e   "         │           Reconecte com O NOVO IP            │"
+    echo -e   "         │          para continuar a instalação         │"
+    echo -e   "         └──────────────────────────────────────────────┘\n"
+    # Determina o PID desta conexão do SSHD
+    PID_SSH=$(ps aux | grep "ssh" | grep "@${SSH_TTY:5}" |  awk '{print $2}')
+    # Executa sem interrupsão após desconectar
+    nohup bash -c "kill $PID_SSH; reboot" &> /dev/null < /dev/null &
+    # Encerra execução do script, o reboot roda em segundo plano!
+    exit 1
+    IP_OK="Y"
+  done #IP_OK
 }
 
 #-----------------------------------------------------------------------

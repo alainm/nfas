@@ -65,15 +65,6 @@ if [ "$1" != "--ip-continue" ]; then
   # Cria banco de dados para locate, varre todos os nomes de arquivos
   updatedb
 
-  # Altera o /etc/rc.d/rc.local para chamar o /script/autostart.sh
-  cat /etc/rc.d/rc.local | grep "autostart.sh"
-  if [ $? -ne 0 ]; then
-    echo -e "\n# NFAS: executa scripts de inicialização\n/script/autostart.sh\n" >> /etc/rc.d/rc.local
-  fi
-
-  # Cria link para menu do usuário
-  ln -s /script/nfas.sh /usr/bin/nfas
-
   ##### Roda cada script de configuração
   # Roda as configuraçãoes próprias para o VirtualBox
   /script/virtualbox.sh --first
@@ -87,7 +78,7 @@ if [ "$1" != "--ip-continue" ]; then
   /script/postfix.sh --first
   # Pergunta se quer IP fixo, so se VirtualBox. Encerra se reboot
   /script/network.sh --ipfixo
-  [ $? -ne 0 ]; exit 1
+  [ $? -ne 0 ] && exit 1
 else
   # Deslifa flag de continuação
   EditConfEqualSafe /script/info/network.var NEW_IP_CONTINUE N
@@ -97,18 +88,29 @@ else
 fi # --ip-continue
 # Pergunta hostname e configura
 /script/hostname.sh --first
+# Setup do relógio
+/script/clock.sh --first
+# Executa scripts de boot: Firewall, etc...
+/script/autostart.sh --first
 # Pergunta dados de Email
 /script/email.sh --first
 # Monitoramente da máquina, tem que vir depois do hostname.sh e email.sh
 /script/monit.sh --first
-# Setup do relógio
-/script/clock.sh --first
 # Configurações de SSH e acesso de ROOT
 /script/ssh.sh --first
 # Instala programas
 /script/progs.sh --first
 # Cria novo usuário
 /script/newuser.sh
+
+# Altera o /etc/rc.d/rc.local para chamar o /script/autostart.sh
+cat /etc/rc.d/rc.local | grep "autostart.sh"
+if [ $? -ne 0 ]; then
+  echo -e "\n# NFAS: executa scripts de inicialização\n/script/autostart.sh\n" >> /etc/rc.d/rc.local
+fi
+
+# Cria link para menu do usuário
+ln -s /script/nfas.sh /usr/bin/nfas
 
 # ===== FIM do first.sh =====
 # => executa o /script/autostart.sh para iniciar
