@@ -191,10 +191,14 @@ function GetFail2banEmail(){
 # Reconfigura IPTABLES para o SSH
 function SetSshIptables(){
   # Limita conexões a 5 por minuto => Eliminado, gera mais problemas que resolve
-  # /sbin/iptables -A IN_SSH -p tcp --dport $SSH_PORT -m state --state NEW -m recent --set
-  # /sbin/iptables -A IN_SSH -p tcp --dport $SSH_PORT -m state --state NEW -m recent --update --seconds 60 --hitcount 5 -j DROP
+  # iptables -A IN_SSH -p tcp --dport $SSH_PORT -m state --state NEW -m recent --set
+  # iptables -A IN_SSH -p tcp --dport $SSH_PORT -m state --state NEW -m recent --update --seconds 60 --hitcount 5 -j DROP
   # Libera acesso à porta usada pelo SSH
-  /sbin/iptables -A IN_SSH -p tcp --dport $SSH_PORT -m state --state NEW -j ACCEPT
+  iptables -A IN_SSH -p tcp --dport $SSH_PORT -m state --state NEW -j ACCEPT
+  # ídem para IPv6
+  if which ip6tables >/dev/null; then
+    ip6tables -A IN_SSH -p tcp --dport $SSH_PORT -m state --state NEW -j ACCEPT
+  fi
 }
 
 #-----------------------------------------------------------------------
