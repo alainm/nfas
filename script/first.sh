@@ -52,6 +52,8 @@ if [ "$1" != "--ip-continue" ]; then
   PKT+=" fail2ban jwhois"
   # Pacote para relógio
   PKT+=" ntp"
+  # Pacotes para o HAproxy e Lua
+  PKT+=" pcre-devel readline-devel"
   yum -y install $PKT
 
   if [ $? -ne 0 ]; then
