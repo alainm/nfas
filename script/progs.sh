@@ -82,6 +82,7 @@ function NodeInstall(){
   wget --no-dns-cache -4 -r $NODE_URL -O /root/$NODE_FILE
   pushd /usr/local
   tar --strip-components 1 -xzf /root/$NODE_FILE
+  # para Ubuntu: https://github.com/nodesource/distributions#debinstall
   popd
   # Mostra versões para debug
   node -v
