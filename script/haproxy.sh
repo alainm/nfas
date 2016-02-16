@@ -73,6 +73,17 @@ function GetVerLua(){
 #-----------------------------------------------------------------------
 # Instala HAproxy 1.6 com LUA
 # http://blog.haproxy.com/2015/10/14/whats-new-in-haproxy-1-6/
+# Verifica opções de compilação: http://stackoverflow.com/questions/34986893/getting-error-as-unknown-keyword-ssl-in-haproxy-configuration-file
+  # $ haproxy -vv
+  # HA-Proxy version 1.6.3 2015/12/25
+  # [...]
+  # Built with OpenSSL version : OpenSSL 1.0.1e 11 Feb 2013
+  # Running on OpenSSL version : OpenSSL 1.0.1e 11 Feb 2013
+  # OpenSSL library supports TLS extensions : yes
+  # OpenSSL library supports SNI : yes
+  # OpenSSL library supports prefer-server-ciphers : yes
+  # [...]
+
 function HaproxyInstall(){
   #cria o diretórios de instalação
   mkdir -p  $INSTALL_DIR
@@ -95,8 +106,10 @@ function HaproxyInstall(){
   wget $HAPROXY_DL/$HAPROXY_VER.tar.gz
   tar xf $HAPROXY_VER.tar.gz
   cd $HAPROXY_VER
-  make TARGET=linux2628 CPU=x8664 USEOPENSSL=1 USEZLIB=1 USEPCRE=1 USELUA=yes LDFLAGS=-ldl
+  make TARGET=linux2628 CPU=x8664 USE_OPENSSL=1 USE_ZLIB=1 USE_PCRE=1 USE_LUA=yes LDFLAGS=-ldl
   make install
+  # Verifica compilação e opções
+  ./haproxy -vv > /root/haproxy.opt.txt
   # Cria um link, alguns scripts usam o binário no /usr/sbin
   ln -sf /usr/local/sbin/haproxy /usr/sbin/haproxy
 
@@ -113,11 +126,11 @@ function HaproxyInstall(){
   # cria os diretórios em etc e stats.
   mkdir -p /var/lib/haproxy
   touch /var/lib/haproxy/stats
-  # TODO: precisa do logrotate ?????????????
+  # TODO: precisa do logrotate ????????????? => sim
 
   # Volta e remove diretório temporário
   popd
-  # rm -rf $INSTALL_DIR
+  rm -rf $INSTALL_DIR
 }
 
 #-----------------------------------------------------------------------
@@ -146,6 +159,9 @@ function HaproxyConfig(){
   # Le o nível de segurança desejado, fica no $HAP_CRYPT_LEVEL
   GetHaproxyLevel
 
+# Provisório: sem SSL
+HAP_WITH_SSL="N"
+
   ARQ="/etc/haproxy/haproxy.cfg"
   if [ ! -e $ARQ ]; then
     echo "##################################################"               >  $ARQ
@@ -157,16 +173,16 @@ function HaproxyConfig(){
     echo "global"                                                           >> $ARQ
     echo "  maxconn 20000"                                                  >> $ARQ
     echo "  #{NFAS-Cfg-Ini}"                                                >> $ARQ
-#     if [ "$HAP_CRYPT_LEVEL" == "1" ]; then
-#       echo -e "$HAP_GLOBAL_N1"                                              >> $ARQ
-#     elif [ "$HAP_CRYPT_LEVEL" == "3" ]; then
-#       echo -e "$HAP_GLOBAL_N3"                                              >> $ARQ
-#     else
-#       # default é nível Intermediário
-#       echo -e "$HAP_GLOBAL_N2"                                              >> $ARQ
-#     fi
+    if [ "$HAP_CRYPT_LEVEL" == "1" ]; then
+      echo -e "$HAP_GLOBAL_N1"                                              >> $ARQ
+    elif [ "$HAP_CRYPT_LEVEL" == "3" ]; then
+      echo -e "$HAP_GLOBAL_N3"                                              >> $ARQ
+    else
+      # default é nível Intermediário
+      echo -e "$HAP_GLOBAL_N2"                                              >> $ARQ
+    fi
     echo "  #{NFAS-Cfg-Fim}"                                                >> $ARQ
-#     echo "  ssl-default-bind-options no-tls-tickets"                        >> $ARQ
+    echo "  ssl-default-bind-options no-tls-tickets"                        >> $ARQ
     echo ""                                                                 >> $ARQ
     echo "defaults"                                                         >> $ARQ
     echo "  mode http"                                                      >> $ARQ
@@ -205,6 +221,7 @@ function HaproxyConfig(){
     echo "  default_backend http-backend"                                   >> $ARQ
 #   fi
 
+    if [ "$HAP_WITH_SSL" == "Y" ]; then
 #   ARQ="/etc/haproxy/https.cfg"
 #   if [ ! -e $ARQ ]; then
 #     echo "##################################################"               >  $ARQ
@@ -234,6 +251,7 @@ function HaproxyConfig(){
     echo ""                                                                 >> $ARQ
     echo "  default_backend http-backend"                                   >> $ARQ
 #   fi
+  fi
 
 #   ARQ="/etc/haproxy/backend/http-default.cfg"
 #   mkdir -p /etc/haproxy/backend
@@ -245,9 +263,14 @@ function HaproxyConfig(){
 #     echo "##  @author original: Marcos de Lima Carlos"                      >> $ARQ
     echo ""                                                                 >> $ARQ
     echo "backend http-backend"                                             >> $ARQ
-    echo "    redirect scheme https if !{ ssl_fc }"                         >> $ARQ
+    if [ "$HAP_WITH_SSL" == "Y" ]; then
+      echo "    redirect scheme https if !{ ssl_fc }"                       >> $ARQ
+    fi
 #   fi
 
+  # Verifica arquivo de configuração
+  haproxy -c -q -V -f /etc/haproxy/haproxy.cfg
+  # instala ou restart serviço
   if [ "$CMD" == "--first" ]; then
     chkconfig --add haproxy
     service haproxy start
@@ -271,7 +294,8 @@ function SaveHaproxyVars(){
 TITLE="NFAS - Configuração do HAproxy"
 if [ "$CMD" == "--first" ]; then
   # Instala HAproxy, não configura nem inicializa
-#  HaproxyInstall
+#   HaproxyInstall
+rm -f /etc/haproxy/haproxy.cfg
   HaproxyConfig
 
 fi
