@@ -4,6 +4,7 @@ set -x
 # Script para Instalar e Configurar o HAprozy
 # Uso: /script/haproxy.sh <cmd>
 # <cmd>: --first       primeira instalação
+# <cmd>: --app <user>  altera configuração da Aplicação
 
 # Instalando o Haproxy do fonte
 # @author original Marcos de Lima Carlos, adaptado por Alain Mouette
@@ -16,14 +17,37 @@ HAPROXY_DL="http://www.haproxy.org/download/1.6/src"
 LUA_DL="http://www.lua.org/ftp"
 INSTALL_DIR="/script/install"
 
+#-----------------------------------------------------------------------
+# Strings de configuração do HAproxy
+# Configurações de: https://mozilla.github.io/server-side-tls/ssl-config-generator/
+#   e https://wiki.mozilla.org/Security/Server_Side_TLS#Recommended_configurations
+#
+# Nível 1: MODERNO
+   HAP_GLOBAL_N1="  # set default parameters to the modern configuration"
+HAP_GLOBAL_N1+="\n  tune.ssl.default-dh-param 2048"
+HAP_GLOBAL_N1+="\n  ssl-default-bind-ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!3DES:!MD5:!PSK"
+    HAP_HTTPS_N1="  bind  :443 no-sslv3 no-tlsv10 crt /etc/haproxy/certs"
+# Nível 2: INTERMEDIARIO
+   HAP_GLOBAL_N2="  # set default parameters to the intermediate configuration"
+HAP_GLOBAL_N2+="\n  tune.ssl.default-dh-param 2048"
+HAP_GLOBAL_N2+="\n  ssl-default-bind-ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:ECDHE-RSA-DES-CBC3-SHA:ECDHE-ECDSA-DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA"
+    HAP_HTTPS_N2="  bind  :443 ssl no-sslv3 crt /etc/haproxy/certs"
+# Nível 3: ANTIGO
+   HAP_GLOBAL_N3="  # set default parameters to the old configuration"
+HAP_GLOBAL_N3+="\n  tune.ssl.default-dh-param 1024"
+HAP_GLOBAL_N3+="\n  ssl-default-bind-ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:ECDHE-RSA-DES-CBC3-SHA:ECDHE-ECDSA-DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:DES-CBC3-SHA:HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA"
+    HAP_HTTPS_N3="  bind  :443 ssl crt /etc/haproxy/certs"
+
 #=======================================================================
 # Processa a linha de comando
 CMD=$1
+HAPP=$2
 # Lê dados anteriores se existirem
 . /script/info/distro.var
 . /script/info/email.var
 VAR_FILE="/script/info/haproxy.var"
 [ -e $VAR_FILE ] && . $VAR_FILE
+TITLE="NFAS - Configuração do HAproxy"
 
 #-----------------------------------------------------------------------
 # Pergunta nível de Segurança do HAproxy
@@ -52,6 +76,114 @@ function GetHaproxyLevel(){
 }
 
 #-----------------------------------------------------------------------
+# Lê dados de uma APP se existirem
+# Usa a variável $HAPP para identificar
+function GetSingleAppVars(){
+  local APP_FILE="/script/info/hap-$HAPP.var"
+  # Apaga variáveis anteriores e gera compatibilidade
+  HAPP_HTTP="Y"
+  HAPP_HTTPS="N"
+  HAPP_URIS=""
+  HAPP_INIT=""
+  if [ -e $APP_FILE ]; then
+    # Lê arquivo já existente
+    . $APP_FILE
+  fi
+}
+
+#-----------------------------------------------------------------------
+# Salve dados de uma APP
+# Usa a variável $HAPP para identificar
+function SaveSingleAppVars(){
+  local APP_FILE="/script/info/hap-$HAPP.var"
+  echo "HAPP_HTTP=\"$HAPP_HTTP\""                    2>/dev/null >  $APP_FILE
+  echo "HAPP_HTTPS=\"$HAPP_HTTPS\""                  2>/dev/null >> $APP_FILE
+  echo "HAPP_URIS=\"$HAPP_URIS\""                    2>/dev/null >> $APP_FILE
+  echo "HAPP_INIT=\"Y\""                             2>/dev/null >> $APP_FILE
+}
+
+#-----------------------------------------------------------------------
+# Pergunta Nível de Conexão Segura de uma Aplicação
+# HTTP e/ou HTTPS
+# Retorna: 0=alteração completada, 1=cancelada
+function GetAppConnType(){
+  local DEF_OPT,MSG,MENU_IT
+   MSG="\nSelecione o tipo de Conexão para o seu Aplicativo."
+  MSG+="\nOs certificados serão providenciados automáticamente"
+  MSG+="\n usando o Let's Encrypt."
+  if [ "$HAPP_INIT" != "Y" ]; then
+    DEF_OPT="Só HTTPS"
+    MSG+="\n\n"
+  else
+    if [ "$HAPP_HTTP" != "Y" ] &&  [ "$HAPP_HTTPS" == "Y" ]; then
+      DEF_OPT="Só HTTPS"
+    elif [ "$HAPP_HTTP" == "Y" ] &&  [ "$HAPP_HTTPS" == "Y" ]; then
+      DEF_OPT="Ambos"
+    else
+      DEF_OPT="Só HTTP"
+    fi
+    MSG+="\n\n Sua opção atual é $DEF_OPT"
+  fi
+  MENU_IT=$(whiptail --title "$TITLE"                                \
+    --menu "$MSG" --default-item "$DEF_OPT" --fb 20 70 3             \
+    "Só HTTPS" "  Só aceita conexão SEGURA (HTTP será redirecionado)"  \
+    "Ambos"    "  Implementa ambos e não redireciona"                  \
+    "Só HTTP"  "  Só implementa HTTP simples (só para testes)"         \
+    3>&1 1>&2 2>&3)
+  if [ $? != 0 ]; then
+    echo "Seleção cancelada."
+    exit 1
+  fi
+
+  # Interpreta Opções
+  if [ "$MENU_IT" == "Só HTTPS" ];then
+    HAPP_HTTP="N"
+    HAPP_HTTPS="Y"
+  elif [ "$MENU_IT" == "Ambos" ];then
+    HAPP_HTTP="Y"
+    HAPP_HTTPS="Y"
+  else
+    HAPP_HTTP="Y"
+    HAPP_HTTPS="N"
+  fi
+  return 0
+}
+
+#-----------------------------------------------------------------------
+# Pergunta os Domínios e URI de uma Aplicação
+# Aceita lista, mostra anterior para alterar
+# Retorna: 0=alteração completada, 1=cancelada
+function GetAppUriList(){
+  return 0
+}
+
+#-----------------------------------------------------------------------
+# Pergunta quantos Workers para esta aplicação
+# Retorna: 0=alteração completada, 1=cancelada
+function GetWorkersNum(){
+  return 0
+}
+
+#-----------------------------------------------------------------------
+# Edita Configurações de uma App
+# Retorna: 0=alteração completada, 1=cancelada
+function EditAppConfig(){
+  # Lê dados desta aplicação, se existirem
+  GetSingleAppVars
+  # Pergunta tipo de Conexão
+  GetAppConnType
+  [ $? -ne 0 ] && return 1
+  # Pergunta
+  GetAppUriList
+  [ $? -ne 0 ] && return 1
+  # Pergunta número de workers
+  GetWorkersNum
+  [ $? -ne 0 ] && return 1
+  # foi confirmado, calva configuração a Aplicação
+  SaveSingleAppVars
+}
+
+#=======================================================================
 # Fornece a versão do HAproxy 1.6 mais novo
 # http://www.lua.org/manual/
 function GetVerHaproxy(){
@@ -136,24 +268,6 @@ function HaproxyInstall(){
 #-----------------------------------------------------------------------
 # Configura o HAproxy
 # Configurações de: https://mozilla.github.io/server-side-tls/ssl-config-generator/
-# Nível 1: MODERNO
-   HAP_GLOBAL_N1="  # set default parameters to the modern configuration"
-HAP_GLOBAL_N1+="\n  tune.ssl.default-dh-param 2048"
-HAP_GLOBAL_N1+="\n  ssl-default-bind-ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!3DES:!MD5:!PSK"
-#     HAP_HTTPS_N1="  bind    0.0.0.0:443 ssl no-sslv3 no-tlsv10 crt /etc/haproxy/certs"
-    HAP_HTTPS_N1="  bind    0.0.0.0:443 no-sslv3 no-tlsv10 crt /etc/haproxy/certs"
-# Nível 2: INTERMEDIARIO
-   HAP_GLOBAL_N2="  # set default parameters to the intermediate configuration"
-HAP_GLOBAL_N2+="\n  tune.ssl.default-dh-param 2048"
-HAP_GLOBAL_N2+="\n  ssl-default-bind-ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:ECDHE-RSA-DES-CBC3-SHA:ECDHE-ECDSA-DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA"
-#     HAP_HTTPS_N2="  bind    0.0.0.0:443 ssl no-sslv3 crt /etc/haproxy/certs"
-    HAP_HTTPS_N2="  bind    0.0.0.0:443  no-sslv3 crt /etc/haproxy/certs"
-# Nível 3: ANTIGO
-   HAP_GLOBAL_N3="  # set default parameters to the old configuration"
-HAP_GLOBAL_N3+="\n  tune.ssl.default-dh-param 1024"
-HAP_GLOBAL_N3+="\n  ssl-default-bind-ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:ECDHE-RSA-DES-CBC3-SHA:ECDHE-ECDSA-DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:DES-CBC3-SHA:HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA"
-#     HAP_HTTPS_N3="  bind    0.0.0.0:443 ssl crt /etc/haproxy/certs"
-    HAP_HTTPS_N3="  bind    0.0.0.0:443 crt /etc/haproxy/certs"
 function HaproxyConfig(){
 	local ARQ
   # Le o nível de segurança desejado, fica no $HAP_CRYPT_LEVEL
@@ -291,12 +405,17 @@ function SaveHaproxyVars(){
 #=======================================================================
 # main()
 
-TITLE="NFAS - Configuração do HAproxy"
 if [ "$CMD" == "--first" ]; then
   # Instala HAproxy, não configura nem inicializa
 #   HaproxyInstall
+# ==>> Provisório, só testes
 rm -f /etc/haproxy/haproxy.cfg
   HaproxyConfig
+
+elif [ "$CMD" == "--app" ]; then
+  #-----------------------------------------------------------------------
+  # Lê Configurações para aquela App
+  EditAppConfig
 
 fi
 
