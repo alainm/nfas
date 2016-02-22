@@ -153,8 +153,51 @@ function GetAppConnType(){
 # Pergunta os Domínios e URI de uma Aplicação
 # Aceita lista, mostra anterior para alterar
 # Retorna: 0=alteração completada, 1=cancelada
+# RegEx: http://stackoverflow.com/questions/3809401/what-is-a-good-regular-expression-to-match-a-url
 function GetAppUriList(){
-  return 0
+  local URI,URIS,MSG,OK,N,T,LIN
+  local TMP_ARQ="/root/tmp-uri.list"
+  URIS=$HAPP_URIS
+  while true; do
+    # coloca cada URL em uma linha e guarda em atquivo temporário
+    rm -r /root/tmp-uri.list
+    for U in $URIS; do
+      echo -e "$U"             2>/dev/null >> $TMP_ARQ
+    done
+    touch $TMP_ARQ
+    # Usa o DIALOG para perguntar as URI
+    MSG="Forneca os Dominios com URI base para a Aplicação"
+    URIS=$(dialog --stdout --backtitle "$TITLE" --title "$MSG"  \
+      --editbox $TMP_ARQ 18 70)
+    OK="Y";N=0;LIN=""
+    # Junta todas as URIs numa linha, verifica se são válidas
+    URIS=$(echo $URIS | sed ':a;$!N;s/\n//;ta;')
+    for URI in $URIS; do
+      N=$((N+1))
+      T=$(echo $URI | sed -n 's/\([-a-z0-9._\/]*\).*/\1/p')
+      if [ "$T" != "$URI" ]; then
+        OK="N"
+        LIN=$N
+      fi
+    done
+    if [ "$OK" == "Y" ]; then
+      # junta todas as linhas, remove espaços repetidos
+      HAPP_URIS="";T=""
+      for URI in $URIS; do
+        # Retira '/' no final da URI
+        # T="abcd/"; echo ${T:$((${#T}-1))}; echo ${T:0:$((${#T}-1))}
+        if [ "${URI:$((${#URI}-1))}" == "/" ]; then
+          URI=${URI:0:$((${#URI}-1))}
+        fi
+        HAPP_URIS+="$T$URI"
+        T=" "
+      done
+      echo "URIs=[$HAPP_URIS]"
+      return 0
+    fi
+    MSG="\n A URI na linha $LIN é inválida, por favor corrija...\n\n"
+    whiptail --title "$TITLE" --msgbox "$MSG" 11 60
+  done
 }
 
 #-----------------------------------------------------------------------
@@ -167,12 +210,13 @@ function GetWorkersNum(){
 #-----------------------------------------------------------------------
 # Edita Configurações de uma App
 # Retorna: 0=alteração completada, 1=cancelada
+# TODO: sem abort, confirmar no final
 function EditAppConfig(){
   # Lê dados desta aplicação, se existirem
   GetSingleAppVars
   # Pergunta tipo de Conexão
-  GetAppConnType
-  [ $? -ne 0 ] && return 1
+#   GetAppConnType
+#   [ $? -ne 0 ] && return 1
   # Pergunta
   GetAppUriList
   [ $? -ne 0 ] && return 1

@@ -38,7 +38,7 @@ if [ "$1" != "--ip-continue" ]; then
   # Repositório auxiliar: https://fedoraproject.org/wiki/EPEL
   yum -y install epel-release
   # Instalar pacotes extra
-  PKT="man nano mc telnet bind-utils bc mlocate"
+  PKT="man nano mc telnet bind-utils bc mlocate dialog"
   PKT+=" openssl openssl-devel pam pam-devel gcc gcc-c++ make git"
   # pacote para ajudar a identificar o VirtualBox
   PKT+=" dmidecode acpid"
