@@ -54,25 +54,21 @@ TITLE="NFAS - Configuração do HAproxy"
 # Nível atual em HAP_CRYPT_LEVEL
 function GetHaproxyLevel(){
   local MENU_IT, MSG;
-  while true; do
-    if [ "$CMD" == "--first" ]; then
-      MSG="\nQual o Nível de Segurança de Criptografia para o Servidor:"
-    else
-      MSG="\nQual o Nível de Segurança de Criptografia (ATUAL=$HAP_CRYPT_LEVEL)"
-    fi
+  if [ "$CMD" == "--first" ]; then
+    MSG="\nQual o Nível de Segurança de Criptografia para o Servidor:"
+  else
+    MSG="\nQual o Nível de Segurança de Criptografia (ATUAL=$HAP_CRYPT_LEVEL)"
+  fi
 
-    MENU_IT=$(whiptail --title "$TITLE" \
-      --menu "$MSG" --fb 20 76 3   \
-      "1" "Moderno - Comunicação segura, só Browsers novos (nível A+)"  \
-      "2" "Intermediário - Compatibilidade, aceita a maioria dos Browsers" \
-      "3" "Antigo - Baixa Segurança, WinXP e IE6"             \
-      3>&1 1>&2 2>&3)
-    if [ $? == 0 ]; then
-      HAP_CRYPT_LEVEL=$MENU_IT
-      echo $MENU_IT
-      return 0
-    fi
-  done
+  MENU_IT=$(whiptail --title "$TITLE" --nocancel                         \
+    --menu "$MSG" --fb 20 76 3                                           \
+    "1" "Moderno - Comunicação segura, só Browsers novos (nível A+)"     \
+    "2" "Intermediário - Compatibilidade, aceita a maioria dos Browsers" \
+    "3" "Antigo - Baixa Segurança, WinXP e IE6"                          \
+    3>&1 1>&2 2>&3)
+  HAP_CRYPT_LEVEL=$MENU_IT
+  echo $MENU_IT
+  return 0
 }
 
 #-----------------------------------------------------------------------
@@ -103,6 +99,17 @@ function SaveSingleAppVars(){
 }
 
 #-----------------------------------------------------------------------
+# Converte tipo de comunicação para Texto
+function ConnType2Text(){
+  if [ "$HAPP_HTTP" != "Y" ] &&  [ "$HAPP_HTTPS" == "Y" ]; then
+    echo "Só HTTPS"
+  elif [ "$HAPP_HTTP" == "Y" ] &&  [ "$HAPP_HTTPS" == "Y" ]; then
+    echo "Ambos"
+  else
+    echo "Só HTTP"
+  fi
+}
+#-----------------------------------------------------------------------
 # Pergunta Nível de Conexão Segura de uma Aplicação
 # HTTP e/ou HTTPS
 # Retorna: 0=alteração completada, 1=cancelada
@@ -112,28 +119,19 @@ function GetAppConnType(){
   MSG+="\nOs certificados serão providenciados automáticamente"
   MSG+="\n usando o Let's Encrypt."
   if [ "$HAPP_INIT" != "Y" ]; then
+    # Como não foi inicializado, cria default
     DEF_OPT="Só HTTPS"
     MSG+="\n\n"
   else
-    if [ "$HAPP_HTTP" != "Y" ] &&  [ "$HAPP_HTTPS" == "Y" ]; then
-      DEF_OPT="Só HTTPS"
-    elif [ "$HAPP_HTTP" == "Y" ] &&  [ "$HAPP_HTTPS" == "Y" ]; then
-      DEF_OPT="Ambos"
-    else
-      DEF_OPT="Só HTTP"
-    fi
+    DEF_OPT=$(ConnType2Text)
     MSG+="\n\n Sua opção atual é $DEF_OPT"
   fi
-  MENU_IT=$(whiptail --title "$TITLE"                                \
-    --menu "$MSG" --default-item "$DEF_OPT" --fb 20 70 3             \
+  MENU_IT=$(whiptail --title "$TITLE" --nocancel                       \
+    --menu "$MSG" --default-item "$DEF_OPT" --fb 20 70 3               \
     "Só HTTPS" "  Só aceita conexão SEGURA (HTTP será redirecionado)"  \
-    "Ambos"    "  Implementa ambos e não redireciona"                  \
+    "Ambos"    "  Implementa ambos e não redireciona (inseguro)"       \
     "Só HTTP"  "  Só implementa HTTP simples (só para testes)"         \
     3>&1 1>&2 2>&3)
-  if [ $? != 0 ]; then
-    echo "Seleção cancelada."
-    exit 1
-  fi
 
   # Interpreta Opções
   if [ "$MENU_IT" == "Só HTTPS" ];then
@@ -166,9 +164,14 @@ function GetAppUriList(){
     done
     touch $TMP_ARQ
     # Usa o DIALOG para perguntar as URI
-    MSG="Forneca os Dominios com URI base para a Aplicação"
-    URIS=$(dialog --stdout --backtitle "$TITLE" --title "$MSG"  \
-      --editbox $TMP_ARQ 18 70)
+    # precisa de um loop porque sempre pode sair com Esc
+    OK="N";
+    while [ "$OK" != "Y" ]; do
+      MSG="Forneca os Dominios com URI base para a Aplicação"
+      URIS=$(dialog --stdout --backtitle "$TITLE" --title "$MSG"  \
+        --nocancel --editbox $TMP_ARQ 18 70)
+      [ $? == 0 ] && OK="Y"
+    done
     OK="Y";N=0;LIN=""
     # Junta todas as URIs numa linha, verifica se são válidas
     URIS=$(echo $URIS | sed ':a;$!N;s/\n//;ta;')
@@ -201,30 +204,32 @@ function GetAppUriList(){
 }
 
 #-----------------------------------------------------------------------
-# Pergunta quantos Workers para esta aplicação
-# Retorna: 0=alteração completada, 1=cancelada
-function GetWorkersNum(){
-  return 0
-}
-
-#-----------------------------------------------------------------------
 # Edita Configurações de uma App
 # Retorna: 0=alteração completada, 1=cancelada
-# TODO: sem abort, confirmar no final
 function EditAppConfig(){
+  local OPT,URI
   # Lê dados desta aplicação, se existirem
   GetSingleAppVars
   # Pergunta tipo de Conexão
-#   GetAppConnType
-#   [ $? -ne 0 ] && return 1
+  GetAppConnType
   # Pergunta
   GetAppUriList
-  [ $? -ne 0 ] && return 1
-  # Pergunta número de workers
-  GetWorkersNum
-  [ $? -ne 0 ] && return 1
-  # foi confirmado, calva configuração a Aplicação
+  # Pede confirmação dos dados
+  OPT=$(ConnType2Text)
+  MSG=" Confirme as configurações da App: $HAPP"
+  MSG+="\n\nTipo de Conexão para o seu Aplicativo: $OPT"
+  MSG+="\n\nURIs para acesso ao aplicativo:"
+  for URI in $HAPP_URIS; do
+    MSG+="\n  $URI"
+  done
+  MSG+="\n"
+  if ( ! whiptail --title "Configuração de Aplicativo" --yesno "$MSG" --no-button "Cancel" 20 78) then
+    echo "AppConfig Cancelado"
+    return 1
+  fi
+  # foi confirmado, grava configuração da Aplicação
   SaveSingleAppVars
+  return 0
 }
 
 #=======================================================================
@@ -310,12 +315,50 @@ function HaproxyInstall(){
 }
 
 #-----------------------------------------------------------------------
+# Configuração Básica do HAproxy
+# Sem nenhuma Aplicação, apenas usado na instalação
+function HaproxyConfigBasic(){
+  local ARQ="/etc/haproxy/haproxy.cfg"
+  # Se arquivo já existe, não altera
+  if [ ! -e $ARQ ]; then
+    echo "##################################################"               >  $ARQ
+    echo "##  HAPROXY: arquivo de configuração inicial"                     >> $ARQ
+    echo "##################################################"               >> $ARQ
+    echo "##  @author original: Marcos de Lima Carlos"                      >> $ARQ
+    echo ""                                                                 >> $ARQ
+    echo "global"                                                           >> $ARQ
+    echo "  maxconn 20000"                                                  >> $ARQ
+    echo ""                                                                 >> $ARQ
+    echo "defaults"                                                         >> $ARQ
+    echo "  mode http"                                                      >> $ARQ
+    echo "  option forwardfor"                                              >> $ARQ
+    echo "  option http-server-close"                                       >> $ARQ
+    echo "  timeout connect 5000ms"                                         >> $ARQ
+    echo "  timeout client 50000ms"                                         >> $ARQ
+    echo "  timeout server 50000ms"                                         >> $ARQ
+    echo ""                                                                 >> $ARQ
+    echo "frontend www-http"                                                >> $ARQ
+    echo "  bind :80"                                                       >> $ARQ
+    echo ""                                                                 >> $ARQ
+    echo "  default_backend http-backend"                                   >> $ARQ
+    echo ""                                                                 >> $ARQ
+    echo "backend http-backend"                                             >> $ARQ
+  fi
+   # Verifica arquivo de configuração
+  haproxy -c -q -V -f /etc/haproxy/haproxy.cfg
+  # instala e start serviço
+  if [ "$DISTRO_NAME_VERS" == "CentOS 6" ]; then
+    # usando init
+    chkconfig --add haproxy
+    service haproxy start
+  fi
+}
+
+#-----------------------------------------------------------------------
 # Configura o HAproxy
 # Configurações de: https://mozilla.github.io/server-side-tls/ssl-config-generator/
 function HaproxyConfig(){
-	local ARQ
-  # Le o nível de segurança desejado, fica no $HAP_CRYPT_LEVEL
-  GetHaproxyLevel
+  local ARQ
 
 # Provisório: sem SSL
 HAP_WITH_SSL="N"
@@ -428,11 +471,9 @@ HAP_WITH_SSL="N"
 
   # Verifica arquivo de configuração
   haproxy -c -q -V -f /etc/haproxy/haproxy.cfg
-  # instala ou restart serviço
-  if [ "$CMD" == "--first" ]; then
-    chkconfig --add haproxy
-    service haproxy start
-  else
+  # Restart serviço
+  if [ "$DISTRO_NAME_VERS" == "CentOS 6" ]; then
+    # usando init
     service haproxy restart
   fi
 }
@@ -451,10 +492,12 @@ function SaveHaproxyVars(){
 
 if [ "$CMD" == "--first" ]; then
   # Instala HAproxy, não configura nem inicializa
-#   HaproxyInstall
-# ==>> Provisório, só testes
+# ==>> Provisório, apaga para testes
 rm -f /etc/haproxy/haproxy.cfg
-  HaproxyConfig
+  # Le o nível de segurança desejado, fica no $HAP_CRYPT_LEVEL
+  GetHaproxyLevel
+  # Cria uma configuração básica sem nada, Start serviço
+  HaproxyConfigBasic
 
 elif [ "$CMD" == "--app" ]; then
   #-----------------------------------------------------------------------
