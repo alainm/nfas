@@ -307,7 +307,31 @@ function HaproxyInstall(){
   # cria os diretórios em etc e stats.
   mkdir -p /var/lib/haproxy
   touch /var/lib/haproxy/stats
-  # TODO: precisa do logrotate ????????????? => sim
+
+  # Configura o rsyslog para aceitar a porta UDP:514
+  [ ! -e /etc/rsyslog.conf.orig ] && cp /etc/rsyslog.conf /etc/rsyslog.conf.orig
+  sed -i '/\$ModLoad imudp/s/#//;' /etc/rsyslog.conf
+  sed -i '/\$UDPServerRun 514/s/#//;' /etc/rsyslog.conf
+  # Configura Logrotate (ver no monit.sh)
+  local ARQ="/etc/logrotate.d/haproxy"
+  if [ ! -e $ARQ ]; then
+    cat <<- EOF > $ARQ
+		##################################################
+		##  Logrotate para o haproxy
+		##################################################
+		##  Depois de criado, não é mais alterado
+
+		/var/log/haproxy.log {
+		  missingok
+		  notifempty
+		  compress
+		  delaycompress
+		  size 100k
+		  weekly
+		  create 0600 root root
+		}
+		EOF
+  fi
 
   # Volta e remove diretório temporário
   popd
@@ -328,6 +352,7 @@ function HaproxyConfigBasic(){
     echo ""                                                                 >> $ARQ
     echo "global"                                                           >> $ARQ
     echo "  maxconn 20000"                                                  >> $ARQ
+    echo "  log "\${LOCAL_SYSLOG}:514" local0 notice"                        >> $ARQ
     echo ""                                                                 >> $ARQ
     echo "defaults"                                                         >> $ARQ
     echo "  mode http"                                                      >> $ARQ
@@ -336,10 +361,10 @@ function HaproxyConfigBasic(){
     echo "  timeout connect 5000ms"                                         >> $ARQ
     echo "  timeout client 50000ms"                                         >> $ARQ
     echo "  timeout server 50000ms"                                         >> $ARQ
+    echo "  log global"                                                     >> $ARQ
     echo ""                                                                 >> $ARQ
     echo "frontend www-http"                                                >> $ARQ
     echo "  bind :80"                                                       >> $ARQ
-    echo ""                                                                 >> $ARQ
     echo "  default_backend http-backend"                                   >> $ARQ
     echo ""                                                                 >> $ARQ
     echo "backend http-backend"                                             >> $ARQ
@@ -492,6 +517,7 @@ function SaveHaproxyVars(){
 
 if [ "$CMD" == "--first" ]; then
   # Instala HAproxy, não configura nem inicializa
+  #HaproxyInstall
 # ==>> Provisório, apaga para testes
 rm -f /etc/haproxy/haproxy.cfg
   # Le o nível de segurança desejado, fica no $HAP_CRYPT_LEVEL

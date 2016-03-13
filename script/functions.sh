@@ -175,7 +175,7 @@ function GetConfSpace(){
 
 #-----------------------------------------------------------------------
 # Função para editar Arquivo de configuração, parametro separado por " "
-# Formato dos parametros: "param:  valor" de separador é " "
+# Formato dos parametros: "param  valor" de separador é " "
 # uso: EditConfSpace <Arquivo> <param> <valor>
 # usa método de substituir, CUIDADO com caracteres que podeminterferir com o SED
 # usado por sshd.conf
