@@ -5,6 +5,7 @@ set -x
 # Uso: /script/haproxy.sh <cmd>
 # <cmd>: --first       primeira instalação
 # <cmd>: --app <user>  altera configuração da Aplicação
+# <cmd>: --reconfig    Reconfigura se alguma coisa mudou
 
 # Instalando o Haproxy do fonte
 # @author original Marcos de Lima Carlos, adaptado por Alain Mouette
@@ -309,6 +310,7 @@ function HaproxyInstall(){
   touch /var/lib/haproxy/stats
 
   # Configura o rsyslog para aceitar a porta UDP:514
+  # http://kvz.io/blog/2010/08/11/haproxy-logging/
   [ ! -e /etc/rsyslog.conf.orig ] && cp /etc/rsyslog.conf /etc/rsyslog.conf.orig
   sed -i '/\$ModLoad imudp/s/#//;' /etc/rsyslog.conf
   sed -i '/\$UDPServerRun 514/s/#//;' /etc/rsyslog.conf
@@ -341,6 +343,7 @@ function HaproxyInstall(){
 #-----------------------------------------------------------------------
 # Configuração Básica do HAproxy
 # Sem nenhuma Aplicação, apenas usado na instalação
+# Config do og: http://cbonte.github.io/haproxy-dconv/configuration-1.6.html#4.2-log
 function HaproxyConfigBasic(){
   local ARQ="/etc/haproxy/haproxy.cfg"
   # Se arquivo já existe, não altera
@@ -348,11 +351,10 @@ function HaproxyConfigBasic(){
     echo "##################################################"               >  $ARQ
     echo "##  HAPROXY: arquivo de configuração inicial"                     >> $ARQ
     echo "##################################################"               >> $ARQ
-    echo "##  @author original: Marcos de Lima Carlos"                      >> $ARQ
     echo ""                                                                 >> $ARQ
     echo "global"                                                           >> $ARQ
     echo "  maxconn 20000"                                                  >> $ARQ
-    echo "  log "\${LOCAL_SYSLOG}:514" local0 notice"                        >> $ARQ
+    echo "  log \"\${LOCAL_SYSLOG}:514\" local0 notice"                     >> $ARQ
     echo ""                                                                 >> $ARQ
     echo "defaults"                                                         >> $ARQ
     echo "  mode http"                                                      >> $ARQ
@@ -509,6 +511,7 @@ HAP_WITH_SSL="N"
 # Estas variáveis são guardadas apenas para recurso futuro de exportação
 function SaveHaproxyVars(){
   echo "HAP_CRYPT_LEVEL=\"$HAP_CRYPT_LEVEL\""                         2>/dev/null >  $VAR_FILE
+  echo "HAP_NEW_CONF=\"$HAP_NEW_CONF\""                               2>/dev/null >> $VAR_FILE
 }
 
 
@@ -529,7 +532,19 @@ elif [ "$CMD" == "--app" ]; then
   #-----------------------------------------------------------------------
   # Lê Configurações para aquela App
   EditAppConfig
+  if [ $? == 0 ]; then
+    # Configuração foi alterada e aceita
+    HAP_NEW_CONF="Y"
+  fi
 
+elif [ "$CMD" == "--reconfig" ]; then
+  #-----------------------------------------------------------------------
+  # Reconfigura HAproxy se alguma coisa mudou
+  if [ "$HAP_NEW_CONF" == "Y" ]; then
+    echo "---------------------"
+    echo " HAproxy RECONFIGURE "
+    echo "---------------------"
+  fi
 fi
 
 # Salva Variáveis alteradas

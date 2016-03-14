@@ -78,6 +78,10 @@ else
   ExecBootScripts
 
   #-----------------------------------------------------------------------
+  # Reconfigura HAproxy caso haja alguma alteração pendente
+  /script/haproxy.sh --reconfig
+
+  #-----------------------------------------------------------------------
   # Inicializa Aplicações
   FILES=$(ls /home/*/auto.sh)
   for f in $FILES; do

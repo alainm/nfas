@@ -100,6 +100,8 @@ fi # --ip-continue
 /script/monit.sh --first
 # Configurações de SSH e acesso de ROOT
 /script/ssh.sh --first
+# Instala e configura Proxy Reverso
+/script/haproxy.sh --first
 # Instala programas
 /script/progs.sh --first
 # Cria novo usuário

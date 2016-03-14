@@ -254,31 +254,33 @@ function ConfigApp(){
     # opção não implementada:  "3" "Selecionar TimeZone, atual=??(TODO)"
     if [ "$CMD" == "--first" ]; then
       MENU_IT=$(whiptail --title "$TITLE" \
-        --menu "\nComando de reconfiguração, aplicação: \"$APP_NAME\"" --fb 18 70 4   \
-        "1" "Acrescentar Chave Pública (PublicKey)"  \
-        "2" "Remover Chave Pública (PublicKey)"      \
-        "3" "Criar Repositório GIT"                  \
+        --menu "\nComando de reconfiguração, aplicação: \"$APP_NAME\"" --fb 18 70 5   \
+        "1" "Configurar HTTP(S) e URIs de acesso"    \
+        "2" "Acrescentar Chave Pública (PublicKey)"  \
+        "3" "Remover Chave Pública (PublicKey)"      \
+        "4" "Criar Repositório GIT"                  \
         "9" "Continuar..."                           \
         3>&1 1>&2 2>&3)
     else
       MENU_IT=$(whiptail --title "$TITLE" \
-        --menu "\nComando de reconfiguração, aplicação: \"$APP_NAME\"" --fb 18 70 3   \
-        "1" "Acrescentar Chave Pública (PublicKey)"  \
-        "2" "Remover Chave Pública (PublicKey)"      \
-        "3" "Criar Repositório GIT"                  \
+        --menu "\nComando de reconfiguração, aplicação: \"$APP_NAME\"" --fb 18 70 4   \
+        "1" "Configurar HTTP(S) e URIs de acesso"    \
+        "2" "Acrescentar Chave Pública (PublicKey)"  \
+        "3" "Remover Chave Pública (PublicKey)"      \
+        "4" "Criar Repositório GIT"                  \
         3>&1 1>&2 2>&3)
     fi
     [ $? != 0 ] && return 0 # Cancelado
     [ "$MENU_IT" == "9" ] && return 0 # Fim
     # Funções que ficam em Procedures
+    #  Configura URIs
+    [ "$MENU_IT" == "1" ] && /script/haproxy.sh --app $APP_NAME
     # Novo certificado de acesso
-    [ "$MENU_IT" == "1" ] && AskNewKey $APP_NAME /home/$APP_NAME
+    [ "$MENU_IT" == "2" ] && AskNewKey $APP_NAME /home/$APP_NAME
     # Remove certificado de root
-    [ "$MENU_IT" == "2" ] && DeleteKeys $APP_NAME /home/$APP_NAME
+    [ "$MENU_IT" == "3" ] && DeleteKeys $APP_NAME /home/$APP_NAME
     # Cria Repositório GIR
-    [ "$MENU_IT" == "3" ] && CreateRepo $APP_NAME
-    #
-    [ "$MENU_IT" == "4" ] && read -p "Não implementado, pressione Enter para continuar..." A
+    [ "$MENU_IT" == "4" ] && CreateRepo $APP_NAME
   done
 }
 
