@@ -11,11 +11,18 @@ date                                     >> $HOME/auto.log
 id                                       >> $HOME/auto.log
 echo -e "----------\n"                   >> $HOME/auto.log
 
-# ------ Esta parte é alterada quando é criado o aplicativo ------
+# ------ Executa o Aplicativo em loop para não abortar ------
 
-# Portas para Aplicativos NODE
-export NODE_PORT=3000
+# Mostra variáveis pré-definidas (no .bashrc)
+echo "Ambiente: NODE_PORT=$NODE_PORT, PORT=$PORT, NODE_URI=$NODE_URI"
 
-# ------ Fim da parte alterada automáticamente ------
+# Esta parte só serve para testes simples ainda não está pronta para produção
+# TODO: usar screen com nohup e script de ajuda com o screen
+# TODO: comandos para start/stop/restart
+# TODO: usar o satan-pm
 
+cd app
+while true; do
+  node server.js
+done
 
