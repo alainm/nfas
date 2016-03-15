@@ -47,8 +47,6 @@ HAPP=$2
 . /script/info/distro.var
 . /script/info/email.var
 VAR_FILE="/script/info/haproxy.var"
-[ -e $VAR_FILE ] && . $VAR_FILE
-TITLE="NFAS - Configuração do HAproxy"
 
 #-----------------------------------------------------------------------
 # Pergunta nível de Segurança do HAproxy
@@ -82,6 +80,7 @@ function GetSingleAppVars(){
   HAPP_HTTPS="N"
   HAPP_URIS=""
   HAPP_INIT=""
+  HAPP_PORT=""
   if [ -e $APP_FILE ]; then
     # Lê arquivo já existente
     . $APP_FILE
@@ -91,12 +90,33 @@ function GetSingleAppVars(){
 #-----------------------------------------------------------------------
 # Salve dados de uma APP
 # Usa a variável $HAPP para identificar
-function SaveSingleAppVars(){
+function ConfigSingleApp(){
   local APP_FILE="/script/info/hap-$HAPP.var"
+  # Se não tinha PORT atribuida, usa a próxima e recalcula
+  if [ -z "$HAPP_PORT" ]; then
+    HAPP_PORT=$HAP_NXT_PORT
+    HAP_NXT_PORT=$(( $HAP_NXT_PORT + 100 ))
+  fi
   echo "HAPP_HTTP=\"$HAPP_HTTP\""                    2>/dev/null >  $APP_FILE
   echo "HAPP_HTTPS=\"$HAPP_HTTPS\""                  2>/dev/null >> $APP_FILE
   echo "HAPP_URIS=\"$HAPP_URIS\""                    2>/dev/null >> $APP_FILE
+  echo "HAPP_PORT=\"$HAP_NXT_PORT\""                 2>/dev/null >> $APP_FILE
   echo "HAPP_INIT=\"Y\""                             2>/dev/null >> $APP_FILE
+  # Coloca no .bashrc, no diretório home da App
+  local ARQ=/home/$HAPP/.bashrc
+  # Precisa usar echo com Aspas simples para evitar expansão da expressão
+  if ! grep "{NFAS-NodeVars}" $ARQ >/dev/null; then
+    echo ""                                                                     >> $ARQ
+    echo "#{NFAS-NodeVars} configurado automáticamente: Variáveis do Node.js"   >> $ARQ
+    echo "PORT=$HAPP_PORT"                                                      >> $ARQ
+    echo "NODE_PORT=$HAPP_PORT"                                                 >> $ARQ
+    echo "NODE_URI=$HAPP_URI"                                                   >> $ARQ
+    echo ""                                                                     >> $ARQ
+  else
+    EditConfEqualSafe $ARQ PORT $HAPP_PORT
+    EditConfEqualSafe $ARQ NODE_PORT $HAPP_PORT
+    EditConfEqualSafe $ARQ NODE_URI $NODE_URI
+  fi
 }
 
 #-----------------------------------------------------------------------
@@ -220,16 +240,28 @@ function EditAppConfig(){
   MSG=" Confirme as configurações da App: $HAPP"
   MSG+="\n\nTipo de Conexão para o seu Aplicativo: $OPT"
   MSG+="\n\nURIs para acesso ao aplicativo:"
+  local HAPP_URI=""
   for URI in $HAPP_URIS; do
+    # Lista URIs na tela
     MSG+="\n  $URI"
+    # Guarda primeira como principal
+    [ -z "$HAPP_URI" ] && HAPP_URI="$URI"
   done
-  MSG+="\n"
+  MSG+="\n\nVariáveis de ambiente criadas:"
+  if [ -z "$HAPP_PORT" ];then
+    MSG+="\n  PORT=$HAP_NXT_PORT"
+    MSG+="\n  NODE_PORT=$HAP_NXT_PORT"
+  else
+    MSG+="\n  PORT=$HAPP_PORT"
+    MSG+="\n  NODE_PORT=$HAPP_PORT"
+  fi
+  MSG+="\n  NODE_URI=$HAPP_URI"
   if ( ! whiptail --title "Configuração de Aplicativo" --yesno "$MSG" --no-button "Cancel" 20 78) then
     echo "AppConfig Cancelado"
     return 1
   fi
   # foi confirmado, grava configuração da Aplicação
-  SaveSingleAppVars
+  ConfigSingleApp
   return 0
 }
 
@@ -506,17 +538,35 @@ HAP_WITH_SSL="N"
 }
 
 #-----------------------------------------------------------------------
+# Lê dados do HAproxy se existirem
+# Configura valores default
+function ReadHaproxyVars(){
+  # Apaga variáveis anteriores e gera compatibilidade
+  HAP_CRYPT_LEVEL="2"
+  HAP_NEW_CONF="N"
+  HAP_NXT_PORT="3000"
+  if [ -e $VAR_FILE ]; then
+    # Lê arquivo já existente
+    . $VAR_FILE
+  fi
+}
+#-----------------------------------------------------------------------
 # Salva variáveis de configuração
 # Neste módulo as variáveis são usadas sempre apartir do arquivo de configuração Real
 # Estas variáveis são guardadas apenas para recurso futuro de exportação
 function SaveHaproxyVars(){
   echo "HAP_CRYPT_LEVEL=\"$HAP_CRYPT_LEVEL\""                         2>/dev/null >  $VAR_FILE
   echo "HAP_NEW_CONF=\"$HAP_NEW_CONF\""                               2>/dev/null >> $VAR_FILE
+  echo "HAP_NXT_PORT=\"$HAP_NXT_PORT\""                               2>/dev/null >> $VAR_FILE
 }
 
 
 #=======================================================================
 # main()
+
+# Lê variáveis e configura Defauls
+ReadHaproxyVars
+TITLE="NFAS - Configuração do HAproxy"
 
 if [ "$CMD" == "--first" ]; then
   # Instala HAproxy, não configura nem inicializa

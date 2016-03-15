@@ -72,7 +72,7 @@ function AddColorToFile(){
       echo '  # Só executa se login pelo SSH'                                             >> $ARQ
       echo '  /script/console.sh --wellcome'                                              >> $ARQ
       echo 'else'                                                                         >> $ARQ
-      echo '  echo -e "\n Acesso via CONSOLE! Bemvindo ao \"$(hostname)\"\n"'      >> $ARQ
+      echo '  echo -e "\n Acesso via CONSOLE! Bemvindo ao \"$(hostname)\"\n"'             >> $ARQ
       echo 'fi'                                                                           >> $ARQ
     fi
     echo ''                                                                               >> $ARQ
