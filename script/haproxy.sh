@@ -108,14 +108,15 @@ function ConfigSingleApp(){
   if ! grep "{NFAS-NodeVars}" $ARQ >/dev/null; then
     echo ""                                                                     >> $ARQ
     echo "#{NFAS-NodeVars} configurado automáticamente: Variáveis do Node.js"   >> $ARQ
-    echo "PORT=$HAPP_PORT"                                                      >> $ARQ
-    echo "NODE_PORT=$HAPP_PORT"                                                 >> $ARQ
-    echo "NODE_URI=$HAPP_URI"                                                   >> $ARQ
+    echo "export PORT=$HAPP_PORT"                                               >> $ARQ
+    echo "export NODE_PORT=$HAPP_PORT"                                          >> $ARQ
+    echo "export NODE_URI=$HAPP_URI"                                            >> $ARQ
     echo ""                                                                     >> $ARQ
   else
-    EditConfEqualSafe $ARQ PORT $HAPP_PORT
-    EditConfEqualSafe $ARQ NODE_PORT $HAPP_PORT
-    EditConfEqualSafe $ARQ NODE_URI $NODE_URI
+    # Altera variáveis já definidas no arquivo
+    EditConfBashExport $ARQ PORT $HAPP_PORT
+    EditConfBashExport $ARQ NODE_PORT $HAPP_PORT
+    EditConfBashExport $ARQ NODE_URI $NODE_URI
   fi
 }
 

@@ -195,6 +195,26 @@ function EditConfSpace(){
     echo "$PARAM   $VAL" >> $ARQ
   fi
 }
+#-----------------------------------------------------------------------
+# Função para editar Arquivo Bash, parametro separado por " "
+# Formato dos parametros: "param  valor" de separador é " "
+# uso: EditConfSpace <Arquivo> <param> <valor>
+# usa método de substituir, CUIDADO com caracteres que podeminterferir com o SED
+# usado por sshd.conf
+function EditConfBashExport(){
+  local ARQ=$1
+  local PARAM=$2
+  local VAL=$3
+  if grep -E "^[[:blank:]]*export[[:blank:]]*$PARAM[[:blank:]]*=" $ARQ; then
+    # linha já existe, substituir no local
+    # Cuidado no grep é "+" e no sed é "\+"
+    eval "sed -i 's/^[[:blank:]]*\(export[[:blank:]]*$PARAM[[:blank:]]*=\).*/\1$VAL/;' $ARQ"
+  else
+    # linha com parametro não existe, acrescenta linha no final
+    echo "export $PARAM=$VAL" >> $ARQ
+  fi
+}
+
 
 #-----------------------------------------------------------------------
 # Função para editar Arquivo de configuração, parametro separado por "="
