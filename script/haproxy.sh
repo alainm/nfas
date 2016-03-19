@@ -410,6 +410,7 @@ function HaproxyConfigBasic(){
   if [ "$DISTRO_NAME_VERS" == "CentOS 6" ]; then
     # usando init
     chkconfig --add haproxy
+    chkconfig --level 345 haproxy on
     service haproxy start
   fi
 }
