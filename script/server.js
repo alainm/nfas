@@ -1,5 +1,5 @@
 // Exempo simples apenas para verificação
-var nodePort = process.env.NODE_PORT || 8080
+var nodePort = process.env.NODE_PORT || 8080;
 var http = require('http');
 http.createServer(function (req, res) {
   res.writeHead(200, {'Content-Type': 'text/plain'});
