@@ -102,19 +102,34 @@ function ProgsInstall(){
     'Node-LTS'    "$NODE1_MSG" YES   \
     'Node-Stable' "$NODE2_MSG" NO    \
     3>&1 1>&2 2>&3)
+  OPTIONS=$(echo $OPTIONS | tr -d '\"')
   if [ $? == 0 ]; then
     #--- Instala programas selecionados
-    for OPT in $(echo $OPTIONS | tr -d '\"'); do
+    echo "Opt list=[$OPTIONS]"
+    for OPT in $OPTIONS; do
       echo "Instalação: $OPT"
       case $OPT in
         "Node-LTS")
-          NodeInstall $LTS_NODE
+          if echo "$OPTIONS" | grep -q "Node-Stable"; then
+            echo "Não instala as duas versões"
+          else
+            NodeInstall $LTS_NODE
+          fi
         ;;
         "Node-Stable")
-          NodeInstall $STB_NODE
+          # Evita instalar as duas versões
+          if [ "$NODE_LTS" != "Y" ]; then
+            NodeInstall $STB_NODE
+          fi
         ;;
       esac
-    done
+    done # for OPT
+    if echo "Node-LTS Node-Stable" | grep -q "Node-LTS\|Node-Stable"; then
+      # Reinstalou Node.js, precisa reinstalar o Forever
+      npm -g install forever
+      # Permite execução por "other", não é padrão!!!
+      chmod -R o+rx /usr/local/lib/node_modules
+    fi
   fi
 }
 #-----------------------------------------------------------------------
