@@ -71,8 +71,9 @@ function AddColorToFile(){
       echo 'if [ -n "$SSH_TTY" ]; then'                                                   >> $ARQ
       echo '  # Só executa se login pelo SSH'                                             >> $ARQ
       echo '  /script/console.sh --wellcome'                                              >> $ARQ
-      echo 'else'                                                                         >> $ARQ
-      echo '  echo -e "\n Acesso via CONSOLE! Bemvindo ao \"$(hostname)\"\n"'             >> $ARQ
+      # Eliminado, gera lixo em scripts
+      # echo 'else'                                                                       >> $ARQ
+      # echo '  echo -e "\n Acesso seguro via CONSOLE! Bemvindo ao \"$(hostname)\"\n"'    >> $ARQ
       echo 'fi'                                                                           >> $ARQ
     fi
     echo ''                                                                               >> $ARQ
@@ -93,7 +94,6 @@ function AddUmaskToFile(){
     echo "umask 007" >> $ARQ
     echo "# configura acesso ao screen pelo SSH" >> $ARQ
     echo "chmod o+rw /dev/pts/*" >> $ARQ
-
   fi
 }
 
@@ -125,8 +125,9 @@ function SayWellcome(){
       echo -e "\n Acesso seguro por Chave Pública!"
       echo -e "\n Bemvindo ao \"$(hostname)\"\n"
     fi
-  else
-    echo "ERRO: Log desta conexão não encontrado"
+  # Eliminado, gera lixo em scripts
+  # else
+  #   echo "ERRO: Log desta conexão não encontrado"
   fi
 }
 #=======================================================================
