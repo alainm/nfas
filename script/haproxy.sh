@@ -342,13 +342,20 @@ function HaproxyInstall(){
   mkdir -p /var/lib/haproxy
   touch /var/lib/haproxy/stats
 
-  # Configura o rsyslog para aceitar a porta UDP:514
-  # http://kvz.io/blog/2010/08/11/haproxy-logging/
-  [ ! -e /etc/rsyslog.conf.orig ] && cp /etc/rsyslog.conf /etc/rsyslog.conf.orig
-  sed -i '/\$ModLoad imudp/s/#//;' /etc/rsyslog.conf
-  sed -i '/\$UDPServerRun 514/s/#//;' /etc/rsyslog.conf
+  # configura o rsyslog para o haproxy
+  # http://serverfault.com/questions/214312/how-to-keep-haproxy-log-messages-out-of-var-log-syslog
+  local ARQ="/etc/rsyslog.d/49-haproxy.conf"
+  if [ ! -e $ARQ ]; then
+    cat <<- EOF > $ARQ
+		# file: /etc/rsyslog.d/49-haproxy.conf:
+		local0.* -/var/log/haproxy.log
+		& stop
+		# & ~ means not to put what matched in the above line anywhere else for the rest of the rules
+		# ~ is obsolete, now use "stop"
+		EOF
+  fi
   # Configura Logrotate (ver no monit.sh)
-  local ARQ="/etc/logrotate.d/haproxy"
+  ARQ="/etc/logrotate.d/haproxy"
   if [ ! -e $ARQ ]; then
     cat <<- EOF > $ARQ
 		##################################################
@@ -387,7 +394,7 @@ function HaproxyConfigBasic(){
     echo ""                                                                 >> $ARQ
     echo "global"                                                           >> $ARQ
     echo "  maxconn 20000"                                                  >> $ARQ
-    echo "  log \"\${LOCAL_SYSLOG}:514\" local0 notice"                     >> $ARQ
+    echo "  log /dev/log local0 notice # notice/info/debug"                 >> $ARQ
     echo ""                                                                 >> $ARQ
     echo "defaults"                                                         >> $ARQ
     echo "  mode http"                                                      >> $ARQ
@@ -413,6 +420,15 @@ function HaproxyConfigBasic(){
     chkconfig --level 345 haproxy on
     service haproxy start
   fi
+}
+
+#-----------------------------------------------------------------------
+# Reconfigura o HAproxy
+# Configurações de: https://mozilla.github.io/server-side-tls/ssl-config-generator/
+function HaproxyReconfig(){
+  local ARQQ="/etc/haproxy/haproxy.cfg"
+
+
 }
 
 #-----------------------------------------------------------------------
@@ -596,6 +612,8 @@ elif [ "$CMD" == "--reconfig" ]; then
     echo "---------------------"
     echo " HAproxy RECONFIGURE "
     echo "---------------------"
+    # refaz a configuração do HTTP, porta 80
+    HaproxyReconfig
   fi
 fi
 
