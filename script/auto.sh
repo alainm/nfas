@@ -1,4 +1,5 @@
 #/bin/bash
+# set -x
 
 # Script de inicialização da aplicação, chamada após o boot
 # fica no /home/<user>/auto.sh
@@ -16,13 +17,8 @@ echo -e "----------\n"                   >> $HOME/auto.log
 # Mostra variáveis pré-definidas (no .bashrc)
 echo "Ambiente: NODE_PORT=$NODE_PORT, PORT=$PORT, NODE_URI=$NODE_URI"
 
-# Esta parte só serve para testes simples ainda não está pronta para produção
-# TODO: usar screen com nohup e script de ajuda com o screen
-# TODO: comandos para start/stop/restart
-# TODO: usar o satan-pm
-
-cd app
-while true; do
-  node server.js
-done
+# Pasta default para Aplicação
+cd ~/app
+# Inicia com Forever para manter sempre no ar
+forever start server.js
 
