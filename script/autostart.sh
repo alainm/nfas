@@ -83,12 +83,14 @@ else
 
   #-----------------------------------------------------------------------
   # Inicializa Aplicações
+  # Comando de execução do SU é diferente em cada distro
+  [ "$DISTRO_NAME" == "CentOS" ] && SU_C="--session-command" || SU_C="-c"
   FILES=$(ls /home/*/auto.sh)
   for f in $FILES; do
     USR=$(echo "$f" | sed 's@/home/\(.*\)/.*@\1@')
     echo "Chamando $f USR=$USR" >> /script/info/autostart.log
     # usa o su para criar um login-shell, está rodando num ambiente não padrão
-    su $USR -l -c "nohup $f 2>&1 >/dev/null &"
+    su - $USR $SU_C "nohup $f </dev/null 2>&1 >/dev/null &"
   done
 
 fi # $CMD
