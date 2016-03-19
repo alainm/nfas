@@ -72,9 +72,9 @@ function GetHaproxyLevel(){
 
 #-----------------------------------------------------------------------
 # Lê dados de uma APP se existirem
-# Usa a variável $HAPP para identificar
+# uso: GetSingleAppVars <app>
 function GetSingleAppVars(){
-  local APP_FILE="/script/info/hap-$HAPP.var"
+  local APP_FILE="/script/info/hap-$1.var"
   # Apaga variáveis anteriores e gera compatibilidade
   HAPP_HTTP="Y"
   HAPP_HTTPS="N"
@@ -231,7 +231,7 @@ function GetAppUriList(){
 function EditAppConfig(){
   local OPT,URI
   # Lê dados desta aplicação, se existirem
-  GetSingleAppVars
+  GetSingleAppVars $HAPP
   # Pergunta tipo de Conexão
   GetAppConnType
   # Pergunta
@@ -426,8 +426,83 @@ function HaproxyConfigBasic(){
 # Reconfigura o HAproxy
 # Configurações de: https://mozilla.github.io/server-side-tls/ssl-config-generator/
 function HaproxyReconfig(){
-  local ARQQ="/etc/haproxy/haproxy.cfg"
-
+  local ARK,APP,U,USR,URI,URIS
+  local APP_LIST=""
+  local HTTP_FRONT=""
+  local HTTP_BAK=""
+  local MSG_TMP=" Configurado automáticamente"
+  local ARQ="/etc/haproxy/haproxy.cfg"
+  # Cria lista das Aplicações, usuários Linux
+  for U in $(ls -d /home/*); do
+    USR=$(echo "$U" | sed -n 's@/home/\(.*\)*@\1@p')
+    [ -n "$APP_LIST" ] && APP_LIST+=" "
+    APP_LIST+=$USR
+  done
+  echo "APP_LIST=[$APP_LIST]"
+  # Varre todos os arquivos de configuração de Aplicação
+  for APP in $APP_LIST; do
+    if [ -e "/script/info/hap-$APP.var" ]; then
+      echo "AppConfig encontrado: $APP"
+      cat "/script/info/hap-$APP.var"
+set -x
+      # Le dados de cada Aplicação
+      GetSingleAppVars $APP
+      if [ -n "$HAPP_URIS" ]; then
+        HTTP_FRONT+="\n  #{NFAS HTTP-FRONT: $APP}$MSG_TMP\n"
+        MSG_TMP=""
+        for URI in $HAPP_URIS; do
+          if [ $(echo "$URI" | grep "/") ]; then
+            # Contém URI com rota
+            HTTP_FRONT+="  acl host_$APP path_beg -i $URI\n"
+          else
+            # Cotém só (sub)domínio
+            HTTP_FRONT+="  acl host_$APP hdr(host) -i $URI\n"
+          fi
+        done
+        HTTP_FRONT+="  use_backend http-$APP if host_$APP\n"
+        # Cria todos os Backends
+        HTTP_BAK+="\n#{NFAS HTTP-BAK: $APP}\n"
+        HTTP_BAK+="backend http-$APP\n"
+        HTTP_BAK+="  mode http\n"
+        HTTP_BAK+="  option forwardfor\n"
+        HTTP_BAK+="  server srv-$APP 127.0.0.1:$HAPP_PORT check\n"
+      fi # Existem URIs
+    fi # Exite arquvo de configuração
+  done
+  echo -e "HTTP_FRONT:\n$HTTP_FRONT"
+  echo -e "HTTP_BAK\n$HTTP_BAK"
+  ARQ="/etc/haproxy/haproxy.cfg"
+  echo "##################################################"               >  $ARQ
+  echo "##  HAPROXY: arquivo de configuração principal"                   >> $ARQ
+  echo "##################################################"               >> $ARQ
+  echo "##  Depois de criado, apenas a linha identificadas são alteradas" >> $ARQ
+  echo "##  @author original: Marcos de Lima Carlos"                      >> $ARQ
+  echo ""                                                                 >> $ARQ
+  echo "global"                                                           >> $ARQ
+  echo "  maxconn 20000"                                                  >> $ARQ
+  echo ""                                                                 >> $ARQ
+  echo "defaults"                                                         >> $ARQ
+  echo "  mode http"                                                      >> $ARQ
+  echo "  option forwardfor"                                              >> $ARQ
+  echo "  option http-server-close"                                       >> $ARQ
+  echo "  timeout connect 5000ms"                                         >> $ARQ
+  echo "  timeout client 50000ms"                                         >> $ARQ
+  echo "  timeout server 50000ms"                                         >> $ARQ
+  echo "  log global"                                                     >> $ARQ
+  echo ""                                                                 >> $ARQ
+  echo "frontend www-http"                                                >> $ARQ
+  echo "  bind :80"                                                       >> $ARQ
+  # Configurações FrontEnd de cada aplicação
+  echo -e "$HTTP_FRONT"                                                   >> $ARQ
+  echo "  default_backend http-backend"                                   >> $ARQ
+  echo ""                                                                 >> $ARQ
+  # Cria BackEnds
+  echo -e "$HTTP_BAK"                                                     >> $ARQ
+  echo "backend http-backend"                                             >> $ARQ
+   # Verifica arquivo de configuração
+  haproxy -c -q -V -f /etc/haproxy/haproxy.cfg
+  # instala e start serviço
+  service haproxy restart
 
 }
 
