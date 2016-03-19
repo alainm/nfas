@@ -83,6 +83,7 @@ function AddColorToFile(){
 #--- Função para alterar arquivos: umask
 # uso: AddUmaskToFile <aqruivo>
 # Altera UMASK para o bash, senão sobrepõe o configurado no PAM.D
+# Também altera permissões de /dev/pts/* para usar screen
 # Alterando o .bashrc funciona  tanto no CentOS quanto no Ubuntu
 function AddUmaskToFile(){
   local ARQ=$1
@@ -90,6 +91,9 @@ function AddUmaskToFile(){
   if ! grep "{NFAS-bash.umask}" $ARQ >/dev/null; then
     echo -e "\n#{NFAS-bash.umask} Configura máscara para criação de arquivos sem acesso a \"outros\"" >> $ARQ
     echo "umask 007" >> $ARQ
+    echo "# configura acesso ao screen pelo SSH" >> $ARQ
+    echo "chmod o+rw /dev/pts/*" >> $ARQ
+
   fi
 }
 
