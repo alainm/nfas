@@ -105,7 +105,7 @@ fi # --ip-continue
 # Instala programas
 /script/progs.sh --first
 # Cria novo usuário
-/script/newuser.sh
+/script/newuser.sh --first
 
 # Altera o /etc/rc.d/rc.local para chamar o /script/autostart.sh
 cat /etc/rc.d/rc.local | grep "autostart.sh"
