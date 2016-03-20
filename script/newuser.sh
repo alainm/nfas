@@ -17,6 +17,8 @@ CMD=$1
 # variaveis globais
 APP_NAME=""
 REPO_DIR=""
+# Comando de execução do SU é diferente em cada distro
+[ "$DISTRO_NAME" == "CentOS" ] && SU_C="--session-command" || SU_C="-c"
 
 #-----------------------------------------------------------------------
 # Função para perguntar e verificar nome da aplicação
@@ -154,6 +156,8 @@ function NewApp(){
   cp -a /script/auto.sh /home/$APP_NAME
   cp -a /script/server.js /home/$APP_NAME/app
   chown -R $APP_NAME:$APP_NAME /home/$APP_NAME
+  # Inicia App com exemplo padrão
+  su - $APP_NAME $SU_C "nohup /home/$APP_NAME/auto.sh </dev/null 2>&1 >/dev/null &"
   return 0
 }
 
@@ -253,7 +257,6 @@ function ConfigApp(){
   local MSG9
   while true; do
     # na primeira vez tem uma opção "Continuar.." para melhor compreensão
-    # opção não implementada:  "3" "Selecionar TimeZone, atual=??(TODO)"
     if [ "$CMD" == "--first" ]; then
       MENU_IT=$(whiptail --title "$TITLE" \
         --menu "\nComando de reconfiguração, aplicação: \"$APP_NAME\"" --fb 18 70 5   \
@@ -295,6 +298,7 @@ if [ "$CMD" == "--first" ]; then
   if [ $? == 0 ]; then
     AskNewKey $APP_NAME /home/$APP_NAME
     /script/haproxy.sh --app $APP_NAME
+    # OBS: não precisa iniciar a aplicação porque vai rebootar
   fi
 
 #-----------------------------------------------------------------------

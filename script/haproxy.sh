@@ -475,7 +475,7 @@ set -x
   echo "##################################################"               >  $ARQ
   echo "##  HAPROXY: arquivo de configuração principal"                   >> $ARQ
   echo "##################################################"               >> $ARQ
-  echo "##  Depois de criado, apenas a linha identificadas são alteradas" >> $ARQ
+  echo "##  Não altere, será recriado integralmente"                      >> $ARQ
   echo "##  @author original: Marcos de Lima Carlos"                      >> $ARQ
   echo ""                                                                 >> $ARQ
   echo "global"                                                           >> $ARQ

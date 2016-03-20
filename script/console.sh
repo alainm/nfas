@@ -92,8 +92,6 @@ function AddUmaskToFile(){
   if ! grep "{NFAS-bash.umask}" $ARQ >/dev/null; then
     echo -e "\n#{NFAS-bash.umask} Configura máscara para criação de arquivos sem acesso a \"outros\"" >> $ARQ
     echo "umask 007" >> $ARQ
-    echo "# configura acesso ao screen pelo SSH" >> $ARQ
-    echo "chmod o+rw /dev/pts/*" >> $ARQ
   fi
 }
 
