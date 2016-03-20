@@ -82,7 +82,7 @@ if [ "$CMD" == "--first" ]; then
   MSG+="Se responder Sim, todos os serviços estarão acessíveis diretamente\n"
   MSG+="\n(Esta opção não aparece fora do VirtualBox!)"
   # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail#Yes.2Fno_box
-  whiptail --title "Configuração NFAS" --yesno --defaultno "$MSG" 13 78
+  whiptail --title "Configuração NFAS" --yesno "$MSG" 13 78
   if [ $? -eq 0 ]; then
     OPEN_FIREWALL="Y"
   else
