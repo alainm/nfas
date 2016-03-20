@@ -156,8 +156,6 @@ function NewApp(){
   cp -a /script/auto.sh /home/$APP_NAME
   cp -a /script/server.js /home/$APP_NAME/app
   chown -R $APP_NAME:$APP_NAME /home/$APP_NAME
-  # Inicia App com exemplo padrão
-  su - $APP_NAME $SU_C "nohup /home/$APP_NAME/auto.sh </dev/null 2>&1 >/dev/null &"
   return 0
 }
 
@@ -305,6 +303,12 @@ if [ "$CMD" == "--first" ]; then
 elif [ "$CMD" == "--newapp" ]; then
   # Chamado pelo menu do nfas.sh
   NewApp
+  if [ $? == 0 ]; then
+    AskNewKey $APP_NAME /home/$APP_NAME
+    /script/haproxy.sh --app $APP_NAME
+    # Inicia App com exemplo padrão
+    su - $APP_NAME $SU_C "nohup /home/$APP_NAME/auto.sh </dev/null 2>&1 >/dev/null &"
+  fi
 
 #-----------------------------------------------------------------------
 elif [ "$CMD" == "--chgapp" ]; then

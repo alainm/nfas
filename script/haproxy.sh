@@ -504,7 +504,7 @@ set -x
   haproxy -c -q -V -f /etc/haproxy/haproxy.cfg
   # instala e start serviço
   service haproxy restart
-
+  HAP_NEW_CONF="N"
 }
 
 #-----------------------------------------------------------------------
