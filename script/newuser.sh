@@ -34,7 +34,7 @@ function AskName(){
   eval TMP=\$$VAR
   # loop só sai com return
   while true; do
-    MSG="\n\nQual o $SHOW (deve ser válido com usuário Linux)?\n"
+    MSG="\n\nQual o $SHOW (deve ser válido como usuário Linux)?\n"
     # if [ -n "$TMP" ]; then
     #   MSG+="\n<Enter> para manter o anterior sendo mostrado"
     # else
@@ -94,7 +94,7 @@ function AskPasswd(){
   while true; do
     MSG="\nQual a senha de $SHOW"
     MSG+="\n\nCaracteres válidos: a-zA-Z0-9!@#$%^&*()_-+={};:,./?"
-    MSG+="\n  (use senha segura...)?"
+    MSG+="\n  (use senha segura...)"
     # Acrescenta mensagem de erro
     MSG+="\n\n$ERR_ST"
     # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
@@ -293,7 +293,8 @@ TITLE="NFAS - Configuração de Aplicações e Usuários"
 if [ "$CMD" == "--first" ]; then
   NewApp
   if [ $? == 0 ]; then
-    ConfigApp $APP_NAME
+    AskNewKey $APP_NAME /home/$APP_NAME
+    /script/haproxy.sh --app $APP_NAME
   fi
 
 #-----------------------------------------------------------------------
