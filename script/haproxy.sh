@@ -100,7 +100,7 @@ function ConfigSingleApp(){
   echo "HAPP_HTTP=\"$HAPP_HTTP\""                    2>/dev/null >  $APP_FILE
   echo "HAPP_HTTPS=\"$HAPP_HTTPS\""                  2>/dev/null >> $APP_FILE
   echo "HAPP_URIS=\"$HAPP_URIS\""                    2>/dev/null >> $APP_FILE
-  echo "HAPP_PORT=\"$HAP_NXT_PORT\""                 2>/dev/null >> $APP_FILE
+  echo "HAPP_PORT=\"$HAPP_PORT\""                    2>/dev/null >> $APP_FILE
   echo "HAPP_INIT=\"Y\""                             2>/dev/null >> $APP_FILE
   # Coloca no .bashrc, no diretório home da App
   local ARQ=/home/$HAPP/.bashrc
@@ -480,6 +480,7 @@ set -x
   echo ""                                                                 >> $ARQ
   echo "global"                                                           >> $ARQ
   echo "  maxconn 20000"                                                  >> $ARQ
+  echo "  log /dev/log local0 notice # notice/info/debug"                 >> $ARQ
   echo ""                                                                 >> $ARQ
   echo "defaults"                                                         >> $ARQ
   echo "  mode http"                                                      >> $ARQ
