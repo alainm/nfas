@@ -124,7 +124,7 @@ function ProgsInstall(){
         ;;
       esac
     done # for OPT
-    if echo "Node-LTS Node-Stable" | grep -q "Node-LTS\|Node-Stable"; then
+    if echo "$OPTIONS" | grep -q "Node-LTS\|Node-Stable"; then
       # Reinstalou Node.js, precisa reinstalar o Forever
       npm -g install forever
       # Permite execução por "other", não é padrão!!!
