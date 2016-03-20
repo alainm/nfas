@@ -663,9 +663,7 @@ TITLE="NFAS - Configuração do HAproxy"
 
 if [ "$CMD" == "--first" ]; then
   # Instala HAproxy, não configura nem inicializa
-  #HaproxyInstall
-# ==>> Provisório, apaga para testes
-rm -f /etc/haproxy/haproxy.cfg
+  HaproxyInstall
   # Le o nível de segurança desejado, fica no $HAP_CRYPT_LEVEL
   GetHaproxyLevel
   # Cria uma configuração básica sem nada, Start serviço
