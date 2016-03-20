@@ -20,5 +20,5 @@ echo "Ambiente: NODE_PORT=$NODE_PORT, PORT=$PORT, NODE_URI=$NODE_URI"
 # Pasta default para Aplicação
 cd ~/app
 # Inicia com Forever para manter sempre no ar
-forever start server.js
+forever --watch start server.js
 
