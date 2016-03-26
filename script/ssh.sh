@@ -299,10 +299,11 @@ if [ "$CMD" == "--first" ]; then
   EditConfSpace $SSHD_ARQ Port $SSH_PORT
   # Precisa salvar para Email que será enviado com dados de acesso
   SaveSshVars
-  # Novo certificado de root
-  AskNewKey root /root
   # Reconfigura iptables, caso tenha atualização
   SetSshIptables
+  # Novo certificado de root
+  AskNewKey root /root
+  # precisa restart (?)
   service sshd restart
   # Configura para que a Umask
   SetUmask 007
