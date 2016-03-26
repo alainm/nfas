@@ -190,9 +190,13 @@ function GetFail2banEmail(){
 #-----------------------------------------------------------------------
 # Reconfigura IPTABLES para o SSH
 function SetSshIptables(){
+  # Porta default se não foi inicializada
+  [ -z "$SSH_PORT" ] && SSH_PORT="22"
   # Limita conexões a 5 por minuto => Eliminado, gera mais problemas que resolve
   # iptables -A IN_SSH -p tcp --dport $SSH_PORT -m state --state NEW -m recent --set
   # iptables -A IN_SSH -p tcp --dport $SSH_PORT -m state --state NEW -m recent --update --seconds 60 --hitcount 5 -j DROP
+  # Limpa chain especial do SSH, chain especial
+  /sbin/iptables -F IN_SSH
   # Libera acesso à porta usada pelo SSH
   iptables -A IN_SSH -p tcp --dport $SSH_PORT -m state --state NEW -j ACCEPT
   # ídem para IPv6
@@ -298,7 +302,6 @@ if [ "$CMD" == "--first" ]; then
   # Novo certificado de root
   AskNewKey root /root
   # Reconfigura iptables, caso tenha atualização
-  /sbin/iptables -F IN_SSH
   SetSshIptables
   service sshd restart
   # Configura para que a Umask
@@ -418,8 +421,6 @@ else
       AskSshPort $SSHD_ARQ
       PORT_A=$(GetConfSpace $1 Port)
       if [ "$PORT_A" != "$SSH_PORT" ]; then
-        # Limpa chain especial do SSH, chain especial
-        /sbin/iptables -F IN_SSH
         # Reconfigura Firewall, chain especial
         SetSshIptables
          # Altera porta do SSH
