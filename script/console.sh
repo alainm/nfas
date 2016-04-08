@@ -18,7 +18,7 @@ CMD=$1
 USR=$2
 # usa as variaveis armazenadas
 . /script/info/distro.var
-. /script/info/network.var
+[ -e script/info/network.var ] && . /script/info/network.var
 # Funções auxiliares
 . /script/functions.sh
 

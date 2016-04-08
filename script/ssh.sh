@@ -444,6 +444,8 @@ else
     fi
     # Salva variáveis de configuração
     SaveSshVars
+    # Reconfigura Estado do sistema
+    /script/boot/90-state.sh
     # read -p "Enter para continuar..." TMP
   done # loop menu principal
 fi # --first
