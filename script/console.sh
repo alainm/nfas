@@ -18,7 +18,8 @@ CMD=$1
 USR=$2
 # usa as variaveis armazenadas
 . /script/info/distro.var
-[ -e script/info/network.var ] && . /script/info/network.var
+. /script/info/state.var
+[ -e /script/info/network.var ] && . /script/info/network.var
 # Funções auxiliares
 . /script/functions.sh
 
@@ -66,8 +67,6 @@ function AddColorToFile(){
       echo '/script/console.sh --wellcome'                                                >> $ARQ
     else
       echo 'export PS1="\[$(tput bold)\]\[$(tput setaf 2)\][\[$(tput setaf 4)\]\u\[$(tput setaf 2)\]@\[$(tput setaf 4)\]\h \[$(tput setaf 2)\]\W\[$(tput setaf 2)\]]\[$(tput setaf 2)\]\\$ \[$(tput setaf 7)\]\[$(tput sgr0)\]"' >> $ARQ
-      echo '# Mensagem de segurança e boas vindas, precisa do sudo para acesso ao Log'    >> $ARQ
-      echo 'sudo -E /script/console.sh --wellcome'                                        >> $ARQ
       echo 'if [ -n "$SSH_TTY" ]; then'                                                   >> $ARQ
       echo '  # Só executa se login pelo SSH'                                             >> $ARQ
       echo '  /script/console.sh --wellcome'                                              >> $ARQ
@@ -75,6 +74,8 @@ function AddColorToFile(){
       # echo 'else'                                                                       >> $ARQ
       # echo '  echo -e "\n Acesso seguro via CONSOLE! Bemvindo ao \"$(hostname)\"\n"'    >> $ARQ
       echo 'fi'                                                                           >> $ARQ
+      echo '# muda para diretório do usuário, caso usem "su user"'                        >> $ARQ
+      echo '[ $(id -u) -ne 0 ] && cd'                                                     >> $ARQ
     fi
     echo ''                                                                               >> $ARQ
   fi
@@ -98,34 +99,50 @@ function AddUmaskToFile(){
 #-----------------------------------------------------------------------
 # Escreve mensagem inicial de segurança e/ou boas vindas
 function SayWellcome(){
-  # Le o tipo de Login: password ou publickey
-  local LOGIN_TYPE=$(GetLoginType)
-  # Lê se acesso por Senha é permitido: yes ou no
-  local PASS_AUTH=$(GetConfSpace /etc/ssh/sshd_config PasswordAuthentication)
-  if [ "$LOGIN_TYPE" == "password" ]; then
-    # Acesso foi inseguro usando senha
-    echo -e "\n         ┌──────────────────────────────────────┐"
-    echo -e   "         │     Esta Conexão não é SEGURA ...    │"
-    echo -e   "         └──────────────────────────────────────┘"
-    echo -e "Seu login foi feito com SENHA"
-    echo -e "Cadastre uma chave pública para acesso e comece a usá-la."
-    echo -e "Utilize o comando nfas (como root) para fazê-lo.\n"
-  elif [ "$LOGIN_TYPE" == "publickey" ]; then
-    if [ "$PASS_AUTH" == "yes" ]; then
+  # Como root a mensagem é diferente
+  if [ "$(id -u)" == "0" ]; then
+    # Le o tipo de Login: password ou publickey
+    local LOGIN_TYPE=$(GetLoginType)
+    # Lê se acesso por Senha é permitido: yes ou no
+    local PASS_AUTH=$(GetConfSpace /etc/ssh/sshd_config PasswordAuthentication)
+    if [ "$LOGIN_TYPE" == "password" ]; then
+      # Acesso foi inseguro usando senha
+      echo -e "\n         ┌──────────────────────────────────────┐"
+      echo -e   "         │     Esta Conexão não é SEGURA ...    │"
+      echo -e   "         └──────────────────────────────────────┘"
+      echo -e "Seu login foi feito com SENHA"
+      echo -e "Cadastre uma chave pública para acesso e comece a usá-la."
+      echo -e "Utilize o comando nfas (como root) para fazê-lo.\n"
+    elif [ "$LOGIN_TYPE" == "publickey" ]; then
+      if [ "$PASS_AUTH" == "yes" ]; then
+        # Acesso foi seguro usando PublicKey mas senha está habilitada
+        echo -e "\n         ┌──────────────────────────────────────┐"
+        echo -e   "         │     Esta Conexão não é SEGURA ...    │"
+        echo -e   "         └──────────────────────────────────────┘"
+        echo -e "Você usou uma Chave Pública, mas o acesso por SENHA está habilitado!!!"
+        echo -e "Utilize o comando nfas (como root) para deshabilitar acesso por SENHA.\n"
+      else
+        # Acesso com PublicKey ok
+        echo -e "\n Acesso seguro por Chave Pública!"
+        echo -e "\n Bemvindo ao \"$(hostname)\"\n"
+      fi
+    # Eliminado, gera lixo em scripts
+    # else
+    #   echo "ERRO: Log desta conexão não encontrado"
+    fi
+  else
+    if [ "$SST_SSH_PASS_AUTH" == "yes" ]; then
       # Acesso foi seguro usando PublicKey mas senha está habilitada
       echo -e "\n         ┌──────────────────────────────────────┐"
       echo -e   "         │     Esta Conexão não é SEGURA ...    │"
       echo -e   "         └──────────────────────────────────────┘"
-      echo -e "Você usou uma Chave Pública, mas o acesso por SENHA está habilitado!!!"
-      echo -e "Utilize o comando nfas (como root) para deshabilitar acesso por SENHA.\n"
+      echo -e   "O acesso por SENHA está habilitado!!!"
+      echo -e   "Utilize o comando nfas (como root) para deshabilitar acesso por SENHA.\n"
     else
       # Acesso com PublicKey ok
       echo -e "\n Acesso seguro por Chave Pública!"
       echo -e "\n Bemvindo ao \"$(hostname)\"\n"
-    fi
-  # Eliminado, gera lixo em scripts
-  # else
-  #   echo "ERRO: Log desta conexão não encontrado"
+      fi
   fi
 }
 #=======================================================================

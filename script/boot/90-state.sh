@@ -19,5 +19,6 @@ SST_SSH_PASS_AUTH=$(GetConfSpace /etc/ssh/sshd_config PasswordAuthentication)
 
 # Grava resultados encontrados
 echo "SST_SSH_PASS_AUTH=$SST_SSH_PASS_AUTH"        >$ARQ
-
+# tem que ser acessível por usuários
+chmod 644 $ARQ
 
