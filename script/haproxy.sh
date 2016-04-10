@@ -453,7 +453,7 @@ set -x
         for URI in $HAPP_URIS; do
           if [ $(echo "$URI" | grep "/") ]; then
             # Contém URI com rota
-            HTTP_FRONT+="  acl host_$APP path_beg -i $URI\n"
+            HTTP_FRONT+="  acl host_$APP path_dir -i $URI\n"
           else
             # Cotém só (sub)domínio
             HTTP_FRONT+="  acl host_$APP hdr(host) -i $URI\n"
@@ -495,12 +495,16 @@ set -x
   echo "  bind :80"                                                       >> $ARQ
   # Configurações FrontEnd de cada aplicação
   echo -e "$HTTP_FRONT"                                                   >> $ARQ
-  echo "  default_backend http-backend"                                   >> $ARQ
+  # Não tem site default
+  # echo "  default_backend http-backend"                                 >> $ARQ
   echo ""                                                                 >> $ARQ
   # Cria BackEnds
   echo -e "$HTTP_BAK"                                                     >> $ARQ
-  echo "backend http-backend"                                             >> $ARQ
-   # Verifica arquivo de configuração
+  # Não tem site default
+  # echo "backend http-backend"                                           >> $ARQ
+  # Configura acesso restrito
+  chmod 600 $ARQ
+  # Verifica arquivo de configuração
   haproxy -c -q -V -f /etc/haproxy/haproxy.cfg
   # instala e start serviço
   service haproxy restart
