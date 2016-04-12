@@ -465,7 +465,18 @@ set -x
   # Verifica arquivo de configuração
   haproxy -c -q -V -f /etc/haproxy/haproxy.cfg
   # instala e start serviço
-  service haproxy restart
+  if [ "$CMD" == "--first" ]; then
+    # Precisa instalar e start serviço
+    if [ "$DISTRO_NAME_VERS" == "CentOS 6" ]; then
+      # usando init
+      chkconfig --add haproxy
+      chkconfig --level 345 haproxy on
+      service haproxy start
+    fi
+  else
+    # restart do serviço
+    service haproxy restart
+  fi
   HAP_NEW_CONF="N"
 }
 
