@@ -462,8 +462,8 @@ set -x
   # echo "backend http-backend"                                           >> $ARQ
   # Configura acesso restrito
   chmod 600 $ARQ
-  # Verifica arquivo de configuração
-  haproxy -c -q -V -f /etc/haproxy/haproxy.cfg
+  # Verifica arquivo de configuração e guarda para debug
+  haproxy -c -q -V -f /etc/haproxy/haproxy.cfg >/root/haproxy.check
   # instala e start serviço
   if [ "$CMD" == "--first" ]; then
     # Precisa instalar e start serviço
