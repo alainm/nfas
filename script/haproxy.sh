@@ -381,48 +381,6 @@ function HaproxyInstall(){
 }
 
 #-----------------------------------------------------------------------
-# Configuração Básica do HAproxy
-# Sem nenhuma Aplicação, apenas usado na instalação
-# Config do og: http://cbonte.github.io/haproxy-dconv/configuration-1.6.html#4.2-log
-function HaproxyConfigBasic(){
-  local ARQ="/etc/haproxy/haproxy.cfg"
-  # Se arquivo já existe, não altera
-  if [ ! -e $ARQ ]; then
-    echo "##################################################"               >  $ARQ
-    echo "##  HAPROXY: arquivo de configuração inicial"                     >> $ARQ
-    echo "##################################################"               >> $ARQ
-    echo ""                                                                 >> $ARQ
-    echo "global"                                                           >> $ARQ
-    echo "  maxconn 20000"                                                  >> $ARQ
-    echo "  log /dev/log local0 notice # notice/info/debug"                 >> $ARQ
-    echo ""                                                                 >> $ARQ
-    echo "defaults"                                                         >> $ARQ
-    echo "  mode http"                                                      >> $ARQ
-    echo "  option forwardfor"                                              >> $ARQ
-    echo "  option http-server-close"                                       >> $ARQ
-    echo "  timeout connect 5000ms"                                         >> $ARQ
-    echo "  timeout client 50000ms"                                         >> $ARQ
-    echo "  timeout server 50000ms"                                         >> $ARQ
-    echo "  log global"                                                     >> $ARQ
-    echo ""                                                                 >> $ARQ
-    echo "frontend www-http"                                                >> $ARQ
-    echo "  bind :80"                                                       >> $ARQ
-    echo "  default_backend http-backend"                                   >> $ARQ
-    echo ""                                                                 >> $ARQ
-    echo "backend http-backend"                                             >> $ARQ
-  fi
-   # Verifica arquivo de configuração
-  haproxy -c -q -V -f /etc/haproxy/haproxy.cfg
-  # instala e start serviço
-  if [ "$DISTRO_NAME_VERS" == "CentOS 6" ]; then
-    # usando init
-    chkconfig --add haproxy
-    chkconfig --level 345 haproxy on
-    service haproxy start
-  fi
-}
-
-#-----------------------------------------------------------------------
 # Reconfigura o HAproxy
 # Configurações de: https://mozilla.github.io/server-side-tls/ssl-config-generator/
 function HaproxyReconfig(){
@@ -511,129 +469,6 @@ set -x
   HAP_NEW_CONF="N"
 }
 
-#-----------------------------------------------------------------------
-# Configura o HAproxy
-# Configurações de: https://mozilla.github.io/server-side-tls/ssl-config-generator/
-function HaproxyConfig(){
-  local ARQ
-
-# Provisório: sem SSL
-HAP_WITH_SSL="N"
-
-  ARQ="/etc/haproxy/haproxy.cfg"
-  if [ ! -e $ARQ ]; then
-    echo "##################################################"               >  $ARQ
-    echo "##  HAPROXY: arquivo de configuração principal"                   >> $ARQ
-    echo "##################################################"               >> $ARQ
-    echo "##  Depois de criado, apenas a linha identificadas são alteradas" >> $ARQ
-    echo "##  @author original: Marcos de Lima Carlos"                      >> $ARQ
-    echo ""                                                                 >> $ARQ
-    echo "global"                                                           >> $ARQ
-    echo "  maxconn 20000"                                                  >> $ARQ
-    echo "  #{NFAS-Cfg-Ini}"                                                >> $ARQ
-    if [ "$HAP_CRYPT_LEVEL" == "1" ]; then
-      echo -e "$HAP_GLOBAL_N1"                                              >> $ARQ
-    elif [ "$HAP_CRYPT_LEVEL" == "3" ]; then
-      echo -e "$HAP_GLOBAL_N3"                                              >> $ARQ
-    else
-      # default é nível Intermediário
-      echo -e "$HAP_GLOBAL_N2"                                              >> $ARQ
-    fi
-    echo "  #{NFAS-Cfg-Fim}"                                                >> $ARQ
-    echo "  ssl-default-bind-options no-tls-tickets"                        >> $ARQ
-    echo ""                                                                 >> $ARQ
-    echo "defaults"                                                         >> $ARQ
-    echo "  mode http"                                                      >> $ARQ
-    echo "  option forwardfor"                                              >> $ARQ
-    echo "  option http-server-close"                                       >> $ARQ
-    echo "  timeout connect 5000ms"                                         >> $ARQ
-    echo "  timeout client 50000ms"                                         >> $ARQ
-    echo "  timeout server 50000ms"                                         >> $ARQ
-    echo ""                                                                 >> $ARQ
-    echo "  errorfile 400 /etc/haproxy/errors/400.http"                     >> $ARQ
-    echo "  errorfile 403 /etc/haproxy/errors/403.http"                     >> $ARQ
-    echo "  errorfile 408 /etc/haproxy/errors/408.http"                     >> $ARQ
-    echo "  errorfile 500 /etc/haproxy/errors/500.http"                     >> $ARQ
-    echo "  errorfile 502 /etc/haproxy/errors/502.http"                     >> $ARQ
-    echo "  errorfile 503 /etc/haproxy/errors/503.http"                     >> $ARQ
-    echo "  errorfile 504 /etc/haproxy/errors/504.http"                     >> $ARQ
-    echo ""                                                                 >> $ARQ
-#     echo "include config/*.cfg"                                             >> $ARQ
-#     echo "include backend/*.cfg"                                            >> $ARQ
-  fi
-
-#   ARQ="/etc/haproxy/http.cfg"
-#   if [ ! -e $ARQ ]; then
-#     echo "##################################################"               >  $ARQ
-#     echo "##  HAPROXY: configuração do HTTP"                                >> $ARQ
-#     echo "##################################################"               >> $ARQ
-#     echo "##  Depois de criado, apenas a linha identificadas são alteradas" >> $ARQ
-#     echo "##  @author original: Marcos de Lima Carlos"                      >> $ARQ
-    echo ""                                                                 >> $ARQ
-    echo "frontend www-http"                                                >> $ARQ
-    echo "  bind :80"                                                       >> $ARQ
-    echo ""                                                                 >> $ARQ
-    echo "  #{NFAS-Cfg-Ini}"                                                >> $ARQ
-    echo "  #{NFAS-Cfg-Fim}"                                                >> $ARQ
-    echo ""                                                                 >> $ARQ
-    echo "  default_backend http-backend"                                   >> $ARQ
-#   fi
-
-    if [ "$HAP_WITH_SSL" == "Y" ]; then
-#   ARQ="/etc/haproxy/https.cfg"
-#   if [ ! -e $ARQ ]; then
-#     echo "##################################################"               >  $ARQ
-#     echo "##  HAPROXY: configuração do HTTPS"                               >> $ARQ
-#     echo "##################################################"               >> $ARQ
-#     echo "##  Depois de criado, apenas a linha identificadas são alteradas" >> $ARQ
-#     echo "##  @author original: Marcos de Lima Carlos"                      >> $ARQ
-    echo ""                                                                 >> $ARQ
-    echo "frontend www-https"                                               >> $ARQ
-    echo ""                                                                 >> $ARQ
-    if [ "$HAP_CRYPT_LEVEL" == "1" ]; then
-      echo -e "$HAP_HTTPS_N1"                                               >> $ARQ
-    elif [ "$HAP_CRYPT_LEVEL" == "3" ]; then
-      echo -e "$HAP_HTTPS_N3"                                               >> $ARQ
-    else
-      # default é nível Intermediário
-      echo -e "$HAP_HTTPS_N2"                                               >> $ARQ
-    fi
-    echo "  tcp-request inspect-delay 5s"                                   >> $ARQ
-    echo ""                                                                 >> $ARQ
-    echo "  tcp-request content accept if { req_ssl_hello_type 1 }"         >> $ARQ
-    echo ""                                                                 >> $ARQ
-    echo "  rspadd  Strict-Transport-Security:\ max-age=15768000 # pesquisar" >> $ARQ
-    echo ""                                                                 >> $ARQ
-    echo "  #{NFAS-Cfg-Ini}"                                                >> $ARQ
-    echo "  #{NFAS-Cfg-Fim}"                                                >> $ARQ
-    echo ""                                                                 >> $ARQ
-    echo "  default_backend http-backend"                                   >> $ARQ
-#   fi
-  fi
-
-#   ARQ="/etc/haproxy/backend/http-default.cfg"
-#   mkdir -p /etc/haproxy/backend
-#   if [ ! -e $ARQ ]; then
-#     echo "##################################################"               >  $ARQ
-#     echo "##  HAPROXY: backend default"                                     >> $ARQ
-#     echo "##################################################"               >> $ARQ
-#     echo "##  Depois de criado, não é mais alterado" >> $ARQ
-#     echo "##  @author original: Marcos de Lima Carlos"                      >> $ARQ
-    echo ""                                                                 >> $ARQ
-    echo "backend http-backend"                                             >> $ARQ
-    if [ "$HAP_WITH_SSL" == "Y" ]; then
-      echo "    redirect scheme https if !{ ssl_fc }"                       >> $ARQ
-    fi
-#   fi
-
-  # Verifica arquivo de configuração
-  haproxy -c -q -V -f /etc/haproxy/haproxy.cfg
-  # Restart serviço
-  if [ "$DISTRO_NAME_VERS" == "CentOS 6" ]; then
-    # usando init
-    service haproxy restart
-  fi
-}
 
 #-----------------------------------------------------------------------
 # Lê dados do HAproxy se existirem
@@ -672,7 +507,7 @@ if [ "$CMD" == "--first" ]; then
   # Le o nível de segurança desejado, fica no $HAP_CRYPT_LEVEL
   GetHaproxyLevel
   # Cria uma configuração básica sem nada, Start serviço
-  HaproxyConfigBasic
+  HaproxyReconfig
 
 elif [ "$CMD" == "--app" ]; then
   #-----------------------------------------------------------------------
