@@ -341,6 +341,8 @@ function HaproxyInstall(){
   # cria os diretórios em etc e stats.
   mkdir -p /var/lib/haproxy
   touch /var/lib/haproxy/stats
+  # diretório para certificados
+  mkdir -p /etc/haproxy/ssl
 
   # configura o rsyslog para o haproxy
   # http://serverfault.com/questions/214312/how-to-keep-haproxy-log-messages-out-of-var-log-syslog
@@ -388,6 +390,7 @@ function HaproxyReconfig(){
   local APP_LIST=""
   local HTTP_FRONT=""
   local HTTP_BAK=""
+  local HAS_SSL="N"
   local MSG_TMP=" Configurado automáticamente"
   local ARQ="/etc/haproxy/haproxy.cfg"
   # Cria lista das Aplicações, usuários Linux
@@ -425,6 +428,11 @@ set -x
         HTTP_BAK+="  option forwardfor\n"
         HTTP_BAK+="  server srv-$APP 127.0.0.1:$HAPP_PORT check\n"
       fi # Existem URIs
+      if [ "$HAPP_HTTPS" == "Y" ]; then
+        # indica se existe ao menos uma Aplicação com SSL
+        echo ""
+        HAS_SSL="Y"
+      fi
     fi # Exite arquvo de configuração
   done
   echo -e "HTTP_FRONT:\n$HTTP_FRONT"
@@ -455,9 +463,33 @@ set -x
   echo -e "$HTTP_FRONT"                                                   >> $ARQ
   # Não tem site default
   # echo "  default_backend http-backend"                                 >> $ARQ
-  echo ""                                                                 >> $ARQ
+  if [ "$HAS_SSL" == "Y" ]; then
+    # Fornt-End do HTTPS e do Lets Encrypt
+    echo "frontend www-https"                                             >> $ARQ
+    if [ -z "$(ls /etc/haproxy/ssl/)" ]; then
+      # ainda não tem nenhum certificado
+      echo "  bind :443"                                                  >> $ARQ
+    else
+      # Já existe certificado atual ou anterior
+      echo "  bind :443 ssl crt /etc/haproxy/ssl/"                        >> $ARQ
+      echo "  reqadd X-Forwarded-Proto:\ https"                           >> $ARQ
+    fi
+    echo ""                                                               >> $ARQ
+    echo "  #{NFAS HTTPS-FRONT: Automação do Lets Encrypt}"               >> $ARQ
+    echo "  acl letsencrypt-request path_beg -i /.well-known/acme-challenge/">> $ARQ
+    echo "  use_backend letsencrypt if letsencrypt-request"               >> $ARQ
+  else
+    echo "#{NFAS: Nenhuma Aplicação com SSL}"                             >> $ARQ
+  fi
   # Cria BackEnds
   echo -e "$HTTP_BAK"                                                     >> $ARQ
+  if [ "$HAS_SSL" == "Y" ]; then
+    # Por último Backend do Lets encrypt
+    echo "#{NFAS HTTPS-BAK: Automação do Lets Encrypt}"                   >> $ARQ
+    echo "backend letsencrypt"                                            >> $ARQ
+    echo "  mode http"                                                    >> $ARQ
+    echo "  server letsencrypt 127.0.0.1:9999"                            >> $ARQ
+  fi
   # Não tem site default
   # echo "backend http-backend"                                           >> $ARQ
   # Configura acesso restrito
