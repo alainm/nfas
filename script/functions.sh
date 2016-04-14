@@ -88,6 +88,19 @@ function GetLoginType(){
   fi
 }
 
+#-----------------------------------------------------------------------
+# Retorna uma lista da Aplicações existentes (usuários Linux)
+function GetAppList(){
+  local U
+  local APP_LIST=""
+  # Cria lista das Aplicações, usuários Linux
+  for U in $(ls -d /home/*); do
+    USR=$(echo "$U" | sed -n 's@/home/\(.*\)*@\1@p')
+    [ -n "$APP_LIST" ] && APP_LIST+=" "
+    APP_LIST+=$USR
+  done
+  echo "$APP_LIST"
+}
 
 #-----------------------------------------------------------------------
 # Função para editar Arquivo de configuração, parametro separado por "="

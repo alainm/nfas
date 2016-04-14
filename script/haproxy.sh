@@ -46,6 +46,8 @@ HAPP=$2
 # Lê dados anteriores se existirem
 . /script/info/distro.var
 . /script/info/email.var
+# Funções do sistema
+. /script/functions.sh
 VAR_FILE="/script/info/haproxy.var"
 
 #-----------------------------------------------------------------------
@@ -266,6 +268,74 @@ function EditAppConfig(){
   return 0
 }
 
+#-----------------------------------------------------------------------
+# instala o Script do Let's Encrypt
+# fica no /opt
+function LetsEncryptInstall(){
+  pushd /opt
+  # instala no /opt/letsencrypt
+  git clone https://github.com/letsencrypt/letsencrypt
+  cd letsencrypt
+  # Instala dependências automáticas
+  ./letsencrypt-auto --os-packages-only
+  popd
+}
+
+#-----------------------------------------------------------------------
+# Cria e autentica um Certificado no Let's encrypt
+# https://blog.brixit.nl/automating-letsencrypt-and-haproxy
+function GetCertificate(){
+  local APP_LIST,APP,URI,DOM
+  local DOM_LIST=""
+  local DOM_CERT=""
+  local NEW_DOMAINS=""
+  local HAS_SSL="N"
+  # Cria lista das Aplicações, usuários Linux
+  APP_LIST=$(GetAppList)
+  echo "APP_LIST=[$APP_LIST]"
+  # Varre todos os arquivos de configuração de Aplicação (HAPP_*)
+  for APP in $APP_LIST; do
+    if [ -e "/script/info/hap-$APP.var" ]; then
+      echo "AppConfig encontrado: $APP"
+      #cat "/script/info/hap-$APP.var"
+      # Le dados de cada Aplicação
+      GetSingleAppVars $APP
+      if [ -n "$HAPP_URIS" ]; then
+        # Tsta se usa SSL para esta aplicação
+        if [ "$HAPP_HTTPS" == "Y" ]; then
+          # varre todas as URIs para extrair os domínios
+          for URI in $HAPP_URIS; do
+            # Retira só o Domínio de todas as URIs
+            DOM_LIST+=" $(echo "$URI" | sed -n 's@\([^\/]*\)\/\?.*@\1@p')"
+          done
+          HAS_SSL="Y"
+        fi # Existem URIs
+      fi
+    fi # Exite arquvo de configuração
+  done
+  # Se não usa SSL em nenhuma Aplicação, retorna
+  [ "$HAS_SSL" == "N" ] && return 0
+  # Ordena e elimina duplicados: http://stackoverflow.com/questions/8802734/sorting-and-removing-duplicate-words-in-a-line
+  DOM_LIST=$(echo "$DOM_LIST" | xargs -n1 | sort -u | xargs)
+  echo "DOM_LIST=[$DOM_LIST]"
+  if [ -n "$(ls /etc/haproxy/ssl/*.pem 2>/dev/null)" ]; then
+    echo "Já existe um certificado instalado"
+    # Gera lista dos Domínios dentro do Certificado
+  else
+    echo "Nenhum certificado encontrado"
+    DOM_CERT=""
+  fi
+  if [ "$DOM_LIST" != "$DOM_CERT" ]; then
+    echo -e "\n         ┌──────────────────────────────────────┐"
+    echo -e   "         │      Gerando Certificado SSL ...     │"
+    echo -e   "         └──────────────────────────────────────┘\n"
+    for DOM in $DOM_LIST; do
+      NEW_DOMAINS+=" -d $DOM"
+    done
+    echo "NEW_DOMAINS=[$NEW_DOMAINS]"
+  fi
+}
+
 #=======================================================================
 # Fornece a versão do HAproxy 1.6 mais novo
 # http://www.lua.org/manual/
@@ -387,25 +457,20 @@ function HaproxyInstall(){
 # Configurações de: https://mozilla.github.io/server-side-tls/ssl-config-generator/
 function HaproxyReconfig(){
   local ARK,APP,U,USR,URI,URIS
-  local APP_LIST=""
+  local APP_LIST
   local HTTP_FRONT=""
   local HTTP_BAK=""
   local HAS_SSL="N"
   local MSG_TMP=" Configurado automáticamente"
   local ARQ="/etc/haproxy/haproxy.cfg"
   # Cria lista das Aplicações, usuários Linux
-  for U in $(ls -d /home/*); do
-    USR=$(echo "$U" | sed -n 's@/home/\(.*\)*@\1@p')
-    [ -n "$APP_LIST" ] && APP_LIST+=" "
-    APP_LIST+=$USR
-  done
+  APP_LIST=$(GetAppList)
   echo "APP_LIST=[$APP_LIST]"
   # Varre todos os arquivos de configuração de Aplicação
   for APP in $APP_LIST; do
     if [ -e "/script/info/hap-$APP.var" ]; then
       echo "AppConfig encontrado: $APP"
       cat "/script/info/hap-$APP.var"
-set -x
       # Le dados de cada Aplicação
       GetSingleAppVars $APP
       if [ -n "$HAPP_URIS" ]; then
@@ -547,6 +612,8 @@ TITLE="NFAS - Configuração do HAproxy"
 if [ "$CMD" == "--first" ]; then
   # Instala HAproxy, não configura nem inicializa
   HaproxyInstall
+  # Instala scripts do Let's Encrypt e dependências
+  LetsEncryptInstall
   # Le o nível de segurança desejado, fica no $HAP_CRYPT_LEVEL
   GetHaproxyLevel
   # Cria uma configuração básica sem nada, Start serviço
@@ -564,13 +631,15 @@ elif [ "$CMD" == "--app" ]; then
 elif [ "$CMD" == "--reconfig" ]; then
   #-----------------------------------------------------------------------
   # Reconfigura HAproxy se alguma coisa mudou
-  if [ "$HAP_NEW_CONF" == "Y" ]; then
+#   if [ "$HAP_NEW_CONF" == "Y" ]; then
     echo "---------------------"
     echo " HAproxy RECONFIGURE "
     echo "---------------------"
     # refaz a configuração do HTTP, porta 80
-    HaproxyReconfig
-  fi
+#     HaproxyReconfig
+    # Consegue Certificado, se precisar
+    GetCertificate
+#   fi
 fi
 
 # Salva Variáveis alteradas
