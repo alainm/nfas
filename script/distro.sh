@@ -10,7 +10,7 @@ INFO_FILE=/script/info/distro.var
 
 # Pré definição das variáveis que serão geradas, defaults em caso de erro
 # Fornece também uma LISTa das Distros suportadas
-DISTRO_LIST="CentOS 6 64bits"
+DISTRO_LIST="CentOS 6 64 bits"
 DISTRO_NAME=""
 DISTRO_VERSION=""
 DISTRO_OK="N"

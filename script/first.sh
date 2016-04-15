@@ -25,7 +25,7 @@ if [ "$1" != "--ip-continue" ]; then
   MSG=" A distribuição encontrada é \"$DISTRO_NAME\" versão \"$DISTRO_VERSION\", $DISTRO_BITS bits\n"
   if [ "$DISTRO_OK" != "Y" ]; then
     MSG="$MSG""As vesrões compatíveis são: \"$DISTRO_LIST\"\n\n   Abortando instalação..."
-    whiptail --title "Instalação NFAS" --msgbox "\"$MSG"\" 11 67
+    whiptail --title "Instalação NFAS" --msgbox "$MSG" 11 67
     exit 1
   else
     MSG+="\nAcione OK para começar a instalação"
