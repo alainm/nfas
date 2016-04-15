@@ -22,15 +22,14 @@ if [ "$1" != "--ip-continue" ]; then
   # executa o script e importa as variáveis resultantes
   /script/distro.sh
   . /script/info/distro.var
+  MSG=" A distribuição encontrada é \"$DISTRO_NAME\" versão \"$DISTRO_VERSION\", $DISTRO_BITS bits\n"
   if [ "$DISTRO_OK" != "Y" ]; then
-    MSG="A distribuição encontrada é \"$DISTRO_NAME\" versão \"$DISTRO_VERSION\"\n"
     MSG="$MSG""As vesrões compatíveis são: \"$DISTRO_LIST\"\n\n   Abortando instalação..."
-    whiptail --title "Instalação NFAS" --msgbox "\"$MSG"\" 11 60
+    whiptail --title "Instalação NFAS" --msgbox "\"$MSG"\" 11 67
     exit 1
   else
-    MSG="A distribuição encontrada é \"$DISTRO_NAME\" versão \"$DISTRO_VERSION\"\n\n"
-    MSG+="Acione OK para começar a instalação"
-    whiptail --title "Instalação NFAS" --msgbox "\"$MSG"\" 11 60
+    MSG+="\nAcione OK para começar a instalação"
+    whiptail --title "Instalação NFAS" --msgbox "$MSG" 11 67
   fi
 
   # atualiza todo o sistema

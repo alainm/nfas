@@ -10,7 +10,7 @@ INFO_FILE=/script/info/distro.var
 
 # Pré definição das variáveis que serão geradas, defaults em caso de erro
 # Fornece também uma LISTa das Distros suportadas
-DISTRO_LIST="CentOS 6"
+DISTRO_LIST="CentOS 6 64bits"
 DISTRO_NAME=""
 DISTRO_VERSION=""
 DISTRO_OK="N"
@@ -52,16 +52,21 @@ if [ -z "$DISTRO_NAME" ]; then
   DISTRO_VERSION="?"
 fi
 
-if [ "$DISTRO_NAME" == "CentOS" ] && [ "$DISTRO_VERSION" == "6" ]; then
+DISTRO_BITS=$(getconf LONG_BIT)
+
+if [ "$DISTRO_NAME" == "CentOS" ] && \
+   [ "$DISTRO_VERSION" == "6" ]   && \
+   [ "$DISTRO_BITS" == "64" ];    then
   DISTRO_OK="Y"
 fi
 
-echo -e "\nDistribuição encontrada: \"$DISTRO_NAME\" versão \"$DISTRO_VERSION\""
+echo -e "\nDistribuição encontrada: \"$DISTRO_NAME\" versão \"$DISTRO_VERSION\", $DISTRO_BITS bits"
 
 echo "DISTRO_LIST=\"$DISTRO_LIST\""                        2>/dev/null >  $INFO_FILE
 echo "DISTRO_NAME=\"$DISTRO_NAME\""                        2>/dev/null >> $INFO_FILE
 echo "DISTRO_NAME_VERS=\"$DISTRO_NAME $DISTRO_VERSION\""   2>/dev/null >> $INFO_FILE
 echo "DISTRO_VERSION=$DISTRO_VERSION"                      2>/dev/null >> $INFO_FILE
+echo "DISTRO_BITS=$DISTRO_BITS"                            2>/dev/null >> $INFO_FILE
 echo "DISTRO_OK=$DISTRO_OK"                                2>/dev/null >> $INFO_FILE
 
 if [[ ! -a $INFO_FILE ]]; then
