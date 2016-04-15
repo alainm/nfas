@@ -8,6 +8,7 @@ set -x
 #   a parte antes do primeiro "." é o hostname local, o resto é o domínio, o conjunto todo é o FQDN.
 #   Isso não tem nada a ver com o que algum DNS possa estar apontando para a máquina,
 #   Só o hostname local é obrigatório, no prompt sempre é só a primeira parte que aparece.
+#   => Eliminado necessidade do ponto (em teste)
 # SEMPRE é atualizada a entrada no /etc/hosts com o IP do eth0 e
 # OBS: varia muito conforme o tipo de distro Ubuntu ou CentOS...
 
@@ -97,10 +98,10 @@ if [ -z "$NEW_HOSTNAME" ]; then
       fi
     elif [ $ERR -eq 0 ]; then
       # testa se é FQDN, tem que ter "." no hostname
-      if echo "$NEW_HOSTNAME" | grep -qv "\."; then
-        ERR_ST="Nome tem que ser FQDN (precisa ter \".\" no nome)"
-        ERR=1 # força repetir
-      else
+      #if echo "$NEW_HOSTNAME" | grep -qv "\."; then
+      #  ERR_ST="Nome tem que ser FQDN (precisa ter \".\" no nome)"
+      #  ERR=1 # força repetir
+      #else
         # Tenta alterar hostname
         echo "Alterando hostname de \"$OLD_HOSTNAME\" para \"$NEW_HOSTNAME\""
         # Alterando temporáriamente
@@ -127,7 +128,7 @@ if [ -z "$NEW_HOSTNAME" ]; then
           # indica que vao precisar de Reboot
           echo "NEED_BOOT=\"Y\""  2>/dev/null >  /script/info/needboot.var
         fi
-      fi
+      #fi
     else
       ERR_ST="Nome inválido, por favor tente novamente"
     fi
