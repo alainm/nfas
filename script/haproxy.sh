@@ -456,7 +456,7 @@ function HaproxyInstall(){
 # Reconfigura o HAproxy
 # Configurações de: https://mozilla.github.io/server-side-tls/ssl-config-generator/
 function HaproxyReconfig(){
-  local ARK,APP,U,USR,URI,URIS
+  local ARK,APP,U,USR,URI,URIS,DOM,DIR,NURI
   local APP_LIST
   local HTTP_FRONT=""
   local HTTP_BAK=""
@@ -476,16 +476,33 @@ function HaproxyReconfig(){
       if [ -n "$HAPP_URIS" ]; then
         HTTP_FRONT+="\n  #{NFAS HTTP-FRONT: $APP}$MSG_TMP\n"
         MSG_TMP=""
+        NURI=1
         for URI in $HAPP_URIS; do
+          DOM="$(echo "$URI" | sed -n 's@\([^\/]*\)\/\?.*@\1@p')"
+          DIR="$(echo "$URI" | sed -n 's@[^\/]*\(.*\)@\1@p')"
+          HTTP_FRONT+="  # URI: $URI\n"
           if [ $(echo "$URI" | grep "/") ]; then
-            # Contém URI com rota
-            HTTP_FRONT+="  acl host_$APP path_dir -i $URI\n"
+            if [ "${URI:0:1}" == "/" ]; then
+              # Sem domínio, acesso direto. Começa com '/'
+              # Precisa usar uma RegEx para identificar acesso só por IP
+              #   "-m ip" não funcionou, TODO: testar IPv6
+              HTTP_FRONT+="  acl host_"$APP"_"$NURI"h req.hdr(host) -m reg ^[0-9\.]*$\n"
+              HTTP_FRONT+="  acl host_"$APP"_"$NURI"h req.hdr(host) -i -m reg ^[0-9a-f:]*$\n"
+              HTTP_FRONT+="  acl host_"$APP"_"$NURI"d path_dir -i $DIR\n"
+              HTTP_FRONT+="  use_backend http-$APP if host_"$APP"_"$NURI"h host_"$APP"_"$NURI"d\n"
+            else
+              # Com domínio e com rota
+              HTTP_FRONT+="  acl host_"$APP"_"$NURI"h req.hdr(host) -i $DOM\n"
+              HTTP_FRONT+="  acl host_"$APP"_"$NURI"d path_dir -i $DIR\n"
+              HTTP_FRONT+="  use_backend http-$APP if host_"$APP"_"$NURI"h host_"$APP"_"$NURI"d\n"
+            fi
           else
             # Cotém só (sub)domínio
-            HTTP_FRONT+="  acl host_$APP hdr(host) -i $URI\n"
+            HTTP_FRONT+="  acl host_"$APP"_"$NURI" req.hdr(host) -i $DOM\n"
+            HTTP_FRONT+="  use_backend http-$APP if host_"$APP"_"$NURI"\n"
           fi
+          NURI=$(( $NURI + 1 ))
         done
-        HTTP_FRONT+="  use_backend http-$APP if host_$APP\n"
         # Cria todos os Backends
         HTTP_BAK+="\n#{NFAS HTTP-BAK: $APP}\n"
         HTTP_BAK+="backend http-$APP\n"
@@ -631,7 +648,7 @@ elif [ "$CMD" == "--app" ]; then
 elif [ "$CMD" == "--reconfig" ]; then
   #-----------------------------------------------------------------------
   # Reconfigura HAproxy se alguma coisa mudou
-  if [ "$HAP_NEW_CONF" == "Y" ]; then
+#   if [ "$HAP_NEW_CONF" == "Y" ]; then
     echo "---------------------"
     echo " HAproxy RECONFIGURE "
     echo "---------------------"
@@ -639,7 +656,7 @@ elif [ "$CMD" == "--reconfig" ]; then
     HaproxyReconfig
     # Consegue Certificado, se precisar
     GetCertificate
-  fi
+#   fi
 fi
 
 # Salva Variáveis alteradas
