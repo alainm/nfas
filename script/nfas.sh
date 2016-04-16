@@ -32,7 +32,10 @@ while true; do
   if [ $status != 0 ]; then
       echo "Seleção cancelada."
       # Na saída precisa verificar o HAproxy se algo mudou
-      /script/haproxy.sh --reconfig
+      . /script/info/haproxy.var
+      if [ "$HAP_NEW_CONF" == "Y" ]; then
+        /script/haproxy.sh --reconfig
+      fi
       exit 0
   fi
 

@@ -658,15 +658,13 @@ elif [ "$CMD" == "--app" ]; then
 elif [ "$CMD" == "--reconfig" ]; then
   #-----------------------------------------------------------------------
   # Reconfigura HAproxy se alguma coisa mudou
-#   if [ "$HAP_NEW_CONF" == "Y" ]; then
-    echo "---------------------"
-    echo " HAproxy RECONFIGURE "
-    echo "---------------------"
-    # refaz a configuração do HTTP, porta 80
-    HaproxyReconfig
-    # Consegue Certificado, se precisar
-    GetCertificate
-#   fi
+  echo "---------------------"
+  echo " HAproxy RECONFIGURE "
+  echo "---------------------"
+  # refaz a configuração do HTTP, porta 80
+  HaproxyReconfig
+  # Consegue Certificado, se precisar
+  GetCertificate
 fi
 
 # Salva Variáveis alteradas
