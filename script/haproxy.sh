@@ -481,8 +481,8 @@ function HaproxyReconfig(){
           DOM="$(echo "$URI" | sed -n 's@\([^\/]*\)\/\?.*@\1@p')"
           DIR="$(echo "$URI" | sed -n 's@[^\/]*\(.*\)@\1@p')"
           HTTP_FRONT+="  # URI: $URI\n"
-          if [ $(echo "$URI" | grep "/") ]; then
-            if [ "${URI:0:1}" == "/" ]; then
+          if [ -n "$DIR" ]; then
+            if [ -z "$DOM" ]; then
               # Sem domínio, acesso direto. Começa com '/'
               # Precisa usar uma RegEx para identificar acesso só por IP
               #   "-m ip" não funcionou, TODO: testar IPv6
@@ -648,7 +648,7 @@ elif [ "$CMD" == "--app" ]; then
 elif [ "$CMD" == "--reconfig" ]; then
   #-----------------------------------------------------------------------
   # Reconfigura HAproxy se alguma coisa mudou
-#   if [ "$HAP_NEW_CONF" == "Y" ]; then
+  if [ "$HAP_NEW_CONF" == "Y" ]; then
     echo "---------------------"
     echo " HAproxy RECONFIGURE "
     echo "---------------------"
@@ -656,7 +656,7 @@ elif [ "$CMD" == "--reconfig" ]; then
     HaproxyReconfig
     # Consegue Certificado, se precisar
     GetCertificate
-#   fi
+  fi
 fi
 
 # Salva Variáveis alteradas
