@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+# set -x
 
 # Script para Instalar e Configurar o HAprozy
 # Uso: /script/haproxy.sh <cmd>
@@ -285,7 +285,7 @@ function LetsEncryptInstall(){
 # Cria e autentica um Certificado no Let's encrypt
 # https://blog.brixit.nl/automating-letsencrypt-and-haproxy
 function GetCertificate(){
-  local APP_LIST,APP,URI,DOM
+  local APP_LIST, APP, URI, DOM, DOM1
   local DOM_LIST=""
   local DOM_CERT=""
   local NEW_DOMAINS=""
@@ -321,6 +321,7 @@ function GetCertificate(){
   if [ -n "$(ls /etc/haproxy/ssl/*.pem 2>/dev/null)" ]; then
     echo "Já existe um certificado instalado"
     # Gera lista dos Domínios dentro do Certificado
+    [ -e /script/info/letsencrypt.var ] && . /script/info/letsencrypt.var
   else
     echo "Nenhum certificado encontrado"
     DOM_CERT=""
@@ -329,10 +330,34 @@ function GetCertificate(){
     echo -e "\n         ┌──────────────────────────────────────┐"
     echo -e   "         │      Gerando Certificado SSL ...     │"
     echo -e   "         └──────────────────────────────────────┘\n"
+set -x
+    DOM1=""
     for DOM in $DOM_LIST; do
       NEW_DOMAINS+=" -d $DOM"
+      [ -z "$DOM1" ] && DOM1="$DOM" # Guarda 1º da lista
     done
     echo "NEW_DOMAINS=[$NEW_DOMAINS]"
+    # Path to the letsencrypt-auto tool
+    LE_TOOL=/opt/letsencrypt/letsencrypt-auto
+    # Create or renew certificate for the domain(s) supplied for this tool
+    # Usa "tls-sni-01" para porta 443
+    $LE_TOOL --agree-tos --renew-by-default --test-cert        \
+             --standalone --standalone-supported-challenges    \
+             http-01 --http-01-port 9999 certonly $NEW_DOMAINS
+    if [ $? -eq 0 ]; then
+      # Path onde é guardado o Certificado
+      LE_CERT_PATH="/etc/letsencrypt/live/$DOM1"
+      # Cat the certificate chain and the private key together for haproxy
+      # Fica guardado com o nome do primeiro certificado (ordem alfabetica...)
+      rm -rf /etc/haproxy/ssl/*
+      cat $LE_CERT_PATH/{fullchain.pem,privkey.pem} > /etc/haproxy/ssl/letsencrypt.pem
+      # Guarda Path para uso futuro, só o último é válido
+      echo "LE_CERT_PATH=$LE_CERT_PATH" > /script/info/letsencrypt.var
+      # Reload the haproxy daemon to activate the cert
+      service haproxy reload
+    else
+      echo "Erro gerando Certificado"
+    fi
   fi
 }
 
@@ -552,6 +577,11 @@ function HaproxyReconfig(){
   echo ""                                                                 >> $ARQ
   echo "frontend www-http"                                                >> $ARQ
   echo "  bind :80"                                                       >> $ARQ
+  if [ "$HAS_SSL" == "Y" ]; then
+    echo "  #{NFAS HTTPS-FRONT: Automação do Lets Encrypt}"               >> $ARQ
+    echo "  acl letsencrypt-request path_beg -i /.well-known/acme-challenge/">> $ARQ
+    echo "  use_backend letsencrypt if letsencrypt-request"               >> $ARQ
+  fi
   # Configurações FrontEnd de cada aplicação
   echo -e "$HTTP_FRONT"                                                   >> $ARQ
   # Não tem site default
@@ -567,9 +597,6 @@ function HaproxyReconfig(){
       echo "  bind :443 ssl crt /etc/haproxy/ssl/"                        >> $ARQ
       echo "  reqadd X-Forwarded-Proto:\ https"                           >> $ARQ
     fi
-    echo "  #{NFAS HTTPS-FRONT: Automação do Lets Encrypt}"               >> $ARQ
-    echo "  acl letsencrypt-request path_beg -i /.well-known/acme-challenge/">> $ARQ
-    echo "  use_backend letsencrypt if letsencrypt-request"               >> $ARQ
   else
     echo "#{NFAS: Nenhuma Aplicação com SSL}"                             >> $ARQ
   fi
