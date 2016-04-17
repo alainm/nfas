@@ -285,7 +285,7 @@ function LetsEncryptInstall(){
 # Cria e autentica um Certificado no Let's encrypt
 # https://blog.brixit.nl/automating-letsencrypt-and-haproxy
 function GetCertificate(){
-  local APP_LIST, APP, URI, DOM, DOM1
+  local APP_LIST APP URI DOM DOM1
   local DOM_LIST=""
   local DOM_CERT=""
   local NEW_DOMAINS=""
@@ -318,10 +318,10 @@ function GetCertificate(){
   # Ordena e elimina duplicados: http://stackoverflow.com/questions/8802734/sorting-and-removing-duplicate-words-in-a-line
   DOM_LIST=$(echo "$DOM_LIST" | xargs -n1 | sort -u | xargs)
   echo "DOM_LIST=[$DOM_LIST]"
-  if [ -n "$(ls /etc/haproxy/ssl/*.pem 2>/dev/null)" ]; then
+  if [ -e /etc/haproxy/ssl/letsencrypt.pem ]; then
     echo "Já existe um certificado instalado"
-    # Gera lista dos Domínios dentro do Certificado
-    [ -e /script/info/letsencrypt.var ] && . /script/info/letsencrypt.var
+    # Gera lista dos Domínios dentro do Certificado, mesma formatação
+    DOM_CERT=$(openssl x509 -in /etc/haproxy/ssl/letsencrypt.pem -text | grep DNS | xargs -n1 | tr -d "DNS:" | tr -d "," | sort -u | xargs)
   else
     echo "Nenhum certificado encontrado"
     DOM_CERT=""
