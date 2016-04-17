@@ -510,8 +510,6 @@ function HaproxyReconfig(){
         # Cria todos os Backends
         HTTP_BAK+="\n#{NFAS HTTP-BAK: $APP}\n"
         HTTP_BAK+="backend http-$APP\n"
-        HTTP_BAK+="  mode http\n"
-        HTTP_BAK+="  option forwardfor\n"
         HTTP_BAK+="  server srv-$APP 127.0.0.1:$HAPP_PORT check\n"
       fi # Existem URIs
       if [ "$HAPP_HTTPS" == "Y" ]; then
@@ -614,7 +612,10 @@ function HaproxyReconfig(){
         # default é nível Intermediário
         echo -e "$HAP_HTTPS_N2"                                           >> $ARQ
       fi
-      echo "  reqadd X-Forwarded-Proto:\ https"                           >> $ARQ
+      # Alerações do Header devem vir primeiro
+      echo -e "  http-request set-header X-Forwarded-Proto https"         >> $ARQ
+      # Se está na porta 443 mas não está encriptado, redireciona. 301 é: moved permanently
+      echo -e "  redirect scheme https code 301 if !{ ssl_fc }"           >> $ARQ
       # Configurações FrontEnd de cada aplicação
       echo -e "$HTTPS_FRONT"                                              >> $ARQ
     else
@@ -630,7 +631,6 @@ function HaproxyReconfig(){
     # Por último Backend do Lets encrypt
     echo "#{NFAS HTTPS-BAK: Automação do Lets Encrypt}"                   >> $ARQ
     echo "backend letsencrypt"                                            >> $ARQ
-    echo "  mode http"                                                    >> $ARQ
     echo "  server letsencrypt 127.0.0.1:9999"                            >> $ARQ
   fi
   # Não tem site default
