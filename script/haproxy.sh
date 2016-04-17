@@ -24,20 +24,20 @@ INSTALL_DIR="/script/install"
 #   e https://wiki.mozilla.org/Security/Server_Side_TLS#Recommended_configurations
 #
 # Nível 1: MODERNO
-   HAP_GLOBAL_N1="  # set default parameters to the modern configuration"
+   HAP_GLOBAL_N1="  # {NFAS: set default parameters to the modern configuration}"
 HAP_GLOBAL_N1+="\n  tune.ssl.default-dh-param 2048"
 HAP_GLOBAL_N1+="\n  ssl-default-bind-ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!3DES:!MD5:!PSK"
-    HAP_HTTPS_N1="  bind  :443 no-sslv3 no-tlsv10 crt /etc/haproxy/certs"
+    HAP_HTTPS_N1="  bind :443 ssl no-sslv3 no-tlsv10 crt /etc/haproxy/ssl/letsencrypt.pem"
 # Nível 2: INTERMEDIARIO
-   HAP_GLOBAL_N2="  # set default parameters to the intermediate configuration"
+   HAP_GLOBAL_N2="  # {NFAS: set default parameters to the intermediate configuration}"
 HAP_GLOBAL_N2+="\n  tune.ssl.default-dh-param 2048"
 HAP_GLOBAL_N2+="\n  ssl-default-bind-ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:ECDHE-RSA-DES-CBC3-SHA:ECDHE-ECDSA-DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA"
-    HAP_HTTPS_N2="  bind  :443 ssl no-sslv3 crt /etc/haproxy/certs"
+    HAP_HTTPS_N2="  bind :443 ssl no-sslv3 crt /etc/haproxy/ssl/letsencrypt.pem"
 # Nível 3: ANTIGO
-   HAP_GLOBAL_N3="  # set default parameters to the old configuration"
+   HAP_GLOBAL_N3="  # {NFAS: set default parameters to the old configuration}"
 HAP_GLOBAL_N3+="\n  tune.ssl.default-dh-param 1024"
 HAP_GLOBAL_N3+="\n  ssl-default-bind-ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:ECDHE-RSA-DES-CBC3-SHA:ECDHE-ECDSA-DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:DES-CBC3-SHA:HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA"
-    HAP_HTTPS_N3="  bind  :443 ssl crt /etc/haproxy/certs"
+    HAP_HTTPS_N3="  bind :443 ssl crt /etc/haproxy/ssl/letsencrypt.pem"
 
 #=======================================================================
 # Processa a linha de comando
@@ -341,7 +341,7 @@ set -x
     LE_TOOL=/opt/letsencrypt/letsencrypt-auto
     # Create or renew certificate for the domain(s) supplied for this tool
     # Usa "tls-sni-01" para porta 443
-    $LE_TOOL --agree-tos --renew-by-default --test-cert        \
+    $LE_TOOL --agree-tos --renew-by-default                    \
              --standalone --standalone-supported-challenges    \
              http-01 --http-01-port 9999 certonly $NEW_DOMAINS
     if [ $? -eq 0 ]; then
@@ -481,10 +481,10 @@ function HaproxyInstall(){
 # Reconfigura o HAproxy
 # Configurações de: https://mozilla.github.io/server-side-tls/ssl-config-generator/
 function HaproxyReconfig(){
-  local ARK,APP,U,USR,URI,URIS,DOM,DIR,NACL
-  local APP_LIST
+  local ARK APP U USR URI URIS DOM DIR HTTP HTTPS NACL APP_LIST TMP_FRONT
   local SORT_LIST=""
   local HTTP_FRONT=""
+  local HTTPS_FRONT=""
   local HTTP_BAK=""
   local HAS_SSL="N"
   local MSG_TMP=" Configurado automáticamente"
@@ -505,7 +505,7 @@ function HaproxyReconfig(){
           DOM="$(echo "$URI" | sed -n 's@\([^\/]*\)\/\?.*@\1@p')"
           DIR="$(echo "$URI" | sed -n 's@[^\/]*\(.*\)@\1@p')"
           # Cria lista de ACLs para ordenar
-          SORT_LIST+="$(( 1000- ${#DOM} ))	\"$DOM\"	$(( 1000- ${#DIR} ))	\"$DIR\"	\"$APP\"\n"
+          SORT_LIST+="$(( 1000- ${#DOM} ))	\"$DOM\"	$(( 1000- ${#DIR} ))	\"$DIR\"	$APP	$HAPP_HTTP	$HAPP_HTTPS\n"
         done
         # Cria todos os Backends
         HTTP_BAK+="\n#{NFAS HTTP-BAK: $APP}\n"
@@ -525,46 +525,61 @@ function HaproxyReconfig(){
   echo -ne "$SORT_LIST" > sortlist.txt
   NACL=1
   while read -r ACL; do
-    APP=$(echo -e "$ACL" | cut -f5 | sed -e 's/^"//' -e 's/"$//')
+    APP=$(echo -e "$ACL" | cut -f5)
     DOM=$(echo -e "$ACL" | cut -f2 | sed -e 's/^"//' -e 's/"$//')
     DIR=$(echo -e "$ACL" | cut -f4 | sed -e 's/^"//' -e 's/"$//')
-    echo "===== APP=$APP DOM=$DOM DIR=$DIR ====="
-    HTTP_FRONT+="  # APP=$APP, URI=$DOM$DIR\n"
+    HTTP=$(echo -e "$ACL" | cut -f6)
+    HTTPS=$(echo -e "$ACL" | cut -f7)
+    echo "===== APP=$APP DOM=$DOM DIR=$DIR HTTP=$HTTP HTTPS=$HTTPS ====="
+    TMP_FRONT="  # APP=$APP, URI=$DOM$DIR\n"
     if [ -z "$DIR" ]; then
       # Cotém só (sub)domínio
-      HTTP_FRONT+="  acl host_"$APP"_"$NACL" req.hdr(host) -i $DOM\n"
-      HTTP_FRONT+="  use_backend http-$APP if host_"$APP"_"$NACL"\n"
+      TMP_FRONT+="  acl host_"$APP"_"$NACL" req.hdr(host) -i $DOM\n"
+      TMP_FRONT+="  use_backend http-$APP if host_"$APP"_"$NACL"\n"
     else
       if [ -n "$DOM" ]; then
         # Com domínio e com rota
-        HTTP_FRONT+="  acl host_"$APP"_"$NACL"h req.hdr(host) -i $DOM\n"
-        HTTP_FRONT+="  acl host_"$APP"_"$NACL"d path_dir -i $DIR\n"
-        HTTP_FRONT+="  use_backend http-$APP if host_"$APP"_"$NACL"h host_"$APP"_"$NACL"d\n"
+        TMP_FRONT+="  acl host_"$APP"_"$NACL"h req.hdr(host) -i $DOM\n"
+        TMP_FRONT+="  acl host_"$APP"_"$NACL"d path_dir -i $DIR\n"
+        TMP_FRONT+="  use_backend http-$APP if host_"$APP"_"$NACL"h host_"$APP"_"$NACL"d\n"
       else
         # Sem domínio, acesso direto. Começa com '/'
         # Precisa usar uma RegEx para identificar acesso só por IP
         #   "-m ip" não funcionou, TODO: testar IPv6
-        HTTP_FRONT+="  acl host_"$APP"_"$NACL"h req.hdr(host) -m reg ^[0-9\.]*$\n"
-        HTTP_FRONT+="  acl host_"$APP"_"$NACL"h req.hdr(host) -i -m reg ^[0-9a-f:]*$\n"
-        HTTP_FRONT+="  acl host_"$APP"_"$NACL"d path_dir -i $DIR\n"
-        HTTP_FRONT+="  use_backend http-$APP if host_"$APP"_"$NACL"h host_"$APP"_"$NACL"d\n"
+        TMP_FRONT+="  acl host_"$APP"_"$NACL"h req.hdr(host) -m reg ^[0-9\.]*$\n"
+        TMP_FRONT+="  acl host_"$APP"_"$NACL"h req.hdr(host) -i -m reg ^[0-9a-f:]*$\n"
+        TMP_FRONT+="  acl host_"$APP"_"$NACL"d path_dir -i $DIR\n"
+        TMP_FRONT+="  use_backend http-$APP if host_"$APP"_"$NACL"h host_"$APP"_"$NACL"d\n"
       fi
     fi
+    [ "$HTTP" == "Y" ]  && HTTP_FRONT+=$TMP_FRONT
+    [ "$HTTPS" == "Y" ] && HTTPS_FRONT+=$TMP_FRONT
     NACL=$(( $NACL + 1 ))
   done <<< "$SORT_LIST"
-  echo -e "HTTP_FRONT:\n$HTTP_FRONT"
-  echo -e "HTTP_BAK\n$HTTP_BAK"
+  # echo -e "HTTP_FRONT:\n$HTTP_FRONT"
+  # echo -e "HTTPS_FRONT:\n$HTTPS_FRONT"
+  # echo -e "HTTP_BAK:\n$HTTP_BAK"
   # Cria o arquivo de configuração
   ARQ="/etc/haproxy/haproxy.cfg"
   echo "##################################################"               >  $ARQ
   echo "##  HAPROXY: arquivo de configuração principal"                   >> $ARQ
   echo "##################################################"               >> $ARQ
   echo "##  Não altere, será recriado integralmente"                      >> $ARQ
-  echo "##  @author original: Marcos de Lima Carlos"                      >> $ARQ
   echo ""                                                                 >> $ARQ
   echo "global"                                                           >> $ARQ
   echo "  maxconn 20000"                                                  >> $ARQ
   echo "  log /dev/log local0 notice # notice/info/debug"                 >> $ARQ
+  if [ "$HAS_SSL" == "Y" ]; then
+    # Configurações para cada nível de criptografia
+    if [ "$HAP_CRYPT_LEVEL" == "1" ]; then
+      echo -e "$HAP_GLOBAL_N1"                                            >> $ARQ
+    elif [ "$HAP_CRYPT_LEVEL" == "3" ]; then
+      echo -e "$HAP_GLOBAL_N3"                                            >> $ARQ
+    else
+      # default é nível Intermediário
+      echo -e "$HAP_GLOBAL_N2"                                            >> $ARQ
+    fi
+  fi
   echo ""                                                                 >> $ARQ
   echo "defaults"                                                         >> $ARQ
   echo "  mode http"                                                      >> $ARQ
@@ -589,13 +604,22 @@ function HaproxyReconfig(){
   if [ "$HAS_SSL" == "Y" ]; then
     # Fornt-End do HTTPS e do Lets Encrypt
     echo "frontend www-https"                                             >> $ARQ
-    if [ -z "$(ls /etc/haproxy/ssl/)" ]; then
+    if [ -e /etc/haproxy/ssl/letsencrypt.pem ]; then
+      # Já existe certificado atual ou anterior
+      if [ "$HAP_CRYPT_LEVEL" == "1" ]; then
+        echo -e "$HAP_HTTPS_N1"                                           >> $ARQ
+      elif [ "$HAP_CRYPT_LEVEL" == "3" ]; then
+        echo -e "$HAP_HTTPS_N3"                                           >> $ARQ
+      else
+        # default é nível Intermediário
+        echo -e "$HAP_HTTPS_N2"                                           >> $ARQ
+      fi
+      echo "  reqadd X-Forwarded-Proto:\ https"                           >> $ARQ
+      # Configurações FrontEnd de cada aplicação
+      echo -e "$HTTPS_FRONT"                                              >> $ARQ
+    else
       # ainda não tem nenhum certificado
       echo "  bind :443"                                                  >> $ARQ
-    else
-      # Já existe certificado atual ou anterior
-      echo "  bind :443 ssl crt /etc/haproxy/ssl/"                        >> $ARQ
-      echo "  reqadd X-Forwarded-Proto:\ https"                           >> $ARQ
     fi
   else
     echo "#{NFAS: Nenhuma Aplicação com SSL}"                             >> $ARQ
