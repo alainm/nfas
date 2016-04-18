@@ -319,9 +319,10 @@ function GetCertificate(){
   DOM_LIST=$(echo "$DOM_LIST" | xargs -n1 | sort -u | xargs)
   echo "DOM_LIST=[$DOM_LIST]"
   if [ -e /etc/haproxy/ssl/letsencrypt.pem ]; then
-    echo "Já existe um certificado instalado"
     # Gera lista dos Domínios dentro do Certificado, mesma formatação
     DOM_CERT=$(openssl x509 -in /etc/haproxy/ssl/letsencrypt.pem -text | grep DNS | xargs -n1 | tr -d "DNS:" | tr -d "," | sort -u | xargs)
+    [ -n "$DOM_CERT" ] && echo "DOM_CERT=[$DOM_CERT]"
+    echo "Já existe um certificado instalado"
   else
     echo "Nenhum certificado encontrado"
     DOM_CERT=""
@@ -522,6 +523,7 @@ function HaproxyReconfig(){
   SORT_LIST=$(echo -ne "$SORT_LIST" | sort -k1,1n -k2,2 -k3,3n -k4,4)
   echo -ne "$SORT_LIST" > sortlist.txt
   NACL=1
+set -x
   while read -r ACL; do
     APP=$(echo -e "$ACL" | cut -f5)
     DOM=$(echo -e "$ACL" | cut -f2 | sed -e 's/^"//' -e 's/"$//')
@@ -550,10 +552,15 @@ function HaproxyReconfig(){
         TMP_FRONT+="  use_backend http-$APP if host_"$APP"_"$NACL"h host_"$APP"_"$NACL"d\n"
       fi
     fi
-    [ "$HTTP" == "Y" ]  && HTTP_FRONT+=$TMP_FRONT
-    [ "$HTTPS" == "Y" ] && HTTPS_FRONT+=$TMP_FRONT
+    if [ "$HTTP" == "Y" ]; then
+      HTTP_FRONT+=$TMP_FRONT
+    fi
+    if [ "$HTTPS" == "Y" ] && [ -n "$DOM" ]; then
+      HTTPS_FRONT+=$TMP_FRONT
+    fi
     NACL=$(( $NACL + 1 ))
   done <<< "$SORT_LIST"
+set +x
   # echo -e "HTTP_FRONT:\n$HTTP_FRONT"
   # echo -e "HTTPS_FRONT:\n$HTTPS_FRONT"
   # echo -e "HTTP_BAK:\n$HTTP_BAK"
