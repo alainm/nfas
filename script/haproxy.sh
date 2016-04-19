@@ -482,13 +482,13 @@ function HaproxyInstall(){
 # Reconfigura o HAproxy
 # Configurações de: https://mozilla.github.io/server-side-tls/ssl-config-generator/
 function HaproxyReconfig(){
-  local ARK APP U USR URI URIS DOM DIR HTTP HTTPS NACL APP_LIST TMP_FRONT
+  local ARK APP U USR URI URIS DOM DIR PORT HTTP HTTPS NACL APP_LIST TMP_FRONT
   local SORT_LIST=""
   local HTTP_FRONT=""
   local HTTPS_FRONT=""
   local HTTP_BAK=""
+  local HAS_HTTP="N"
   local HAS_SSL="N"
-  local MSG_TMP=" Configurado automáticamente"
   local ARQ="/etc/haproxy/haproxy.cfg"
   # Cria lista das Aplicações, usuários Linux
   APP_LIST=$(GetAppList)
@@ -496,74 +496,95 @@ function HaproxyReconfig(){
   # Varre todos os arquivos de configuração de Aplicação
   for APP in $APP_LIST; do
     if [ -e "/script/info/hap-$APP.var" ]; then
-      echo "AppConfig encontrado: $APP"
-      cat "/script/info/hap-$APP.var"
+      # echo "AppConfig encontrado: $APP"
+      # cat "/script/info/hap-$APP.var"
       # Le dados de cada Aplicação
       GetSingleAppVars $APP
       if [ -n "$HAPP_URIS" ]; then
-        MSG_TMP=""
+        # Cria uma Lista com todas as informações da Aplicação
         for URI in $HAPP_URIS; do
           DOM="$(echo "$URI" | sed -n 's@\([^\/]*\)\/\?.*@\1@p')"
           DIR="$(echo "$URI" | sed -n 's@[^\/]*\(.*\)@\1@p')"
           # Cria lista de ACLs para ordenar
-          SORT_LIST+="$(( 1000- ${#DOM} ))	\"$DOM\"	$(( 1000- ${#DIR} ))	\"$DIR\"	$APP	$HAPP_HTTP	$HAPP_HTTPS\n"
+          SORT_LIST+="$(( 1000- ${#DOM} ))	\"$DOM\"	$(( 1000- ${#DIR} ))	\"$DIR\"	$APP	$HAPP_PORT	$HAPP_HTTP	$HAPP_HTTPS\n"
         done
-        # Cria todos os Backends
-        HTTP_BAK+="\n#{NFAS HTTP-BAK: $APP}\n"
-        HTTP_BAK+="backend http-$APP\n"
-        HTTP_BAK+="  server srv-$APP 127.0.0.1:$HAPP_PORT check\n"
+        [ "$HAPP_HTTP"  == "Y" ] && HAS_HTTP="Y"
+        [ "$HAPP_HTTPS" == "Y" ] && HAS_SSL="Y"
       fi # Existem URIs
-      if [ "$HAPP_HTTPS" == "Y" ]; then
-        # indica se existe ao menos uma Aplicação com SSL
-        echo ""
-        HAS_SSL="Y"
-      fi
     fi # Exite arquvo de configuração
-  done
+  done #APP_LIST
   SORT_LIST=$(echo -ne "$SORT_LIST" | sort -k1,1n -k2,2 -k3,3n -k4,4)
   echo -ne "$SORT_LIST" > sortlist.txt
   NACL=1
-set -x
   while read -r ACL; do
     APP=$(echo -e "$ACL" | cut -f5)
     DOM=$(echo -e "$ACL" | cut -f2 | sed -e 's/^"//' -e 's/"$//')
     DIR=$(echo -e "$ACL" | cut -f4 | sed -e 's/^"//' -e 's/"$//')
-    HTTP=$(echo -e "$ACL" | cut -f6)
-    HTTPS=$(echo -e "$ACL" | cut -f7)
+    PORT=$(echo -e "$ACL" | cut -f6)
+    HTTP=$(echo -e "$ACL" | cut -f7)
+    HTTPS=$(echo -e "$ACL" | cut -f8)
     echo "===== APP=$APP DOM=$DOM DIR=$DIR HTTP=$HTTP HTTPS=$HTTPS ====="
     TMP_FRONT="  # APP=$APP, URI=$DOM$DIR\n"
     if [ -z "$DIR" ]; then
-      # Cotém só (sub)domínio
+      # Cotém só domínio
       TMP_FRONT+="  acl host_"$APP"_"$NACL" req.hdr(host) -i $DOM\n"
-      TMP_FRONT+="  use_backend http-$APP if host_"$APP"_"$NACL"\n"
+      if [ "$HTTP" == "N" ] && [ "$HTTPS" == "Y" ]; then
+        # Precisa redirecionar
+        HTTP_FRONT+=$TMP_FRONT
+        HTTPS_FRONT+=$TMP_FRONT
+        # HTTP faz redirect
+        HTTP_FRONT+="  use_backend http-redirect if host_"$APP"_"$NACL"\n"
+        # HTTPS vai para a aplicação
+        HTTPS_FRONT+="  use_backend http-$APP if host_"$APP"_"$NACL"\n"
+      else
+        TMP_FRONT+="  use_backend http-$APP if host_"$APP"_"$NACL"\n"
+        # Adiciona frontends, pode ser só HTTP ou nos dois
+        [ "$HTTP" == "Y" ]  && HTTP_FRONT+=$TMP_FRONT
+        [ "$HTTPS" == "Y" ] && HTTPS_FRONT+=$TMP_FRONT
+      fi
     else
       if [ -n "$DOM" ]; then
         # Com domínio e com rota
         TMP_FRONT+="  acl host_"$APP"_"$NACL"h req.hdr(host) -i $DOM\n"
         TMP_FRONT+="  acl host_"$APP"_"$NACL"d path_dir -i $DIR\n"
-        TMP_FRONT+="  use_backend http-$APP if host_"$APP"_"$NACL"h host_"$APP"_"$NACL"d\n"
-      else
+        if [ "$HTTP" == "N" ] && [ "$HTTPS" == "Y" ]; then
+          # Precisa redirecionar
+          HTTP_FRONT+=$TMP_FRONT
+          HTTPS_FRONT+=$TMP_FRONT
+          # HTTP faz redirect
+          HTTP_FRONT+="  use_backend http-redirect if host_"$APP"_"$NACL"h host_"$APP"_"$NACL"d\n"
+          # HTTPS vai para a aplicação
+          HTTPS_FRONT+="  use_backend http-$APP if host_"$APP"_"$NACL"h host_"$APP"_"$NACL"d\n"
+        else
+          TMP_FRONT+="  use_backend http-$APP if host_"$APP"_"$NACL"h host_"$APP"_"$NACL"d\n"
+        # Adiciona frontends, pode ser só HTTP ou nos dois
+        [ "$HTTP" == "Y" ]  && HTTP_FRONT+=$TMP_FRONT
+        [ "$HTTPS" == "Y" ] && HTTPS_FRONT+=$TMP_FRONT
+        fi
+      elif [ "$HTTP" == "Y" ]; then
         # Sem domínio, acesso direto. Começa com '/'
-        # Precisa usar uma RegEx para identificar acesso só por IP
-        #   "-m ip" não funcionou, TODO: testar IPv6
-        TMP_FRONT+="  acl host_"$APP"_"$NACL"h req.hdr(host) -m reg ^[0-9\.]*$\n"
-        TMP_FRONT+="  acl host_"$APP"_"$NACL"h req.hdr(host) -i -m reg ^[0-9a-f:]*$\n"
-        TMP_FRONT+="  acl host_"$APP"_"$NACL"d path_dir -i $DIR\n"
-        TMP_FRONT+="  use_backend http-$APP if host_"$APP"_"$NACL"h host_"$APP"_"$NACL"d\n"
+        # Precisa usar uma RegEx para identificar acesso só por IP ("-m ip" não funcionou)
+        # Só pode ser com HTTP, TODO: testar IPv6
+        HTTP_FRONT+=$TMP_FRONT
+        HTTP_FRONT+="  acl host_"$APP"_"$NACL"h req.hdr(host) -m reg ^[0-9\.]*$\n"
+        HTTP_FRONT+="  acl host_"$APP"_"$NACL"h req.hdr(host) -i -m reg ^[0-9a-f:]*$\n"
+        HTTP_FRONT+="  acl host_"$APP"_"$NACL"d path_dir -i $DIR\n"
+        HTTP_FRONT+="  use_backend http-$APP if host_"$APP"_"$NACL"h host_"$APP"_"$NACL"d\n"
       fi
     fi
-    if [ "$HTTP" == "Y" ]; then
-      HTTP_FRONT+=$TMP_FRONT
+    # Cria todos os Backends
+    HTTP_BAK+="\n#{NFAS HTTP-BAK: $APP}\n"
+    HTTP_BAK+="backend http-$APP\n"
+    if [ "$HTTP" == "N" ] && [ "$HTTPS" == "Y" ]; then
+      # Acrescenta HSTS, só se deve redirecionar. Tem que ser > 6 mêses, 16000000
+      HTTP_BAK+="  http-response set-header Strict-Transport-Security \"max-age=16000000; includeSubDomains; preload;\"\n"
     fi
-    if [ "$HTTPS" == "Y" ] && [ -n "$DOM" ]; then
-      HTTPS_FRONT+=$TMP_FRONT
-    fi
+    HTTP_BAK+="  server srv-$APP 127.0.0.1:$PORT check\n"
+    # Indexador das ACLs
     NACL=$(( $NACL + 1 ))
   done <<< "$SORT_LIST"
-set +x
   # echo -e "HTTP_FRONT:\n$HTTP_FRONT"
   # echo -e "HTTPS_FRONT:\n$HTTPS_FRONT"
-  # echo -e "HTTP_BAK:\n$HTTP_BAK"
   # Cria o arquivo de configuração
   ARQ="/etc/haproxy/haproxy.cfg"
   echo "##################################################"               >  $ARQ
@@ -621,8 +642,8 @@ set +x
       fi
       # Alerações do Header devem vir primeiro
       echo -e "  http-request set-header X-Forwarded-Proto https"         >> $ARQ
-      # Se está na porta 443 mas não está encriptado, redireciona. 301 é: moved permanently
-      echo -e "  redirect scheme https code 301 if !{ ssl_fc }"           >> $ARQ
+      # Se está na porta 443 mas não está encriptado, redireciona. "code 301" é: moved permanently
+      echo -e "  redirect scheme https if !{ ssl_fc }"                    >> $ARQ
       # Configurações FrontEnd de cada aplicação
       echo -e "$HTTPS_FRONT"                                              >> $ARQ
     else
@@ -635,7 +656,12 @@ set +x
   # Cria BackEnds
   echo -e "$HTTP_BAK"                                                     >> $ARQ
   if [ "$HAS_SSL" == "Y" ]; then
+    # Backend para redirecionar HTTP=>HTTPS na sequência correta
+    echo "#{NFAS HTTPS-BAK: Redireciona HTTP}"                            >> $ARQ
+    echo "backend http-redirect"                                          >> $ARQ
+    echo "  redirect scheme https"                                        >> $ARQ
     # Por último Backend do Lets encrypt
+    echo ""                                                               >> $ARQ
     echo "#{NFAS HTTPS-BAK: Automação do Lets Encrypt}"                   >> $ARQ
     echo "backend letsencrypt"                                            >> $ARQ
     echo "  server letsencrypt 127.0.0.1:9999"                            >> $ARQ
@@ -661,7 +687,6 @@ set +x
   fi
   HAP_NEW_CONF="N"
 }
-
 
 #-----------------------------------------------------------------------
 # Lê dados do HAproxy se existirem
