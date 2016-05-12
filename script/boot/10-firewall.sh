@@ -42,15 +42,17 @@ echo "Executando 10-firewall.sh" >> /script/info/autostart.log
 # ATENÇÃO: não incluir SSH
 SERVICE_PORTS="80 443"
 # Endereços inválidos em qualquer lugar pela RFC 3330
-BADIP="0.0.0.0/8 172.16.0.0/12 255.255.255.255/32"
+BADIP="0.0.0.0/8 255.255.255.255/32"
 # Endereços Locais que não podem vir da internet, também pela RFC 3330
-BADIP+=" 127.0.0.0/8 169.254.0.0/16 240.0.0.0/4 224.0.0.0/4"
+BADIP+=" 127.0.0.0/8 240.0.0.0/4 224.0.0.0/4"
 # Endereços Locais que não podem vir da internet, pela RFC 2365
 BADIP+=" 239.255.255.0/24"
 # Endereços IP da lista negra (IPs e Redes)
 BLAK_LIST=""
 if [ "$IS_VIRTUALBOX" != "Y" ]; then
-  BADIP+=" 10.0.0.0/8 192.168.0.0/16 172.16.0.0/16 169.254.0.0/16"
+  BADIP+=" 10.0.0.0/8 192.168.0.0/16"
+  # Estes causam problema no AWS, TODO: fazer teste específico
+  # BADIP+=" 172.16.0.0/12 169.254.0.0/16"
 fi
 # Opções de LOG
 LOGOPT="--log-level=3 -m limit --limit 3/minute --limit-burst 3"
