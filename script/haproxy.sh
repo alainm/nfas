@@ -188,6 +188,8 @@ function GetAppUriList(){
     done
     touch $TMP_ARQ
     # Usa o DIALOG para perguntar as URI
+    # para PuTTY mostrar os quadros na tela com linhas
+    export NCURSES_NO_UTF8_ACS=1
     # precisa de um loop porque sempre pode sair com Esc
     OK="N";
     while [ "$OK" != "Y" ]; do
@@ -284,6 +286,7 @@ function LetsEncryptInstall(){
 #-----------------------------------------------------------------------
 # Cria e autentica um Certificado no Let's encrypt
 # https://blog.brixit.nl/automating-letsencrypt-and-haproxy
+# Ver conteúdo do Cartificado: openssl x509 -in /etc/haproxy/ssl/letsencrypt.pem -text
 function GetCertificate(){
   local APP_LIST APP URI DOM DOM1
   local DOM_LIST=""
