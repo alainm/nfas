@@ -521,7 +521,7 @@ function HaproxyReconfig(){
           # Acrescenta HSTS, só se deve redirecionar. Tem que ser > 6 mêses, 16000000
           HTTP_BAK+="  http-response set-header Strict-Transport-Security \"max-age=16000000; includeSubDomains; preload;\"\n"
         fi
-        HTTP_BAK+="  server srv-$APP 127.0.0.1:$PORT check\n"
+        HTTP_BAK+="  server srv-$APP 127.0.0.1:$HAPP_PORT check\n"
       fi # Existem URIs
     fi # Exite arquvo de configuração
   done #APP_LIST
