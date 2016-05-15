@@ -345,8 +345,8 @@ set -x
     LE_TOOL=/opt/letsencrypt/letsencrypt-auto
     # Create or renew certificate for the domain(s) supplied for this tool
     # Usa "tls-sni-01" para porta 443
-    $LE_TOOL --agree-tos --renew-by-default                    \
-             --standalone --standalone-supported-challenges    \
+    $LE_TOOL --agree-tos --renew-by-default --email "$EMAIL_ADMIN" \
+             --standalone --standalone-supported-challenges        \
              http-01 --http-01-port 9999 certonly $NEW_DOMAINS
     if [ $? -eq 0 ]; then
       # Path onde é guardado o Certificado
