@@ -79,10 +79,11 @@ else
 
   #-----------------------------------------------------------------------
   # Reconfigura HAproxy caso haja alguma alteração pendente
-  . /script/info/haproxy.var
-  if [ "$HAP_NEW_CONF" == "Y" ]; then
-    /script/haproxy.sh --reconfig
-  fi
+  # Removido, pode fazer alguma pergunta e ficar pendente
+  # . /script/info/haproxy.var
+  # if [ "$HAP_NEW_CONF" == "Y" ]; then
+  #   /script/haproxy.sh --reconfig
+  # fi
 
   #-----------------------------------------------------------------------
   # Inicializa Aplicações
