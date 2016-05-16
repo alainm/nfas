@@ -748,10 +748,10 @@ elif [ "$CMD" == "--reconfig" ]; then
   echo "---------------------"
   echo " HAproxy RECONFIGURE "
   echo "---------------------"
-  # refaz a configuração do HTTP, porta 80
-  HaproxyReconfig
   # Consegue Certificado, se precisar
   GetCertificate
+  # refaz a configuração do HTTP, porta 80
+  HaproxyReconfig
 fi
 
 # Salva Variáveis alteradas
