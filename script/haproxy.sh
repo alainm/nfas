@@ -152,7 +152,7 @@ function GetAppConnType(){
   fi
   MENU_IT=$(whiptail --title "$TITLE" --nocancel                       \
     --menu "$MSG" --default-item "$DEF_OPT" --fb 20 70 3               \
-    "Só HTTPS" "  Só aceita conexão SEGURA (HTTP será redirecionado)"  \
+    "Só HTTPS" "  HTTP será redirecionado (usa PFS para \"A+\")"  \
     "Ambos"    "  Implementa ambos e não redireciona (inseguro)"       \
     "Só HTTP"  "  Só implementa HTTP simples (só para testes)"         \
     3>&1 1>&2 2>&3)

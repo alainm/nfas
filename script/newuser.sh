@@ -6,7 +6,7 @@ set -x
 # <cmd>: --first       primeira instalação
 #        --newapp      cria nova aplicação
 #        --chgapp      altera acesso da aplicação
-#        <em branco>   modo interativo
+#        <em branco>   modo interativo, não usado
 
 #=======================================================================
 # Processa a linha de comando
@@ -258,7 +258,7 @@ function ConfigApp(){
     if [ "$CMD" == "--first" ]; then
       MENU_IT=$(whiptail --title "$TITLE" \
         --menu "\nComando de reconfiguração, aplicação: \"$APP_NAME\"" --fb 18 70 5   \
-        "1" "Configurar HTTP(S) e URIs de acesso"    \
+        "1" "Configurar HTTP(S) e URL/URIs de acesso"\
         "2" "Acrescentar Chave Pública (PublicKey)"  \
         "3" "Remover Chave Pública (PublicKey)"      \
         "4" "Criar Repositório GIT"                  \
@@ -296,7 +296,8 @@ if [ "$CMD" == "--first" ]; then
   if [ $? == 0 ]; then
     AskNewKey $APP_NAME /home/$APP_NAME
     /script/haproxy.sh --app $APP_NAME
-    # OBS: não precisa iniciar a aplicação porque vai rebootar
+    # Inicia App com exemplo padrão, facilita os teste, mesmo se vai rebootar
+    su - $APP_NAME $SU_C "nohup /home/$APP_NAME/auto.sh </dev/null 2>&1 >/dev/null &"
   fi
 
 #-----------------------------------------------------------------------
@@ -321,11 +322,12 @@ elif [ "$CMD" == "--chgapp" ]; then
 #-----------------------------------------------------------------------
 else
   # Loop do Menu principal interativo
+  # (não é chamadao pelo nfas.sh, ficou sem uso)
   while true; do
     MENU_IT=$(whiptail --title "NFAS - Node.js Full Application Server" \
         --menu "Selecione um comando de reconfiguração:" --fb 18 70 2   \
         "1" "Criar nova Aplicação (usuário Linux)"  \
-        "2" "Configurar acesso à Aplicação" \
+        "2" "Configurar acesso WEB à Aplicação" \
         3>&1 1>&2 2>&3)
     if [ $? != 0 ]; then
         echo "Seleção cancelada."
