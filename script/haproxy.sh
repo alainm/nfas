@@ -517,7 +517,7 @@ function HaproxyReconfig(){
         # Cria todos os Backends
         HTTP_BAK+="\n#{NFAS HTTP-BAK: $APP}\n"
         HTTP_BAK+="backend http-$APP\n"
-        if [ "$HTTP" == "N" ] && [ "$HTTPS" == "Y" ]; then
+        if [ "$HAPP_HTTP" == "N" ] && [ "$HAPP_HTTPS" == "Y" ]; then
           # Acrescenta HSTS, só se deve redirecionar. Tem que ser > 6 mêses, 16000000
           HTTP_BAK+="  http-response set-header Strict-Transport-Security \"max-age=16000000; includeSubDomains; preload;\"\n"
         fi
