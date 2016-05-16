@@ -124,7 +124,7 @@ function Fail2banConf(){
 		enabled  = true
 		filter   = sshd
 		action   = iptables[name=SSH, port=$SSH_PORT, protocol=tcp]
-		           sendmail[name=SSH, dest=root, sender=fail2ban@$(hostname)]
+		#           sendmail[name=SSH, dest=root, sender=fail2ban@$(hostname)]
 		logpath  = /var/log/secure
 		maxretry = 3
 		EOF
@@ -172,6 +172,7 @@ function Fail2banConf(){
      MSG="\nProteção fail2ban configurada para"
   MSG+="\n\n  3 tentativas de login que falharem em 2 minutos"
     MSG+="\n  bloqueiam acesso daquele IP por 10 minutos"
+    MSG+="\n  Emails de notificação desligados"
   MSG+="\n\n  configuração manual em /etc/fail2ban/jail.local"
   whiptail --title "$TITLE" --msgbox "$MSG" 13 70
 }
