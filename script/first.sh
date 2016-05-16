@@ -105,6 +105,12 @@ fi # --ip-continue
 /script/progs.sh --first
 # Cria novo usuário
 /script/newuser.sh --first
+# Reconfigura HAproxy caso haja alguma alteração pendente
+. /script/info/haproxy.var
+if [ "$HAP_NEW_CONF" == "Y" ]; then
+  /script/haproxy.sh --reconfig
+fi
+
 
 # Altera o /etc/rc.d/rc.local para chamar o /script/autostart.sh
 cat /etc/rc.d/rc.local | grep "autostart.sh"

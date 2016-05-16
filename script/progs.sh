@@ -127,7 +127,7 @@ function ProgsInstall(){
     if echo "$OPTIONS" | grep -q "Node-LTS\|Node-Stable"; then
       # Reinstalou Node.js, precisa reinstalar o Forever
       npm -g install forever
-      # Permite execução por "other", não é padrão!!!
+      # Permite execução para "other", não é padrão!!!
       chmod -R o+rx /usr/local/lib/node_modules
     fi
   fi
