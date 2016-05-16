@@ -5,6 +5,7 @@
 # Uso: /script/haproxy.sh <cmd>
 # <cmd>: --first       primeira instalação
 # <cmd>: --app <user>  altera configuração da Aplicação
+# <cmd>: --ssl         altera nível global de segurança SSL
 # <cmd>: --reconfig    Reconfigura se alguma coisa mudou
 
 # Instalando o Haproxy do fonte
@@ -24,17 +25,17 @@ INSTALL_DIR="/script/install"
 #   e https://wiki.mozilla.org/Security/Server_Side_TLS#Recommended_configurations
 #
 # Nível 1: MODERNO
-   HAP_GLOBAL_N1="  # {NFAS: set default parameters to the modern configuration}"
+   HAP_GLOBAL_N1="  # {NFAS: set default parameters to the configuration: MODERN}"
 HAP_GLOBAL_N1+="\n  tune.ssl.default-dh-param 2048"
 HAP_GLOBAL_N1+="\n  ssl-default-bind-ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!3DES:!MD5:!PSK"
     HAP_HTTPS_N1="  bind :443 ssl no-sslv3 no-tlsv10 crt /etc/haproxy/ssl/letsencrypt.pem"
 # Nível 2: INTERMEDIARIO
-   HAP_GLOBAL_N2="  # {NFAS: set default parameters to the intermediate configuration}"
+   HAP_GLOBAL_N2="  # {NFAS: set default parameters to the configuration: INTERMEDIATE}"
 HAP_GLOBAL_N2+="\n  tune.ssl.default-dh-param 2048"
 HAP_GLOBAL_N2+="\n  ssl-default-bind-ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:ECDHE-RSA-DES-CBC3-SHA:ECDHE-ECDSA-DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA"
     HAP_HTTPS_N2="  bind :443 ssl no-sslv3 crt /etc/haproxy/ssl/letsencrypt.pem"
 # Nível 3: ANTIGO
-   HAP_GLOBAL_N3="  # {NFAS: set default parameters to the old configuration}"
+   HAP_GLOBAL_N3="  # {NFAS: set default parameters to the configuration: OLD(OBSOLETE)}"
 HAP_GLOBAL_N3+="\n  tune.ssl.default-dh-param 1024"
 HAP_GLOBAL_N3+="\n  ssl-default-bind-ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:ECDHE-RSA-DES-CBC3-SHA:ECDHE-ECDSA-DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:DES-CBC3-SHA:HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA"
     HAP_HTTPS_N3="  bind :443 ssl crt /etc/haproxy/ssl/letsencrypt.pem"
@@ -54,20 +55,24 @@ VAR_FILE="/script/info/haproxy.var"
 # Pergunta nível de Segurança do HAproxy
 # Nível atual em HAP_CRYPT_LEVEL
 function GetHaproxyLevel(){
-  local MENU_IT, MSG;
+  local MENU_IT MSG LEVEL
   if [ "$CMD" == "--first" ]; then
     MSG="\nQual o Nível de Segurança de Criptografia para o Servidor:"
   else
     MSG="\nQual o Nível de Segurança de Criptografia (ATUAL=$HAP_CRYPT_LEVEL)"
   fi
 
-  MENU_IT=$(whiptail --title "$TITLE" --nocancel                         \
+  MENU_IT=$(whiptail --title "$TITLE" --nocancel --default-item "$HAP_CRYPT_LEVEL" \
     --menu "$MSG" --fb 20 76 3                                           \
     "1" "Moderno - Comunicação segura, só Browsers novos (nível A+)"     \
     "2" "Intermediário - Compatibilidade, aceita a maioria dos Browsers" \
     "3" "Antigo - Baixa Segurança, WinXP e IE6"                          \
     3>&1 1>&2 2>&3)
-  HAP_CRYPT_LEVEL=$MENU_IT
+  if [ "$HAP_CRYPT_LEVEL" != "$MENU_IT" ]; then
+    HAP_CRYPT_LEVEL=$MENU_IT
+    # Configuração foi alterada e aceita
+    HAP_NEW_CONF="Y"
+  fi
   echo $MENU_IT
   return 0
 }
@@ -741,6 +746,11 @@ elif [ "$CMD" == "--app" ]; then
     # Configuração foi alterada e aceita
     HAP_NEW_CONF="Y"
   fi
+
+elif [ "$CMD" == "--ssl" ]; then
+  #-----------------------------------------------------------------------
+  # Le o nível de segurança desejado, fica no $HAP_CRYPT_LEVEL
+  GetHaproxyLevel
 
 elif [ "$CMD" == "--reconfig" ]; then
   #-----------------------------------------------------------------------

@@ -367,7 +367,7 @@ else
     else
       MSG_F2B_MAIL="Permitir envio de Emails pelo FAIL2BAN, ATUAL=parado"
     fi
-    MENU_IT=$(whiptail --title "$TITLE" \
+    MENU_IT=$(whiptail --title "$TITLE" --cancel-button "Retornar" \
         --menu "\nSelecione um comando de reconfiguração:" --fb 18 70 6   \
         "1" "Acrescentar Chave Pública (PublicKey)"    \
         "2" "Listar/Remover Chave Pública (PublicKey)" \

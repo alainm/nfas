@@ -265,9 +265,9 @@ function ConfigApp(){
         "9" "Continuar..."                           \
         3>&1 1>&2 2>&3)
     else
-      MENU_IT=$(whiptail --title "$TITLE" \
+      MENU_IT=$(whiptail --title "$TITLE" --cancel-button "Retornar" \
         --menu "\nComando de reconfiguração, aplicação: \"$APP_NAME\"" --fb 18 70 4   \
-        "1" "Configurar HTTP(S) e URIs de acesso"    \
+        "1" "Configurar HTTP(S) e URL/URIs de acesso"    \
         "2" "Acrescentar Chave Pública (PublicKey)"  \
         "3" "Remover Chave Pública (PublicKey)"      \
         "4" "Criar Repositório GIT"                  \
