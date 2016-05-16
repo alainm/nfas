@@ -334,7 +334,7 @@ function GetCertificate(){
     echo -e "\n         ┌──────────────────────────────────────┐"
     echo -e   "         │      Gerando Certificado SSL ...     │"
     echo -e   "         └──────────────────────────────────────┘\n"
-set -x
+#set -x
     DOM1=""
     for DOM in $DOM_LIST; do
       NEW_DOMAINS+=" -d $DOM"

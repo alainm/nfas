@@ -110,7 +110,7 @@ fi # --ip-continue
 if [ "$HAP_NEW_CONF" == "Y" ]; then
   /script/haproxy.sh --reconfig
 fi
-read -p "Pressione qualquer tecla para continuar" A
+#read -p "Pressione qualquer tecla para continuar" A
 
 # Altera o /etc/rc.d/rc.local para chamar o /script/autostart.sh
 cat /etc/rc.d/rc.local | grep "autostart.sh"
