@@ -7,6 +7,7 @@
 # <cmd>: --app <user>  altera configuração da Aplicação
 # <cmd>: --ssl         altera nível global de segurança SSL
 # <cmd>: --reconfig    Reconfigura se alguma coisa mudou
+# <cmd>: --certonly    Gera novo Certificado, testa antes se precisa
 
 # Instalando o Haproxy do fonte
 # @author original Marcos de Lima Carlos, adaptado por Alain Mouette
@@ -293,7 +294,7 @@ function LetsEncryptInstall(){
 # https://blog.brixit.nl/automating-letsencrypt-and-haproxy
 # Ver conteúdo do Cartificado: openssl x509 -in /etc/haproxy/ssl/letsencrypt.pem -text
 function GetCertificate(){
-  local APP_LIST APP URI DOM DOM1
+  local APP_LIST APP URI DOM DOM1 DATE_CERT DIAS MSG
   local DOM_LIST=""
   local DOM_CERT=""
   local NEW_DOMAINS=""
@@ -330,12 +331,16 @@ function GetCertificate(){
     # Gera lista dos Domínios dentro do Certificado, mesma formatação
     DOM_CERT=$(openssl x509 -in /etc/haproxy/ssl/letsencrypt.pem -text | grep DNS | xargs -n1 | tr -d "DNS:" | tr -d "," | sort -u | xargs)
     [ -n "$DOM_CERT" ] && echo "DOM_CERT=[$DOM_CERT]"
-    echo "Já existe um certificado instalado"
+    # Obtém a data de validade do Certificado
+    DATE_CERT=$(openssl x509 -in /etc/haproxy/ssl/letsencrypt.pem -text | grep "Not After" | sed -n 's/\s*Not After : \(.*\)/\1/p')
+    # Calcula número de dias faltando até vencer
+    DIAS=$(( ($(date -d "$DATE_CERT" +%s) - $(date +%s)) / 86400 ))
+    echo "Já existe um certificado instalado, validade: $DIAS dias"
   else
     echo "Nenhum certificado encontrado"
     DOM_CERT=""
   fi
-  if [ "$DOM_LIST" != "$DOM_CERT" ]; then
+  if [ "$DOM_LIST" != "$DOM_CERT" ] || [ $DIAS -lt 45 ]; then
     echo -e "\n         ┌──────────────────────────────────────┐"
     echo -e   "         │      Gerando Certificado SSL ...     │"
     echo -e   "         └──────────────────────────────────────┘\n"
@@ -350,10 +355,14 @@ function GetCertificate(){
     LE_TOOL=/opt/letsencrypt/letsencrypt-auto
     # Create or renew certificate for the domain(s) supplied for this tool
     # Usa "tls-sni-01" para porta 443
+    # Usar "--test-cert" para teste (staging)
     $LE_TOOL --agree-tos --renew-by-default --email "$EMAIL_ADMIN" \
              --standalone --standalone-supported-challenges        \
-             http-01 --http-01-port 9999 certonly $NEW_DOMAINS
+             http-01 --http-01-port 9999 certonly $NEW_DOMAINS 2>&1 | tee /root/certoutput.txt
+    MSG="Seu novo Certificado foi gerado, saida:\n--------------------\n"
+    MSG+="$(cat /root/certoutput.txt)\n--------------------"
     if [ $? -eq 0 ]; then
+      echo -e "$MSG" | tr -cd '\11\12\15\40-\176' | mail -s "Certificado gerado para [$(hostname)] - OK" $EMAIL_ADMIN
       # Path onde é guardado o Certificado
       LE_CERT_PATH="/etc/letsencrypt/live/$DOM1"
       # Cat the certificate chain and the private key together for haproxy
@@ -365,6 +374,7 @@ function GetCertificate(){
       # Reload the haproxy daemon to activate the cert
       service haproxy reload
     else
+      echo -e "$MSG" | tr -cd '\11\12\15\40-\176' | mail -s "ERRO gerando certificado para [$(hostname)]" $EMAIL_ADMIN
       echo "Erro gerando Certificado"
     fi
   fi
@@ -764,9 +774,14 @@ elif [ "$CMD" == "--reconfig" ]; then
   GetCertificate
   # refaz a configuração do HTTP, portas 80 e 443
   HaproxyReconfig
-fi
 
-# Salva Variáveis alteradas
+elif [ "$CMD" == "--certonly" ]; then
+  #-----------------------------------------------------------------------
+  # Consegue Certificado, se precisar
+  GetCertificate
+
+fi
+  # Salva Variáveis alteradas
 SaveHaproxyVars
 
 #=======================================================================
