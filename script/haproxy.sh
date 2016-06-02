@@ -476,79 +476,84 @@ function HaproxyInstall(){
   mkdir -p  $INSTALL_DIR
   pushd $INSTALL_DIR
 
-  # Carrega última versão do Lua 5.3
-  HAPROXY_LUA_VER=$(GetVerLua)
-  rm -f $HAPROXY_LUA_VER.tar.gz
-  wget $LUA_DL/$HAPROXY_LUA_VER.tar.gz
-  tar xf $HAPROXY_LUA_VER.tar.gz
-  cd $HAPROXY_LUA_VER
-  make linux
-  make install
-  cd $INSTALL_DIR
-
-  # Carrega última versão do HAproxy 1.6
-  HAPROXY_VER=$(GetVerHaproxy)
-  #efetua o download e descompacta
-  rm -f $HAPROXY_VER.tar.gz
-  wget $HAPROXY_DL/$HAPROXY_VER.tar.gz
-  tar xf $HAPROXY_VER.tar.gz
-  cd $HAPROXY_VER
-  make TARGET=linux2628 CPU=x8664 USE_OPENSSL=1 USE_ZLIB=1 USE_PCRE=1 USE_LUA=yes LDFLAGS=-ldl
-  make install
-  # Verifica compilação e opções
-  ./haproxy -vv > /root/haproxy.opt.txt
-  # Cria um link, alguns scripts usam o binário no /usr/sbin
-  ln -sf /usr/local/sbin/haproxy /usr/sbin/haproxy
-
-  # adiciona o usuário do haproxy
-  id -u haproxy &>/dev/null || useradd -s /usr/sbin/nologin -r haproxy
-  # copia o init.d e dá permissão de execução (usa mesma dos outros arquivos).
-  # TODO: usar uptart/systemd CentOS/Ubuntu, testar $DISTRO_NAME
-  cp examples/haproxy.init /etc/init.d/haproxy
-  chmod 755 /etc/init.d/haproxy
-  # copia os arquivos de erro
-  mkdir -p /etc/haproxy/errors
-  cp examples/errorfiles/* /etc/haproxy/errors
-  chmod 600 /etc/haproxy/errors
-  # cria os diretórios em etc e stats.
-  mkdir -p /var/lib/haproxy
-  touch /var/lib/haproxy/stats
-  # diretório para certificados
-  mkdir -p /etc/haproxy/ssl
-
-  # configura o rsyslog para o haproxy
-  # http://serverfault.com/questions/214312/how-to-keep-haproxy-log-messages-out-of-var-log-syslog
-  local ARQ="/etc/rsyslog.d/49-haproxy.conf"
-  if [ ! -e $ARQ ]; then
-    cat <<- EOF > $ARQ
-		# file: /etc/rsyslog.d/49-haproxy.conf:
-		local0.* -/var/log/haproxy.log
-		& stop
-		# & ~ means not to put what matched in the above line anywhere else for the rest of the rules
-		# ~ is obsolete, now use "stop"
-		EOF
-  fi
-  # Configura Logrotate (ver no monit.sh)
-  ARQ="/etc/logrotate.d/haproxy"
-  if [ ! -e $ARQ ]; then
-    cat <<- EOF > $ARQ
-		##################################################
-		##  Logrotate para o haproxy
-		##################################################
-		##  Depois de criado, não é mais alterado
-
-		/var/log/haproxy.log {
-		  missingok
-		  notifempty
-		  compress
-		  delaycompress
-		  size 100k
-		  weekly
-		  create 0600 root root
-		}
-		EOF
+  local LUA_CUR_VER=$(lua -v | sed -n 's/.* \([0-9]*\.[0-9]*\).*/\1/p')
+  if [ "$LUA_CUR_VER" != "5.3" ]; then
+    # Carrega última versão do Lua 5.3
+    HAPROXY_LUA_VER=$(GetVerLua)
+    rm -f $HAPROXY_LUA_VER.tar.gz
+    wget $LUA_DL/$HAPROXY_LUA_VER.tar.gz
+    tar xf $HAPROXY_LUA_VER.tar.gz
+    cd $HAPROXY_LUA_VER
+    make linux
+    make install
+    cd $INSTALL_DIR
   fi
 
+  local HAP_CUR_VER=$(haproxy -v | grep "HA-Proxy version" | sed -n 's/.* \([0-9]*\.[0-9]*\).*/\1/p')
+  if [ "$HAP_CUR_VER" != "1.6" ]; then
+    # Carrega última versão do HAproxy 1.6
+    HAPROXY_VER=$(GetVerHaproxy)
+    #efetua o download e descompacta
+    rm -f $HAPROXY_VER.tar.gz
+    wget $HAPROXY_DL/$HAPROXY_VER.tar.gz
+    tar xf $HAPROXY_VER.tar.gz
+    cd $HAPROXY_VER
+    make TARGET=linux2628 CPU=x8664 USE_OPENSSL=1 USE_ZLIB=1 USE_PCRE=1 USE_LUA=yes LDFLAGS=-ldl
+    make install
+    # Verifica compilação e opções
+    ./haproxy -vv > /root/haproxy.opt.txt
+    # Cria um link, alguns scripts usam o binário no /usr/sbin
+    ln -sf /usr/local/sbin/haproxy /usr/sbin/haproxy
+
+    # adiciona o usuário do haproxy
+    id -u haproxy &>/dev/null || useradd -s /usr/sbin/nologin -r haproxy
+    # copia o init.d e dá permissão de execução (usa mesma dos outros arquivos).
+    # TODO: usar uptart/systemd CentOS/Ubuntu, testar $DISTRO_NAME
+    cp examples/haproxy.init /etc/init.d/haproxy
+    chmod 755 /etc/init.d/haproxy
+    # copia os arquivos de erro
+    mkdir -p /etc/haproxy/errors
+    cp examples/errorfiles/* /etc/haproxy/errors
+    chmod 600 /etc/haproxy/errors
+    # cria os diretórios em etc e stats.
+    mkdir -p /var/lib/haproxy
+    touch /var/lib/haproxy/stats
+    # diretório para certificados
+    mkdir -p /etc/haproxy/ssl
+
+    # configura o rsyslog para o haproxy
+    # http://serverfault.com/questions/214312/how-to-keep-haproxy-log-messages-out-of-var-log-syslog
+    local ARQ="/etc/rsyslog.d/49-haproxy.conf"
+    if [ ! -e $ARQ ]; then
+      cat <<- EOF > $ARQ
+      # file: /etc/rsyslog.d/49-haproxy.conf:
+      local0.* -/var/log/haproxy.log
+      & stop
+      # & ~ means not to put what matched in the above line anywhere else for the rest of the rules
+      # ~ is obsolete, now use "stop"
+      EOF
+    fi
+    # Configura Logrotate (ver no monit.sh)
+    ARQ="/etc/logrotate.d/haproxy"
+    if [ ! -e $ARQ ]; then
+      cat <<- EOF > $ARQ
+			##################################################
+			##  Logrotate para o haproxy
+			##################################################
+			##  Depois de criado, não é mais alterado
+
+			/var/log/haproxy.log {
+			  missingok
+			  notifempty
+			  compress
+			  delaycompress
+			  size 100k
+			  weekly
+			  create 0600 root root
+			}
+			EOF
+    fi
+  fi
   # Volta e remove diretório temporário
   popd
   rm -rf $INSTALL_DIR
@@ -837,7 +842,7 @@ elif [ "$CMD" == "--certonly" ]; then
   #-----------------------------------------------------------------------
   # Deve ser chamado do CRON, vem sem environment
   SHELL=/bin/bash
-  PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin
+  PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
   # Consegue Certificado, se precisar
   GetCertificate
 
