@@ -19,6 +19,10 @@
 HAPROXY_DL="http://www.haproxy.org/download/1.6/src"
 LUA_DL="http://www.lua.org/ftp"
 INSTALL_DIR="/script/install"
+# Configura modo de teste do Certificado Let's Encrypt
+LE_TEST="N"
+# Numero de dias valtando para renovação, 91=forçar sempre, 45=normal
+LE_VAL=91
 
 #-----------------------------------------------------------------------
 # Strings de configuração do HAproxy
@@ -287,23 +291,14 @@ function LetsEncryptInstall(){
   # Instala dependências automáticas
   ./letsencrypt-auto --os-packages-only
   popd
-  # Instala chamada pelo CRON
+  # Instala chamada pelo CRON, cria chamada diária, evita repetir a alteração
   local ARQ=/etc/crontab
-  # cria chamada diária
-  ARQ=/etc/cron.daily/nfas-letsencrypt.sh
-  cat <<- EOF > $ARQ
-	#!/bin/bash
-
-	##################################################
-	##  Renovação do Let's encrypt
-	##################################################
-
-	# Chama diariamente para verificar se é necessário
-
-	/script/haproxy.sh --certonly 2>&1 >/dev/null
-
-	EOF
-  chmod 700 $ARQ
+  if ! grep "{NFAS-letsencrypt}" $ARQ >/dev/null; then
+    echo ""                                                                     >> $ARQ
+    echo "#{NFAS-letsencrypt} renovação automática do certificado"              >> $ARQ
+    echo "  33 3  *  *  * root /script/haproxy.sh --certonly > /root/cron-certonly.txt" >> $ARQ
+    echo ""                                                                     >> $ARQ
+  fi
 }
 
 #-----------------------------------------------------------------------
@@ -368,6 +363,7 @@ function GetCertificate(){
   LE_CERT_PATH="/etc/letsencrypt/live/$DOM1"
   # Path to the letsencrypt-auto tool
   LE_TOOL=/opt/letsencrypt/letsencrypt-auto
+  [ "$LE_TEST" == "Y" ] && LE_TOOL+=" --test-cert"
   # Agora pode testar se vai mesmo fazer...
   if [ "$DOM_LIST" != "$DOM_CERT" ]; then
     echo -e "\n         ┌──────────────────────────────────────┐"
@@ -382,7 +378,7 @@ function GetCertificate(){
     # Create or renew certificate for the domain(s) supplied for this tool
     # Usa "tls-sni-01" para porta 443
     # Usar "--test-cert" para teste (staging)
-    $LE_TOOL --test-cert --agree-tos --renew-by-default --email "$EMAIL_ADMIN" \
+    $LE_TOOL --agree-tos --renew-by-default --email "$EMAIL_ADMIN" \
              --standalone --standalone-supported-challenges        \
              http-01 --http-01-port 9999 certonly $NEW_DOMAINS 2>&1 | tee /root/certoutput.txt
     MSG="Seu novo Certificado foi gerado, saida:\n--------------------\n"
@@ -408,7 +404,7 @@ function GetCertificate(){
       echo -e "$MSG" | tr -cd '\11\12\15\40-\176' | mail -s "ERRO gerando certificado para [$(hostname)]" $EMAIL_ADMIN
       echo "Erro gerando Certificado"
     fi
-  elif [ $DIAS -lt 91 ]; then
+  elif [ $DIAS -lt $LE_VAL ]; then
     echo -e "\n         ┌────────────────────────────────────────┐"
     echo -e   "         │      Renovando Certificado SSL ...     │"
     echo -e   "         └────────────────────────────────────────┘\n"
@@ -416,7 +412,7 @@ function GetCertificate(){
     # Renova com mesmo sistema automático
     # Usar "--test-cert" para teste (staging)
     # Usar "--renew-by-default" para forçar renovação
-    $LE_TOOL --test-cert --renew-by-default --email "$EMAIL_ADMIN" renew 2>&1 | tee /root/certoutput.txt
+    $LE_TOOL --renew-by-default --email "$EMAIL_ADMIN" renew 2>&1 | tee /root/certoutput.txt
     MSG="Seu Certificado foi RENOVADO, saida:\n--------------------\n"
     MSG+="$(cat /root/certoutput.txt)\n--------------------"
     if [ $? -eq 0 ]; then
@@ -849,6 +845,8 @@ elif [ "$CMD" == "--certonly" ]; then
   # Deve ser chamado do CRON, vem sem environment
   SHELL=/bin/bash
   PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+  # Cria timestamp no log
+  date
   # Consegue Certificado, se precisar
   GetCertificate
 
