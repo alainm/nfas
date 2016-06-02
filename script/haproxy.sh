@@ -300,7 +300,7 @@ function LetsEncryptInstall(){
 
 	# Chama diariamente para verificar se é necessário
 
-	/script/haproxy.sh --certonly
+	/script/haproxy.sh --certonly 2>&1 >/dev/null
 
 	EOF
   chmod 700 $ARQ
@@ -521,6 +521,11 @@ function HaproxyInstall(){
     # diretório para certificados
     mkdir -p /etc/haproxy/ssl
 
+    # Configura o rsyslog para aceitar a porta UDP:514
+    [ ! -e /etc/rsyslog.conf.orig ] && cp /etc/rsyslog.conf /etc/rsyslog.conf.orig
+    sed -i '/\$ModLoad imudp/s/#//;' /etc/rsyslog.conf
+    sed -i '/\$UDPServerRun 514/s/#//;' /etc/rsyslog.conf
+
     # configura o rsyslog para o haproxy
     # http://serverfault.com/questions/214312/how-to-keep-haproxy-log-messages-out-of-var-log-syslog
     local ARQ="/etc/rsyslog.d/49-haproxy.conf"
@@ -676,7 +681,8 @@ function HaproxyReconfig(){
   echo ""                                                                 >> $ARQ
   echo "global"                                                           >> $ARQ
   echo "  maxconn 20000"                                                  >> $ARQ
-  echo "  log /dev/log local0 notice # notice/info/debug"                 >> $ARQ
+  #echo "  log /dev/log local0 notice # notice/info/debug"                >> $ARQ
+  echo "  log "\${LOCAL_SYSLOG}:514" local0 notice # notice/info/debug"   >> $ARQ
   if [ "$HAS_SSL" == "Y" ]; then
     # Configurações para cada nível de criptografia
     if [ "$HAP_CRYPT_LEVEL" == "1" ]; then
