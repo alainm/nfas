@@ -295,6 +295,7 @@ function LetsEncryptInstall(){
 # Ver conteúdo do Cartificado: openssl x509 -in /etc/haproxy/ssl/letsencrypt.pem -text
 function GetCertificate(){
   local APP_LIST APP URI DOM DOM1 DATE_CERT DIAS MSG
+  local LE_TOOL LE_CERT_PATH LE_CERT_ATUAL
   local DOM_LIST=""
   local DOM_CERT=""
   local NEW_DOMAINS=""
@@ -340,19 +341,27 @@ function GetCertificate(){
     echo "Nenhum certificado encontrado"
     DOM_CERT=""
   fi
-  if [ "$DOM_LIST" != "$DOM_CERT" ] || [ $DIAS -lt 45 ]; then
+  # Gera informações para Gerar/Ronovar Certificado
+  DOM1=""
+  for DOM in $DOM_LIST; do
+    NEW_DOMAINS+=" -d $DOM"
+    [ -z "$DOM1" ] && DOM1="$DOM" # Guarda 1º da lista
+  done
+  # Path onde é guardado o Certificado
+  LE_CERT_PATH="/etc/letsencrypt/live/$DOM1"
+  # Path to the letsencrypt-auto tool
+  LE_TOOL=/opt/letsencrypt/letsencrypt-auto
+  # Agora pode testar se vai mesmo fazer...
+  if [ "$DOM_LIST" != "$DOM_CERT" ]; then
     echo -e "\n         ┌──────────────────────────────────────┐"
     echo -e   "         │      Gerando Certificado SSL ...     │"
     echo -e   "         └──────────────────────────────────────┘\n"
 #set -x
-    DOM1=""
-    for DOM in $DOM_LIST; do
-      NEW_DOMAINS+=" -d $DOM"
-      [ -z "$DOM1" ] && DOM1="$DOM" # Guarda 1º da lista
-    done
     echo "NEW_DOMAINS=[$NEW_DOMAINS]"
-    # Path to the letsencrypt-auto tool
-    LE_TOOL=/opt/letsencrypt/letsencrypt-auto
+    # Elimina dados de certificados anteriores, senão fica acumulando e renovando os velhos
+    rm -rf /etc/letsencrypt/archive/*
+    rm -rf /etc/letsencrypt/live/*
+    rm -rf /etc/letsencrypt/renewal/*
     # Create or renew certificate for the domain(s) supplied for this tool
     # Usa "tls-sni-01" para porta 443
     # Usar "--test-cert" para teste (staging)
@@ -363,8 +372,40 @@ function GetCertificate(){
     MSG+="$(cat /root/certoutput.txt)\n--------------------"
     if [ $? -eq 0 ]; then
       echo -e "$MSG" | tr -cd '\11\12\15\40-\176' | mail -s "Certificado gerado para [$(hostname)] - OK" $EMAIL_ADMIN
-      # Path onde é guardado o Certificado
-      LE_CERT_PATH="/etc/letsencrypt/live/$DOM1"
+      LE_CERT_ATUAL="$(cat /root/certoutput.txt | sed -n 's/.*\/etc\/letsencrypt\/live\/\(.*\)\/fullchain.pem.*/\1/p')"
+      if [ "$DOM1" != "$LE_CERT_ATUAL" ]; then
+        echo "Primeiro comínio : $DOM1"
+        echo "Reportado no Cert: $LE_CERT_ATUAL"
+        echo "ERRO: Certificado não foi guardado no diretório esperado"
+        read -p "Pressione <Enter> para continuar" A
+      fi
+      # Cat the certificate chain and the private key together for haproxy
+      # Fica guardado com o nome do primeiro certificado (ordem alfabetica...)
+      rm -rf /etc/haproxy/ssl/*
+      cat $LE_CERT_PATH/{fullchain.pem,privkey.pem} > /etc/haproxy/ssl/letsencrypt.pem # | sed -n 's/\(.*\)-.*/\1/p'
+      # Guarda Path para uso futuro, só o último é válido
+      echo "LE_CERT_PATH=$LE_CERT_PATH" > /script/info/letsencrypt.var
+      # Reload the haproxy daemon to activate the cert
+      service haproxy reload
+    else
+      echo -e "$MSG" | tr -cd '\11\12\15\40-\176' | mail -s "ERRO gerando certificado para [$(hostname)]" $EMAIL_ADMIN
+      echo "Erro gerando Certificado"
+    fi
+  elif [ $DIAS -lt 91 ]; then
+    echo -e "\n         ┌────────────────────────────────────────┐"
+    echo -e   "         │      Renovando Certificado SSL ...     │"
+    echo -e   "         └────────────────────────────────────────┘\n"
+#set -x
+    # Renova com mesmo sistema automático
+    # Usar "--test-cert" para teste (staging)
+    # Usar "--renew-by-default" para forçar renovação
+    $LE_TOOL --renew-by-default --email "$EMAIL_ADMIN" renew 2>&1 | tee /root/certoutput.txt
+    MSG="Seu Certificado foi RENOVADO, saida:\n--------------------\n"
+    MSG+="$(cat /root/certoutput.txt)\n--------------------"
+    if [ $? -eq 0 ]; then
+      echo -e "$MSG" | tr -cd '\11\12\15\40-\176' | mail -s "Certificado RENOVADO para [$(hostname)] - OK" $EMAIL_ADMIN
+      # Path do Certificado, informado pelo Let's encrypt
+      LE_CERT_ATUAL=$(cat /root/certoutput.txt | sed -n -e '/have been renewed/,$p' | sed -n 's/.*\/etc\/letsencrypt\/live\/\(.*\)\/fullchain.pem.*/\1/p')
       # Cat the certificate chain and the private key together for haproxy
       # Fica guardado com o nome do primeiro certificado (ordem alfabetica...)
       rm -rf /etc/haproxy/ssl/*
@@ -374,8 +415,8 @@ function GetCertificate(){
       # Reload the haproxy daemon to activate the cert
       service haproxy reload
     else
-      echo -e "$MSG" | tr -cd '\11\12\15\40-\176' | mail -s "ERRO gerando certificado para [$(hostname)]" $EMAIL_ADMIN
-      echo "Erro gerando Certificado"
+      echo -e "$MSG" | tr -cd '\11\12\15\40-\176' | mail -s "ERRO renovando certificado para [$(hostname)]" $EMAIL_ADMIN
+      echo "Erro renovando Certificado"
     fi
   fi
 }
