@@ -681,9 +681,9 @@ function HaproxyReconfig(){
   echo "  maxconn 20000"                                                  >> $ARQ
   #echo "  log /dev/log local0 notice # notice/info/debug"                >> $ARQ
   echo "  log "\${LOCAL_SYSLOG}:514" local0 notice # notice/info/debug"   >> $ARQ
-  echo "  chroot /var/lib/haproxy"                                        >> $ARQ
   echo "  user   haproxy"                                                 >> $ARQ
   echo "  group  haproxy"                                                 >> $ARQ
+  echo "  chroot /var/lib/haproxy"                                        >> $ARQ
   if [ "$HAS_SSL" == "Y" ]; then
     # Configurações para cada nível de criptografia
     if [ "$HAP_CRYPT_LEVEL" == "1" ]; then
