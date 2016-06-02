@@ -287,6 +287,23 @@ function LetsEncryptInstall(){
   # Instala dependências automáticas
   ./letsencrypt-auto --os-packages-only
   popd
+  # Instala chamada pelo CRON
+  local ARQ=/etc/crontab
+  # cria chamada diária
+  ARQ=/etc/cron.daily/nfas-letsencrypt.sh
+  cat <<- EOF > $ARQ
+	#!/bin/bash
+
+	##################################################
+	##  Renovação do Let's encrypt
+	##################################################
+
+	# Chama diariamente para verificar se é necessário
+
+	/script/haproxy.sh --certonly
+
+	EOF
+  chmod 700 $ARQ
 }
 
 #-----------------------------------------------------------------------
@@ -365,7 +382,7 @@ function GetCertificate(){
     # Create or renew certificate for the domain(s) supplied for this tool
     # Usa "tls-sni-01" para porta 443
     # Usar "--test-cert" para teste (staging)
-    $LE_TOOL --agree-tos --renew-by-default --email "$EMAIL_ADMIN" \
+    $LE_TOOL --test-cert --agree-tos --renew-by-default --email "$EMAIL_ADMIN" \
              --standalone --standalone-supported-challenges        \
              http-01 --http-01-port 9999 certonly $NEW_DOMAINS 2>&1 | tee /root/certoutput.txt
     MSG="Seu novo Certificado foi gerado, saida:\n--------------------\n"
@@ -399,7 +416,7 @@ function GetCertificate(){
     # Renova com mesmo sistema automático
     # Usar "--test-cert" para teste (staging)
     # Usar "--renew-by-default" para forçar renovação
-    $LE_TOOL --renew-by-default --email "$EMAIL_ADMIN" renew 2>&1 | tee /root/certoutput.txt
+    $LE_TOOL --test-cert --renew-by-default --email "$EMAIL_ADMIN" renew 2>&1 | tee /root/certoutput.txt
     MSG="Seu Certificado foi RENOVADO, saida:\n--------------------\n"
     MSG+="$(cat /root/certoutput.txt)\n--------------------"
     if [ $? -eq 0 ]; then
@@ -818,6 +835,9 @@ elif [ "$CMD" == "--reconfig" ]; then
 
 elif [ "$CMD" == "--certonly" ]; then
   #-----------------------------------------------------------------------
+  # Deve ser chamado do CRON, vem sem environment
+  SHELL=/bin/bash
+  PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin
   # Consegue Certificado, se precisar
   GetCertificate
 
