@@ -501,8 +501,6 @@ function HaproxyInstall(){
     # Cria um link, alguns scripts usam o binário no /usr/sbin
     ln -sf /usr/local/sbin/haproxy /usr/sbin/haproxy
 
-    # adiciona o usuário do haproxy
-    id -u haproxy &>/dev/null || useradd -s /usr/sbin/nologin -r haproxy
     # copia o init.d e dá permissão de execução (usa mesma dos outros arquivos).
     # TODO: usar uptart/systemd CentOS/Ubuntu, testar $DISTRO_NAME
     cp examples/haproxy.init /etc/init.d/haproxy
@@ -511,16 +509,20 @@ function HaproxyInstall(){
     mkdir -p /etc/haproxy/errors
     cp examples/errorfiles/* /etc/haproxy/errors
     chmod 600 /etc/haproxy/errors
-    # cria os diretórios em etc e stats.
-    mkdir -p /var/lib/haproxy
-    touch /var/lib/haproxy/stats
     # diretório para certificados
     mkdir -p /etc/haproxy/ssl
 
-    # Configura o rsyslog para aceitar a porta UDP:514
+    # adiciona grupo, usuário e diretório do haproxy, precisa para CHROOT
+    id -g haproxy &>/dev/null || groupadd haproxy
+    id -u haproxy &>/dev/null || useradd -g haproxy -s /usr/sbin/nologin -r haproxy
+    # cria os diretórios em etc e stats.
+    mkdir -p /var/lib/haproxy
+    touch /var/lib/haproxy/stats
+    # Configura o rsyslog para aceitar a porta UDP:514, precisa para CHROOT
     [ ! -e /etc/rsyslog.conf.orig ] && cp /etc/rsyslog.conf /etc/rsyslog.conf.orig
     sed -i '/\$ModLoad imudp/s/#//;' /etc/rsyslog.conf
     sed -i '/\$UDPServerRun 514/s/#//;' /etc/rsyslog.conf
+    service rsyslog reload
 
     # configura o rsyslog para o haproxy
     # http://serverfault.com/questions/214312/how-to-keep-haproxy-log-messages-out-of-var-log-syslog
@@ -679,6 +681,9 @@ function HaproxyReconfig(){
   echo "  maxconn 20000"                                                  >> $ARQ
   #echo "  log /dev/log local0 notice # notice/info/debug"                >> $ARQ
   echo "  log "\${LOCAL_SYSLOG}:514" local0 notice # notice/info/debug"   >> $ARQ
+  echo "  chroot /var/lib/haproxy"                                        >> $ARQ
+  echo "  user   haproxy"                                                 >> $ARQ
+  echo "  group  haproxy"                                                 >> $ARQ
   if [ "$HAS_SSL" == "Y" ]; then
     # Configurações para cada nível de criptografia
     if [ "$HAP_CRYPT_LEVEL" == "1" ]; then
