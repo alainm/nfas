@@ -415,7 +415,7 @@ function GetCertificate(){
     $LE_TOOL --renew-by-default --email "$EMAIL_ADMIN" renew 2>&1 | tee /root/certoutput.txt
     MSG="Seu Certificado foi RENOVADO, saida:\n--------------------\n"
     MSG+="$(cat /root/certoutput.txt)\n--------------------"
-    if [ $? -eq 0 ]; then
+    if [ $? -eq 0 ] && ! grep "could not be renewed" /root/certoutput.txt ; then
       echo -e "$MSG" | tr -cd '\11\12\15\40-\176' | mail -s "Certificado RENOVADO para [$(hostname)] - OK" $EMAIL_ADMIN
       # Path do Certificado, informado pelo Let's encrypt
       LE_CERT_ATUAL=$(cat /root/certoutput.txt | sed -n -e '/have been renewed/,$p' | sed -n 's/.*\/etc\/letsencrypt\/live\/\(.*\)\/fullchain.pem.*/\1/p')
