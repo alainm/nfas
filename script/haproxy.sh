@@ -22,7 +22,7 @@ INSTALL_DIR="/script/install"
 # Configura modo de teste do Certificado Let's Encrypt
 LE_TEST="N"
 # Numero de dias valtando para renovação, 91=forçar sempre, 45=normal
-LE_VAL=91
+LE_VAL=45
 
 #-----------------------------------------------------------------------
 # Strings de configuração do HAproxy
@@ -162,7 +162,7 @@ function GetAppConnType(){
   fi
   MENU_IT=$(whiptail --title "$TITLE" --nocancel                       \
     --menu "$MSG" --default-item "$DEF_OPT" --fb 20 70 3               \
-    "Só HTTPS" "  HTTP será redirecionado (usa PFS para \"A+\")"  \
+    "Só HTTPS" "  HTTP será redirecionado (usa HSTS para \"A+\")"  \
     "Ambos"    "  Implementa ambos e não redireciona (inseguro)"       \
     "Só HTTP"  "  Só implementa HTTP simples (só para testes)"         \
     3>&1 1>&2 2>&3)
@@ -598,6 +598,8 @@ function HaproxyReconfig(){
         # Cria todos os Backends
         HTTP_BAK+="\n#{NFAS HTTP-BAK: $APP}\n"
         HTTP_BAK+="backend http-$APP\n"
+        HTTP_BAK+="  option forwardfor # Original IP address\n"
+        HTTP_BAK+="  http-response set-header X-Frame-Options SAMEORIGIN  # no clickjacking\n"
         if [ "$HAPP_HTTP" == "N" ] && [ "$HAPP_HTTPS" == "Y" ]; then
           # Acrescenta HSTS, só se deve redirecionar. Tem que ser > 6 mêses, 16000000
           HTTP_BAK+="  http-response set-header Strict-Transport-Security \"max-age=16000000; includeSubDomains; preload;\"\n"
