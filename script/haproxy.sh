@@ -701,10 +701,19 @@ function HaproxyReconfig(){
   echo "defaults"                                                         >> $ARQ
   echo "  mode http"                                                      >> $ARQ
   echo "  option forwardfor"                                              >> $ARQ
+  # Experimenta servidor alternadivo (se load balance) em caso de falha
+  echo "  retries  3"                                                     >> $ARQ
+  echo "  option  redispatch"                                             >> $ARQ
+  # Precisa para reavaliar a cada vez os testes do header
   echo "  option http-server-close"                                       >> $ARQ
-  echo "  timeout connect 5000ms"                                         >> $ARQ
-  echo "  timeout client 50000ms"                                         >> $ARQ
-  echo "  timeout server 50000ms"                                         >> $ARQ
+  # timeouts recomendados: http://cbonte.github.io/haproxy-dconv/configuration-1.6.html#timeout%20tunnel
+  # tunnel é para Wbsockets
+  echo "  timeout connect      5s  # from HAproxy to Server"              >> $ARQ
+  echo "  timeout client       30s # if client doesn't answer"            >> $ARQ
+  echo "  timeout server       30s # if server doesn't answer"            >> $ARQ
+  echo "  timeout client-fin   30s # for badly closed connections"        >> $ARQ
+  echo "  timeout tunnel       1h  # Used for WebSockets"                 >> $ARQ
+  echo "  timeout http-request 5s  # SlowLorris"                          >> $ARQ
   echo "  log global"                                                     >> $ARQ
   echo ""                                                                 >> $ARQ
   echo "frontend www-http"                                                >> $ARQ
