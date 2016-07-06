@@ -390,6 +390,8 @@ function GetCertificate(){
         echo "Reportado no Cert: $LE_CERT_ATUAL"
         echo "ERRO: Certificado não foi guardado no diretório esperado"
         read -p "Pressione <Enter> para continuar" A
+        # aborta para manter a configuração anterior
+        exit 1
       fi
       # Cat the certificate chain and the private key together for haproxy
       # Fica guardado com o nome do primeiro certificado (ordem alfabetica...)

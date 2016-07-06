@@ -33,9 +33,9 @@ if [ "$1" == "--stop" ] || [ "$1" == "stop" ]; then
   exit 0
 fi
 
+# => Altere apartir daqui o método de iniciar!
 # Pasta default para Aplicação
-cd ~/node-videostream
+cd ~/app
 # Inicia com Forever para manter sempre no ar
-# => Altere aqui o méto de iniciar!
 forever --watch start server.js
 
