@@ -121,14 +121,13 @@ function ConfigSingleApp(){
     echo ""                                                                     >> $ARQ
     echo "#{NFAS-NodeVars} configurado automáticamente: Variáveis do Node.js"   >> $ARQ
     echo "export PORT=$HAPP_PORT"                                               >> $ARQ
-    echo "export NODE_PORT=$HAPP_PORT"                                          >> $ARQ
-    echo "export NODE_URI=$HAPP_URI"                                            >> $ARQ
+    echo "export ROOT_URL=$HAPP_URI"                                            >> $ARQ
     echo ""                                                                     >> $ARQ
   else
     # Altera variáveis já definidas no arquivo
     EditConfBashExport $ARQ PORT $HAPP_PORT
     EditConfBashExport $ARQ NODE_PORT $HAPP_PORT
-    EditConfBashExport $ARQ NODE_URI $NODE_URI
+    EditConfBashExport $ARQ ROOT_URL $NODE_URI
   fi
 }
 
@@ -270,7 +269,7 @@ function EditAppConfig(){
     MSG+="\n  PORT=$HAPP_PORT"
     MSG+="\n  NODE_PORT=$HAPP_PORT"
   fi
-  MSG+="\n  NODE_URI=$HAPP_URI"
+  MSG+="\n  ROOT_URL=$HAPP_URI"
   if ( ! whiptail --title "Configuração de Aplicativo" --yesno "$MSG" --no-button "Cancel" 20 78) then
     echo "AppConfig Cancelado"
     return 1
