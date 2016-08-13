@@ -81,89 +81,79 @@ function NodeInstall(){
 }
 
 #-----------------------------------------------------------------------
+# Pergunta a versão do Node.js
+function AskNodeVersion(){
+  local FIM N_LIN VER_TMP ERR_MSG
+  FIM="N"
+  VER_TMP=""
+  ERR_MSG=""
+  N_LIN=10
+  while [ "$FIM" != "Y" ]; do
+    MSG="\nQual a versao do Node.js desejada:\n$ERR_MSG"
+    VER_TMP=$(whiptail --title "$TITLE" --inputbox "$MSG" $N_LIN 74 $VER_TMP 3>&1 1>&2 2>&3)
+    if [ $? -ne 0 ]; then
+      return 1
+    else
+      # Verifica se tem o "v" na versão...
+      [ "${VER_TMP:0:1}" != "v" ] && VER_TMP="v$VER_TMP"
+      CheckVerNode $VER_TMP
+      if [ $? -eq 0 ]; then
+        echo "$VER_TMP"
+        return 0
+      else
+        ERR_MSG="\nERRO: essa versão não foi encontrada, tente novamente"
+        ERR_MSG+="\n (verifique versões em https://nodejs.org/dist)"
+        N_LIN=13
+      fi
+    fi
+  done
+}
+
+#-----------------------------------------------------------------------
 # Instala programas pré configurados
 function NodeSelect(){
   # Última versão do Node.js:
-  local EXE MSG ERR_MSG OPTION FIM VERSAO VER_TMP
+  local EXE ERR_MSG OPTION
   local LTS_NODE=$(GetVerNodeLts)
   local STB_NODE=$(GetVerNodeStable)
   local CUR_NODE=$(GetVerNodeAtual)
+  local VERSAO=""
 
-  EXE="whiptail --title \"$TITLE\""
-  # Opções de seleção
-  if [ "$CMD" != "--first" ] || [ "$CUR_NODE" == "" ]; then
-    EXE+=" --nocancel --radiolist \"Selecione a versão no NODE que deseja instalar\" 12 75 4 "
-    EXE+="\"Atual\"    \"manter versão atual (recomendado): $CUR_NODE\" YES "
-    EXE+="\"LTS\"      \"versão LTS                       : $LTS_NODE\" NO "
-  else
-    EXE+=" --nocancel --radiolist \"Selecione a versão no NODE que deseja instalar\" 13 75 3 "
-    EXE+="\"LTS\"      \"versão LTS (recomendado)         : $LTS_NODE\" YES "
-  fi
-  EXE+="\"Stable\"     \"versão latest/stable             : $STB_NODE\" NO "
-  EXE+="\"Custom\"     \"selecionar a versão manualmente\" NO "
-  OPTION=$(eval "$EXE 3>&1 1>&2 2>&3")
-  [ $? != 0 ] && return 1 # Cancelado
-
-  VERSAO=""
-  if [ "$OPTION" == "Custom" ]; then
-    FIM="N"
-    VER_TMP=""
-    ERR_MSG=""
-    while [ "$FIM" != "Y" ]; do
-      MSG="\nQual a versao do Node.js desejada:$ERR_MSG"
-      VER_TMP=$(whiptail --title "$TITLE" --inputbox "$MSG" 10 74 $VER_TMP 3>&1 1>&2 2>&3)
-      if [ $? -ne 0 ]; then
-        FIM="Y"
-      else
-        # Verifica se tem o "v" na versão...
-        [ "${VER_TMP:0:1}" != "v" ] && VER_TMP="v$VER_TMP"
-        CheckVerNode $VER_TMP
-        if [ $? -eq 0 ]; then
-          VERSAO="$VER_TMP"
-          FIM="Y"
-        else
-          ERR_MSG="\nERRO: essa versão não foi encontrada, tente novamente"
-        fi
-      fi
-    done
-  elif [ "$OPTION" == "Atual" ]; then
-    VERSAO="$CUR_NODE"
-  elif [ "$OPTION" == "LTS" ]; then
-    VERSAO="$LTS_NODE"
-  elif [ "$OPTION" == "Stable" ]; then
-    VERSAO="$STB_NODE"
-  fi
-
-return 0
-  OPTIONS=$(echo $OPTIONS | tr -d '\"')
-  if [ $? == 0 ]; then
-    #--- Instala programas selecionados
-    echo "Opt list=[$OPTIONS]"
-    for OPT in $OPTIONS; do
-      echo "Instalação: $OPT"
-      case $OPT in
-        "Node-LTS")
-          if echo "$OPTIONS" | grep -q "Node-Stable"; then
-            echo "Não instala as duas versões"
-          else
-            NodeInstall $LTS_NODE
-          fi
-        ;;
-        "Node-Stable")
-          # Evita instalar as duas versões
-          if [ "$NODE_LTS" != "Y" ]; then
-            NodeInstall $STB_NODE
-          fi
-        ;;
-      esac
-    done # for OPT
-    if echo "$OPTIONS" | grep -q "Node-LTS\|Node-Stable"; then
-      # Reinstalou Node.js, precisa reinstalar o Forever
-      npm -g install forever
-      # Permite execução para "other", não é padrão!!!
-      chmod -R o+rx /usr/local/lib/node_modules
+  while [ "$VERSAO" == "" ]; do
+    EXE="whiptail --title \"$TITLE\""
+    # Opções de seleção
+    if [ "$CUR_NODE" != "" ]; then
+      EXE+=" --nocancel --menu \"$ERR_MSG Selecione a versão no NODE que deseja instalar\" 12 75 4 "
+      EXE+="\"Atual\"    \"  manter versão atual (recomendado): $CUR_NODE\" "
+      EXE+="\"LTS\"      \"  versão LTS                       : $LTS_NODE\" "
+    else
+      EXE+=" --nocancel --menu \"Selecione a versão no NODE que deseja instalar\" 13 75 3 "
+      EXE+="\"LTS\"      \"  versão LTS (recomendado)         : $LTS_NODE\" "
     fi
-  fi
+    EXE+="\"Stable\"     \"  versão latest/stable             : $STB_NODE\" "
+    EXE+="\"Custom\"     \"  selecionar a versão manualmente\" "
+    OPTION=$(eval "$EXE 3>&1 1>&2 2>&3")
+    [ $? != 0 ] && return 1 # Cancelado
+
+    VERSAO="";ERR_MSG=""
+    if [ "$OPTION" == "Atual" ]; then
+      return
+    elif [ "$OPTION" == "LTS" ]; then
+      VERSAO="$LTS_NODE"
+    elif [ "$OPTION" == "Stable" ]; then
+      VERSAO="$STB_NODE"
+    elif [ "$OPTION" == "Custom" ]; then
+      VERSAO=$(AskNodeVersion)
+      [ $? != 0 ] && ERR_MSG="(Erro...)"
+    fi
+  done
+
+  # Instala ou re-instala o Node.js
+  NodeInstall $VERSAO
+  # Reinstalou Node.js, precisa reinstalar o Forever
+  npm -g install forever
+  # Permite execução para "other", não é padrão!!!
+  chmod -R o+rx /usr/local/lib/node_modules
 }
 
 
@@ -173,7 +163,6 @@ return 0
 if [ "$CMD" == "--first" ]; then
   #--- Primeira instalação
   NodeSelect
-
 
 #-----------------------------------------------------------------------
 else

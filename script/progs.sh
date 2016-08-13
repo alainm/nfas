@@ -24,44 +24,44 @@ VAR_FILE="/script/info/progs.var"
 #-----------------------------------------------------------------------
 # Instala programas pré configurados
 function ProgsInstall(){
-  # Última versão do Node.js:
-  local LTS_NODE=$(GetVerNodeLts)
-  local STB_NODE=$(GetVerNodeStable)
-  local NODE1_MSG="versão LTS          : $LTS_NODE. atual=$(GetVerNodeAtual)"
-  local NODE2_MSG="versão latest/stable: $STB_NODE"
-  local OPTIONS=$(whiptail --title "$TITLE"                                   \
-    --checklist "\nSelecione os programas que deseja Instalar:" 22 75 2 \
-    'Node-LTS'    "$NODE1_MSG" YES   \
-    'Node-Stable' "$NODE2_MSG" NO    \
+  local MSG1=""
+  if [ "$CMD" == "--first" ]; then
+    MSG="Instalar"
+    NODE_MSG=" (Obrigatório)"
+    NODE_OPT=YES
+  else
+    MSG="Instalar/Alterar"
+    NODE_MSG=""
+    NODE_OPT=NO
+  fi
+  local OPTIONS=$(whiptail --title "$TITLE"                         \
+    --checklist "\nSelecione os programas que deseja $MSG:" 22 75 3 \
+    'Node'    "  Node.js $NODE_MSG" $NODE_OPT   \
+    'MongoDB' "  Banco de dados"    NO          \
+    'MQTT'    "  Storage para IoT"  NO          \
     3>&1 1>&2 2>&3)
-  OPTIONS=$(echo $OPTIONS | tr -d '\"')
   if [ $? == 0 ]; then
+    # Tira as Aspas e Força a opção Node
+    OPTIONS=$(echo $OPTIONS | tr -d '\"')
+    if [ "$CMD" == "--first" ]; then
+      echo $OPTIONS | grep "Node"; [ $? -ne 0 ] && OPTIONS="Node $OPTIONS"
+    fi
     #--- Instala programas selecionados
     echo "Opt list=[$OPTIONS]"
     for OPT in $OPTIONS; do
       echo "Instalação: $OPT"
       case $OPT in
-        "Node-LTS")
-          if echo "$OPTIONS" | grep -q "Node-Stable"; then
-            echo "Não instala as duas versões"
-          else
-            NodeInstall $LTS_NODE
-          fi
+        "Node")
+          /script/prog-node.sh --first
         ;;
-        "Node-Stable")
-          # Evita instalar as duas versões
-          if [ "$NODE_LTS" != "Y" ]; then
-            NodeInstall $STB_NODE
-          fi
+        "MongoDB")
+          echo "Instala MongoDB..."
+        ;;
+        "MQTT")
+          echo "Instala MQTT..."
         ;;
       esac
     done # for OPT
-    if echo "$OPTIONS" | grep -q "Node-LTS\|Node-Stable"; then
-      # Reinstalou Node.js, precisa reinstalar o Forever
-      npm -g install forever
-      # Permite execução para "other", não é padrão!!!
-      chmod -R o+rx /usr/local/lib/node_modules
-    fi
   fi
 }
 #-----------------------------------------------------------------------
@@ -71,7 +71,6 @@ TITLE="NFAS - Configuração e Instalaçao de Utilitários"
 if [ "$CMD" == "--first" ]; then
   #--- Seleciona os programas a instalar
   /script/prog-git.sh --first
-  /script/prog-node.sh --first
   ProgsInstall
 
 #-----------------------------------------------------------------------
