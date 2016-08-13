@@ -20,74 +20,6 @@ CMD=$1
 VAR_FILE="/script/info/progs.var"
 [ -e $VAR_FILE ] && . $VAR_FILE
 
-#-----------------------------------------------------------------------
-# Rotina para configurar o GIT
-# faz apenas a configuração global de email e usuário=hostname
-function SetupGit(){
-  local MSG
-  # Configura mesmo email que sistema
-  git config --global user.email "$EMAIL_ADMIN"
-  # Configura hostname como nome default
-  git config --global user.name "$HOSTNAME_INFO"
-  # Faz o git criar arquivos com acesso de grupo
-  git config --global core.sharedRepository 0660
-  # Mensagem de aviso informativo
-     MSG=" Instalados utilitários de compilação: GCC, Make, etc.."
-  MSG+="\n\nGIT foi instalado e configurado:"
-    MSG+="\n  Nome e Email globais iguais ao do administrador,"
-    MSG+="\n  Criação de arquivos com máscara 660 para acesso em grupo."
-  whiptail --title "$TITLE" --msgbox "$MSG" 13 70
-}
-
-#-----------------------------------------------------------------------
-# Fornece a versão do Node Stable mais novo
-function GetVerNodeStable(){
-  # usa o WGET com "--no-dns-cache -4" para melhorar a velocidade de conexão
-  local NEW_NODE=$(wget --quiet --no-dns-cache -4 http://nodejs.org/dist/latest/ -O - | sed -n 's/.*\(node.*linux-x64\.tar\.gz\).*/\1/p' | sed -n 's/node-\(v[0-9\.]*\).*/\1/p')
-  echo "$NEW_NODE"
-}
-
-#-----------------------------------------------------------------------
-# Fornece a versão do Node LTS mais novo
-# procura na tabela em https://nodejs.org/dist/index.tab
-#   foi dica daqui: https://github.com/nodejs/node/issues/4569#issuecomment-169746908
-function GetVerNodeLts(){
-  # Baixa lista oficial de versões, coluna1: versão, coluna10: novme lts,
-  #   tira primeira linha header, só linhas co nome Lts, sort, última linha, versão
-  local LTS_NODE=$(wget --quiet --no-dns-cache -4 https://nodejs.org/dist/index.tab -O - | awk '{print $1 "\t" $10}' | tail -n +2 | \
-    awk '$2 != "-"' | sort | tail -n 1 | cut -f1)
-  echo "$LTS_NODE"
-}
-
-#-----------------------------------------------------------------------
-# Fornece a versão atual do Node instalada
-function GetVerNodeAtual(){
-  if which node >/dev/null; then
-    echo $(node -v)
-  else
-    echo "não instalado"
-  fi
-}
-
-#-----------------------------------------------------------------------
-# Rotina para instalar Node.js (latest)
-# site: https://nodejs.org/dist/v4.2.6/node-v4.2.6-linux-x64.tar.gz
-# Uso: NodeInstall <versão>
-function NodeInstall(){
-  # Localização e nome do arquivo da versão solicitada
-  local NODE_URL="https://nodejs.org/dist/$1/node-$1-linux-x64.tar.gz"
-  local NODE_FILE="node-$1-linux-x64.tar.gz"
-  echo "Instalar Node: $NODE_FILE"
-  # baixa no diretório root
-  wget --no-dns-cache -4 -r $NODE_URL -O /root/$NODE_FILE
-  pushd /usr/local
-  tar --strip-components 1 --no-same-owner -xzf /root/$NODE_FILE
-  # para Ubuntu: https://github.com/nodesource/distributions#debinstall
-  popd
-  # Mostra versões para debug
-  node -v
-  npm -v
-}
 
 #-----------------------------------------------------------------------
 # Instala programas pré configurados
@@ -137,20 +69,18 @@ function ProgsInstall(){
 
 TITLE="NFAS - Configuração e Instalaçao de Utilitários"
 if [ "$CMD" == "--first" ]; then
-  #--- Configura o git
-  SetupGit
   #--- Seleciona os programas a instalar
+  /script/prog-git.sh --first
+  /script/prog-node.sh --first
   ProgsInstall
 
 #-----------------------------------------------------------------------
 elif [ "$CMD" == "--hostname" ]; then
-  # Re-configura hostname como nome default
-  git config --global user.name "$HOSTNAME_INFO"
+  /script/prog-git.sh --hostname
 
 #-----------------------------------------------------------------------
 elif [ "$CMD" == "--email" ]; then
-  # Re-configura mesmo email que sistema
-  git config --global user.email "$EMAIL_ADMIN"
+  /script/prog-git.sh --email
 
 #-----------------------------------------------------------------------
 else
