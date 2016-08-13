@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+# set -x
 
 # Script para instalar e configurar o GIT
 # Uso: /script/prog-git.sh <cmd>

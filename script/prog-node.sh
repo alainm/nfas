@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+# set -x
 
 # Script para instalar e configurar programas mais comuns
 # Uso: /script/prog-node.sh <cmd>
