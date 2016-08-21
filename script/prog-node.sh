@@ -75,6 +75,7 @@ function NodeInstall(){
   # para Ubuntu: https://github.com/nodesource/distributions#debinstall
   rm -f /root/$NODE_FILE
   popd
+  rm -f /root/$NODE_FILE
   # Mostra versões para debug
   node -v
   npm -v
