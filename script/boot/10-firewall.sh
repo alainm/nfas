@@ -188,9 +188,10 @@ for service in $SERVICE_PORTS ; do
   iptables -A IN_FIREWALL -p tcp --dport $service  -m state --state NEW -j ACCEPT
 done
 #==========================================================================
-# Chain especial para editar dinamicamente a porta do SSH
+# Chain especial para editar dinamicamente a porta do SSH, configurado pelo /script/ssh.sh
 iptables -N IN_SSH
-# será configurado pelo /script/ssh.sh
+# Chain especial para editar dinamicamente a porta do MQTT, configurado pelo...
+iptables -N IN_MQTT
 #==========================================================================
 
 #--------------------------------------------------------------------------

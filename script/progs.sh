@@ -36,9 +36,9 @@ function ProgsInstall(){
   fi
   local OPTIONS=$(whiptail --title "$TITLE"                         \
     --checklist "\nSelecione os programas que deseja $MSG:" 22 75 3 \
-    'Node'    "  Node.js $NODE_MSG" $NODE_OPT   \
-    'MongoDB' "  Banco de dados"    NO          \
-    'MQTT'    "  Storage para IoT"  NO          \
+    'Node'     "  Node.js $NODE_MSG" $NODE_OPT   \
+    'MongoDB'  "  Banco de dados"    NO          \
+    'Mosquito' "  MQTT - Storage para IoT"  NO          \
     3>&1 1>&2 2>&3)
   if [ $? == 0 ]; then
     # Tira as Aspas e Força a opção Node
@@ -52,7 +52,7 @@ function ProgsInstall(){
       echo "Instalação: $OPT"
       case $OPT in
         "Node")
-          /script/prog-node.sh --first
+          /script/prog-node.sh $CMD
         ;;
         "MongoDB")
           echo "Instala MongoDB..."

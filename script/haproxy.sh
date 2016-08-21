@@ -127,7 +127,7 @@ function ConfigSingleApp(){
     # Altera variáveis já definidas no arquivo
     EditConfBashExport $ARQ PORT $HAPP_PORT
     EditConfBashExport $ARQ NODE_PORT $HAPP_PORT
-    EditConfBashExport $ARQ ROOT_URL $NODE_URI
+    EditConfBashExport $ARQ ROOT_URL $HAPP_URI
   fi
 }
 

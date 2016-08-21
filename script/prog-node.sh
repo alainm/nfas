@@ -70,10 +70,10 @@ function NodeInstall(){
   # baixa no diretório root
   wget --no-dns-cache -4 -r $NODE_URL -O /root/$NODE_FILE
   echo "wget err=$?"
-  return $?
   pushd /usr/local
   tar --strip-components 1 --no-same-owner -xzf /root/$NODE_FILE
   # para Ubuntu: https://github.com/nodesource/distributions#debinstall
+  rm -f /root/$NODE_FILE
   popd
   # Mostra versões para debug
   node -v
