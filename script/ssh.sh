@@ -80,7 +80,7 @@ function AskSshPort(){
        [ $PORT_TMP -lt 65536 ] &&                  # Portas até 65535
        [ "$PORT_TMP" == "$PORT_A" ]; then # Não foi alterado pela ER
       # Email do Admin aceito, Continua
-      echo "Porta do servidor de SMTP ok: $PORT_A"
+      echo "Porta do servidor de SSH ok: $PORT_A"
       SSH_PORT=$PORT_A
       return 0
     else
