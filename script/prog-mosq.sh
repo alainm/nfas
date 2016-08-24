@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+# set -x
 
 # Script para instalar e configurar MQTT - Mosquitto
 # Uso: /script/prog-mosq.sh <cmd>
@@ -21,7 +21,6 @@ TITLE="NFAS - Configuração do Mosquitto-MQTT"
 function CheckBothPorts(){
   local MSG
   if [ -z "$MOSQ_PORT" ] && [ -z "$MOSQ_PORT_S" ]; then
-  # mensagem de confirmação
        MSG="\nATENÇÃO: ambas as portas com e sem criptografia estão desativadas,"
     MSG+="\n\n  isto fará com que o Mosquitto-MQTT seja desativado ao retornar!"
       MSG+="\n  Por favor altere uma das duas portas se deseja usar o MQTT"
@@ -56,7 +55,7 @@ function AskMqttPort(){
     fi
     # Validate port
     OK="N"
-    if [ -z "$PORT_TMP" ] || [ "$PORT_TMP" == "" ] || [ $PORT_TMP -eq 0 ]; then
+    if [ -z "$PORT_TMP" ] || [ $PORT_TMP -eq 0 ]; then
       PORT_TMP=""
       OK="Y"
     elif [[ $PORT_TMP =~ [0-9]* ]] && [ $PORT_TMP -lt 65536 ]; then
@@ -72,6 +71,111 @@ function AskMqttPort(){
       return 0
     else
       ERR_ST="Porta inválida, por favor tente novamente"
+    fi
+  done
+}
+
+#-----------------------------------------------------------------------
+# Ask for Security Level for MQTT
+# Returns: 0=ok, 1=canceled
+function AskMosqConnType(){
+  local DEF_OPT MSG MENU_IT
+  if [ -z "$MOSQ_PORT_S" ]; then
+     MSG="\nATENÇÃO: A conexão Segura está desabilitadas,"
+    MSG+="\n  por favor ative a porta correspondente."
+    whiptail --title "$TITLE" --msgbox "$MSG" 9 75
+  else
+    MSG="\nQual o Nível de Segurança de Criptografia para o MQTT?"
+    MSG+="\nselecione conforme a capacidade dos dispositivos"
+    [ "$CMD" != "--first" ] && MSG+=" ATUAL=$MOSQ_CRYPT_LEVEL"
+    MSG+="\nOBS: crie uma Aplicação corresponde com sub-domínio a ser usado"
+    MOSQ_CRYPT_LEVEL=$(whiptail --title "$TITLE" --nocancel --default-item "$MOSQ_CRYPT_LEVEL" \
+      --menu "$MSG" --fb 16 76 3                                    \
+      "1" "Moderno - Comunicação segura (TLSv1.2, Ephemetal, AES)"  \
+      "2" "Intermediário - Compatibilidade (TLSv1, diversos) "      \
+      "3" "Antigo - Baixa Segurança (SSLv3...)"                     \
+      3>&1 1>&2 2>&3)
+  fi
+}
+
+#-----------------------------------------------------------------------
+# Ask for persistance to use for MQTT
+# maximum time is arbitraryly set to 1 year
+# Returns: 0=ok, 1=Abort
+function AskMqttPersistance(){
+  local ERR_ST=""
+  local PERS_TMP TMP1 TMP2 OK
+  PERS_TMP="$MOSQ_PERS_EXP"
+  # loop, only exists with Ok or Abort
+  while true; do
+     MSG="\nTempo de tersistência do MQTT"
+    MSG+="\neste é o tempo para apagar eventos muito antigos..."
+    MSG+="\n\nNúmero seguido de uma letra:"
+      MSG+=" h=hour, d=day, w=week, m=month e y=year"
+    # Acrescenta mensagem de erro
+    MSG+="\n\n$ERR_ST"
+    # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
+    PERS_TMP=$(whiptail --title "$TITLE" --inputbox "$MSG" 14 74 $PERS_TMP 3>&1 1>&2 2>&3)
+    if [ $? -ne 0 ]; then
+      echo "Operação cancelada!"
+      return 1
+    fi
+    # Validate response
+    OK="N"
+    if [[ $PERS_TMP =~ [0-9]*[hdwmy] ]]; then
+      TMP1=$(echo "$PERS_TMP" | sed 's/\([0-9]*\).*/\1/')
+      TMP2=$(echo "$PERS_TMP" | sed 's/[0-9]*\([hdwmy]\)/\1/')
+      # maximum is one year
+      [ "$TMP2" == "h" ] && [ $TMP1 -le 8760 ] && [ $TMP1 -gt 0 ] && OK="Y"
+      [ "$TMP2" == "d" ] && [ $TMP1 -le 366  ] && [ $TMP1 -gt 0 ] && OK="Y"
+      [ "$TMP2" == "w" ] && [ $TMP1 -le 51   ] && [ $TMP1 -gt 0 ] && OK="Y"
+      [ "$TMP2" == "m" ] && [ $TMP1 -le 12   ] && [ $TMP1 -gt 0 ] && OK="Y"
+      [ "$TMP2" == "y" ] && [ $TMP1 -le 1    ] && [ $TMP1 -gt 0 ] && OK="Y"
+    fi
+    if [ "$OK" == "Y" ]; then
+      # Port accepted
+      echo "Persistencia do MQTT ok: $PERS_TMP"
+      MOSQ_PERS_EXP="$PERS_TMP"
+      return 0
+    else
+      ERR_ST="Parâmetro inválido, por favor tente novamente"
+    fi
+  done
+}
+
+#-----------------------------------------------------------------------
+# Ask for AutoSave time
+# Arbitrarily limited between 5 and 3600 seconds
+# Returns: 0=ok, 1=Abort
+function AskMqttAutoSave(){
+  local ERR_ST=""
+  local SAVE_TMP TMP OK
+  SAVE_TMP="$MOSQ_AUTO_SAVE"
+  # loop, only exists with Ok or Abort
+set -x
+  while true; do
+     MSG="\nIntervalo de tempo para backup em arquivo"
+    MSG+="\nDurante esse tempo, os dados ficam em RAM !!!"
+    MSG+="\nNúmero em segundos:"
+    # Acrescenta mensagem de erro
+    MSG+="\n\n$ERR_ST"
+    # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
+    SAVE_TMP=$(whiptail --title "$TITLE" --inputbox "$MSG" 13 74 $SAVE_TMP 3>&1 1>&2 2>&3)
+    if [ $? -ne 0 ]; then
+      echo "Operação cancelada!"
+set +x
+      return 1
+    fi
+    # Validate response
+    OK="N"
+    if [[ $SAVE_TMP =~ [0-9]* ]] && [ $SAVE_TMP -gt 5 ] && [ $SAVE_TMP -lt 3600 ]; then
+      # Port accepted
+      echo "AutoSave do MQTT ok: $SAVE_TMP"
+      MOSQ_AUTO_SAVE="$SAVE_TMP"
+set +x
+      return 0
+    else
+      ERR_ST="Parâmetro inválido, por favor tente novamente"
     fi
   done
 }
@@ -93,12 +197,12 @@ function MosqMenu(){
       #         "2 (intermediário, com12)" <= Max Length for width  =78
       MN_LEVEL+="1 (mais seguro, moderno)"
     elif [ "$MOSQ_CRYPT_LEVEL" == "3" ]; then
-      MN_LEVEL+="3 (antigo, SSL1)"
+      MN_LEVEL+="3 (antigo, SSLv3)"
     else
       MN_LEVEL+="2 (intermediário)"
     fi
      MN_PERS="Tempo de Persistência (apaga velhos), ATUAL=$MOSQ_PERS_EXP"
-     MN_SAVE="Tempo de auto-save para disco,        ATUAL=$MOSQ_AUTO_SAVE"
+     MN_SAVE="Tempo de auto-save para disco,        ATUAL=$MOSQ_AUTO_SAVE""s"
     MENU_IT=$(whiptail --title "$TITLE" --fb --cancel-button "$CAN_MSG" \
         --menu "\nOpções de configuração:" 18 78 7   \
         "1" "$MN_PORT"                            \
@@ -116,9 +220,9 @@ function MosqMenu(){
     # Funções que ficam em Procedures
     [ "$MENU_IT" == "1" ] && AskMqttPort
     [ "$MENU_IT" == "2" ] && AskMqttPort "SSL"
-    [ "$MENU_IT" == "3" ] && echo "Level"
-    [ "$MENU_IT" == "4" ] && echo "Persist"
-    [ "$MENU_IT" == "5" ] && echo "autoSave"
+    [ "$MENU_IT" == "3" ] && AskMosqConnType
+    [ "$MENU_IT" == "4" ] && AskMqttPersistance
+    [ "$MENU_IT" == "5" ] && AskMqttAutoSave
     [ "$MENU_IT" == "6" ] && echo "NewUser"
     [ "$MENU_IT" == "7" ] && echo "DelUser"
   done
