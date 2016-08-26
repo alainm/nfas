@@ -152,7 +152,6 @@ function AskMqttAutoSave(){
   local SAVE_TMP TMP OK
   SAVE_TMP="$MOSQ_AUTO_SAVE"
   # loop, only exists with Ok or Abort
-set -x
   while true; do
      MSG="\nIntervalo de tempo para backup em arquivo"
     MSG+="\nDurante esse tempo, os dados ficam em RAM !!!"
@@ -163,7 +162,6 @@ set -x
     SAVE_TMP=$(whiptail --title "$TITLE" --inputbox "$MSG" 13 74 $SAVE_TMP 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
       echo "Operação cancelada!"
-set +x
       return 1
     fi
     # Validate response
@@ -172,12 +170,43 @@ set +x
       # Port accepted
       echo "AutoSave do MQTT ok: $SAVE_TMP"
       MOSQ_AUTO_SAVE="$SAVE_TMP"
-set +x
       return 0
     else
       ERR_ST="Parâmetro inválido, por favor tente novamente"
     fi
   done
+}
+
+#-----------------------------------------------------------------------
+# Install Mosquitto if any port is enabled
+# Get current version: mosquitto -h | grep version | sed 's/.*version \([0-9\.]*\).*/\1/;'
+function MosqInstall(){
+set -x
+  if [ -z "$MOSQ_PORT" ] && [ -z "$MOSQ_PORT_S" ]; then
+    # mosquito is disabled
+    return 1
+  else
+    if which mosquitto >/dev/null; then
+      # Not installed
+      if [ "$DISTRO_NAME" == "CentOS" ]; then
+        if [ "$DISTRO_VERSION" == "6" ]; then
+          PKT_URL="http://download.opensuse.org/repositories/home:/oojah:/mqtt/CentOS_CentOS-6/home:oojah:mqtt.repo"
+        elif [ "$DISTRO_VERSION" == "7" ]; then
+          PKT_URL="http://download.opensuse.org/repositories/home:/oojah:/mqtt/CentOS_CentOS-7/home:oojah:mqtt.repo"
+        fi
+        PKT_FILE="/etc/yum.repos.d/mosquito.repo"
+        wget --no-dns-cache -4 -r $PKT_URL -O $PKT_FILE
+        yum -y install mosquitto mosquitto-clients libmosquitto1
+      else
+        echo "Ubuntu..."
+      fi
+      # Copy the example file for mosquitto.conf
+      if [ ! -e /etc/mosquitto/conf.d/mosquitto.conf ]; then
+        cp /etc/mosquitto/mosquitto.conf.example /etc/mosquitto/conf.d/mosquitto.conf
+      fi
+    fi
+  fi
+set +x
 }
 
 #-----------------------------------------------------------------------
@@ -266,7 +295,8 @@ if [ "$CMD" == "--first" ]; then
 #-----------------------------------------------------------------------
 else
   #--- Set options and install
-  MosqMenu
+  # MosqMenu
+  MosqInstall
 
 fi
 #-----------------------------------------------------------------------
