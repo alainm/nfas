@@ -14,7 +14,33 @@ CMD=$1
 # Lê dados anteriores se existirem
 . /script/info/distro.var
 VAR_FILE="/script/info/mosq.var"
+CONF_FILE="/etc/mosquitto/mosquitto.conf"
 TITLE="NFAS - Configuração do Mosquitto-MQTT"
+
+#-----------------------------------------------------------------------
+# Functionto edit Mosquito.conf
+# this is different from the general one in function.sh,
+# 1) mosquitto has rigid rules on spacing
+# 2) default configuration with "#name" without <space> and examples start with "# name"
+# usage: MosqEditConf <param> <value>
+function MosqEditConf(){
+set -x
+  local PARAM=$1
+  local VAL=$2
+  # https://www.gnu.org/software/findutils/manual/html_node/find_html/grep-regular-expression-syntax.html
+  if grep -q -E "^$PARAM\b" $CONF_FILE; then
+    # Line already exists, inline replacing
+    eval "sed -i 's/^\($PARAM\).*/\1 $VAL/;' $CONF_FILE"
+  elif grep -q -E "^#$PARAM\b" $CONF_FILE; then
+    # Line exists but is commented out, add config after that line
+    # http://thobias.org/doc/sosed.html#toc51
+    eval "sed -i '/^#$PARAM\b/{p;s/.*/$PARAM $VAL/;}' $CONF_FILE"
+  else
+    # line does not exist, append to the end of the file
+    echo "$PARAM $VAL" >> $CONF_FILE
+  fi
+set +x
+}
 
 #-----------------------------------------------------------------------
 # Check if both ports are deactivated and issue a Warning
@@ -182,6 +208,7 @@ function AskMqttAutoSave(){
 # Get current version: mosquitto -h | grep version | sed 's/.*version \([0-9\.]*\).*/\1/;'
 function MosqInstall(){
 set -x
+  local PKT_URL PKT_FILE
   if [ -z "$MOSQ_PORT" ] && [ -z "$MOSQ_PORT_S" ]; then
     # mosquito is disabled
     return 1
@@ -201,12 +228,19 @@ set -x
         echo "Ubuntu..."
       fi
       # Copy the example file for mosquitto.conf
-      if [ ! -e /etc/mosquitto/conf.d/mosquitto.conf ]; then
-        cp /etc/mosquitto/mosquitto.conf.example /etc/mosquitto/conf.d/mosquitto.conf
+      if [ ! -e $CONF_FILE ]; then
+        cp $CONF_FILE.example $CONF_FILE
       fi
     fi
   fi
 set +x
+}
+
+#-----------------------------------------------------------------------
+# Configure Mosquitto, original file is edited
+function MosqConfig(){
+
+  MosqEditConf allow_anonymous false
 }
 
 #-----------------------------------------------------------------------
@@ -296,7 +330,9 @@ if [ "$CMD" == "--first" ]; then
 else
   #--- Set options and install
   # MosqMenu
-  MosqInstall
+  # MosqInstall
+  cp -f $CONF_FILE.example $CONF_FILE
+  MosqConfig
 
 fi
 #-----------------------------------------------------------------------
