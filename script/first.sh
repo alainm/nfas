@@ -71,7 +71,8 @@ if [ "$1" != "--ip-continue" ]; then
   /script/virtualbox.sh --first
   # aborta instalação e preserva a VM
   [ $? -ne 0 ] && exit 1
-  # Console colorido
+  # Console colorido, precisa executar como usuário
+  chmod o+x /script/console.sh
   /script/console.sh --first
   # Configurações e alterações na Rede
   /script/network.sh --first
