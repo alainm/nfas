@@ -18,7 +18,7 @@ CMD=$1
 # Lê dados anteriores se existirem
 . /script/info/distro.var
 VAR_FILE="/script/info/rabit.var"
-CONF_FILE="/etc/rabbitmq/rabbitmq-env.conf"
+CONF_FILE="/etc/rabbitmq/rabbitmq.config"
 TITLE="NFAS - Configuração do RabbitMQ"
 
 #-----------------------------------------------------------------------
@@ -34,7 +34,7 @@ function AskRabbitPort(){
   PORT_TMP=$RABT_PORT
   # loop, only exists with Ok or Abort
   while true; do
-    MSG="\nPorta de acesso para o RabbitMQ, somente uso interno"
+    MSG="\nPorta de acesso para o RabbitMQ, somente uso interno (default 5672)"
     MSG+="\n\n<Enter> para manter o anterior sendo mostrado\n"
     # Acrescenta mensagem de erro
     MSG+="\n$ERR_ST"
@@ -58,11 +58,45 @@ function AskRabbitPort(){
 }
 
 #-----------------------------------------------------------------------
+# Ask how much memory to use for RabbitMQ
+# Returns: 0=ok, 1=Abort
+function AskRabbitMemory(){
+  local ERR_ST=""
+  local MEM_TMP
+  # Save current port
+  MEM_TMP=$RABT_MEM
+  # loop, only exists with Ok or Abort
+  while true; do
+     MSG="\nQual a >Porcentagem< de memória que o RabbitMQ deve usar?"
+    MSG+="\n  (recomendamos 20%, limite superior é 30% maior)"
+    MSG+="\n\n<Enter> para manter o anterior sendo mostrado\n"
+    # Acrescenta mensagem de erro
+    MSG+="\n$ERR_ST"
+    # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
+    MEM_TMP=$(whiptail --title "$TITLE" --inputbox "$MSG" 14 74 $MEM_TMP 3>&1 1>&2 2>&3)
+    if [ $? -ne 0 ]; then
+      echo "Operação cancelada!"
+      return 1
+    fi
+    # Validate value
+    if [[ $MEM_TMP =~ [0-9]* ]] && [ $MEM_TMP -ge 10 ] && [ $MEM_TMP -le 80 ]; then
+      # Port accepted
+      echo "Memória para o RabbitMQ ok: $MEM_TMP"
+      # save result
+      RABT_MEM=$MEM_TMP
+      return 0
+    else
+      ERR_ST="Valor inválida, deve ser entre 10 e 80 (%)"
+    fi
+  done
+}
+
+#-----------------------------------------------------------------------
 # Install RabbitMQ
 # https://www.digitalocean.com/community/tutorials/how-to-install-and-manage-rabbitmq
 # TODO: Procurar a versão mais nova, CUODADO com o dígito depois da versão
 function RabbitInstall(){
-set -x
+  #set -x
   local PKT_VER PKT_FILE PKT_URL
   if ! which rabbitmq-server >/dev/null; then
     # Not installed
@@ -92,8 +126,8 @@ set -x
     fi
     # Enabling the Management Console, port=15672
     rabbitmq-plugins enable rabbitmq_management
-    # File is 660 but need more permitions, probably fo chroot
-    chmod 666 /etc/rabbitmq/enabled_plugins
+    # RabbitMQ runs with user rabbitmq
+    chown rabbitmq:rabbitmq /etc/rabbitmq/enabled_plugins
     # Create new user admin/admin
     # http://stackoverflow.com/questions/22850546/cant-access-rabbitmq-web-management-interface-after-fresh-install
     rabbitmqctl add_user admin admin
@@ -104,34 +138,39 @@ set -x
     service rabbitmq-server start
     # Copy the example file...
   fi
-set +x
+  #set +x
 }
 
 #-----------------------------------------------------------------------
 # Configure RabitMQ
-# first time, the file is created, then it is editted
+# File is created every time, changes will be lost
 function RabbitConfig(){
-  # Fisrts time: create file
-  [ ! -e $CONF_FILE ] && touch $CONF_FILE
-  # Edit or insert
-  EditConfEqualSafe $CONF_FILE NODE_PORT $RABT_PORT
+  echo -e "%%\n%%{NFAS-RabitMQ} Atention: changes to this file will be lost when reconfiguring\n%%" 2>/dev/null > $CONF_FILE
+  echo -e "[\n  {rabbit, ["                                2>/dev/null >> $CONF_FILE
+  echo -e "      {tcp_listeners, [$RABT_PORT]},"           2>/dev/null >> $CONF_FILE
+  echo -e "      {vm_memory_high_watermark, 0.$RABT_MEM}"  2>/dev/null >> $CONF_FILE
+  echo -e "  ]}\n]."                                       2>/dev/null >> $CONF_FILE
+  # RabbitMQ runs with user rabbitmq
+  chown rabbitmq:rabbitmq $CONF_FILE
   # restart to force changes
-  service rabbitmq-server restart
+  service rabbitmq-server reload
 }
 
 #-----------------------------------------------------------------------
 # Setup Menu
 # TODO: configurar "vm_memory_high_watermark" default de 40% para 20%
 function RabbitMenu(){
-  local MSG MENU_IT MN_PORT
+  local MSG MENU_IT MN_PORT MN_MEM
   # Cancel button message
   [ "$CMD" == "--first" ] && CAN_MSG="Terminar" || CAN_MSG="Retornar"
   # Loop do Menu principal interativo
   while true; do
-     MN_PORT="Porta de acesso,               ATUAL=$RABT_PORT"
+    MN_PORT="Porta de acesso,                ATUAL=$RABT_PORT"
+     MN_MEM="Uso de Memória, limite inferior ATUAL=$RABT_MEM%"
     MENU_IT=$(whiptail --title "$TITLE" --fb --cancel-button "$CAN_MSG" \
-        --menu "\nOpções de configuração:" 18 78 1  \
+        --menu "\nOpções de configuração:" 18 78 2  \
         "1" "$MN_PORT"                              \
+        "2" "$MN_MEM"                               \
         3>&1 1>&2 2>&3)
     if [ $? != 0 ]; then
         echo "Terminou"
@@ -139,6 +178,7 @@ function RabbitMenu(){
     fi
     # Funções que ficam em Procedures
     [ "$MENU_IT" == "1" ] && AskRabbitPort
+    [ "$MENU_IT" == "2" ] && AskRabbitMemory
   done
 }
 
@@ -148,6 +188,7 @@ function RabbitMenu(){
 function ReadRabbitVars(){
   # Erase previous values ans set compatibility
   RABT_PORT="5672"
+  RABT_MEM="20"
   # Read already existing file
   [ -e $VAR_FILE ] && . $VAR_FILE
 }
@@ -157,6 +198,7 @@ function ReadRabbitVars(){
 # These will be used by other modules end for future iteraction
 function SaveRabbitVars(){
   echo "RABT_PORT=\"$RABT_PORT\""                  2>/dev/null >  $VAR_FILE
+  echo "RABT_MEM=\"$RABT_MEM\""                    2>/dev/null >> $VAR_FILE
 }
 
 #=======================================================================
@@ -167,7 +209,7 @@ ReadRabbitVars
 
 #-----------------------------------------------------------------------
 if [ "$CMD" == "--first" ]; then
-  # same as not --first ;-)
+  # same as not --first
   RabbitInstall
   RabbitMenu
   RabbitConfig
