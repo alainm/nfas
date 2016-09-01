@@ -107,7 +107,7 @@ function GetAppList(){
 # Formato dos parametros: "param=valor", separador é "="
 # Estilo Bash, sem <space> antes/depois do "="
 # uso: EditConfEqualSafe <Arquivo> <param> <valor>
-# usado por: clock, function, network
+# usado por: clock, function, network, RabitMQ
 function EditConfEqualSafe(){
   local ARQ=$1
   local PARAM=$2

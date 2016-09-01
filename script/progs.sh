@@ -59,7 +59,7 @@ function ProgsInstall(){
           echo "Instala MongoDB..."
         ;;
         "Rabbit")
-          echo "Instala RabitMQ..."
+          /script/prog-rabit.sh $CMD
         ;;
         "MQTT")
           echo "Instala MQTT..."
