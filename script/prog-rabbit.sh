@@ -2,7 +2,7 @@
 # set -x
 
 # Script para instalar e configurar o RabbitMQ
-# Uso: /script/prog-rabit.sh <cmd>
+# Uso: /script/prog-rabbit.sh <cmd>
 # <cmd>: --first       primeira instalação
 #        <sem nada>    Modo interativo, usado pelo nfas
 

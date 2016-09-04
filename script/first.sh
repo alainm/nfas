@@ -53,6 +53,8 @@ if [ "$1" != "--ip-continue" ]; then
   PKT+=" ntp"
   # Pacotes para o HAproxy e Lua
   PKT+=" pcre-devel readline-devel"
+  # Pacode de administração do SElinux (usado para o MongoDB e outros)
+  PKT+=" policycoreutils-python"
   yum -y install $PKT
 
   if [ $? -ne 0 ]; then
