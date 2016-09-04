@@ -36,6 +36,22 @@ function GetMongoVersion(){
 }
 
 #-----------------------------------------------------------------------
+# Fornece a versão atual do Node instalada
+function GetMongoVerAtual(){
+  local VER_TMP=""
+  if which mongod >/dev/null; then
+    # Gtting version from executable doesn't include the distro version (last digit)
+    # mongod --version | grep "db version" | sed -e 's/.*v\([0-9.]*\)/\1/;'
+    if [ "$DISTRO_NAME" == "CentOS" ]; then
+      VER_TMP=$(rpm -q mongodb-org-server | sed -e 's/.*mongodb-org-server-\([0-9]\.[0-9]\.[0-9]-[0-9]\+\).*/\1/;')
+    else
+      echo "Ubuntu..."
+    fi
+  fi
+  echo "$VER_TMP"
+}
+
+#-----------------------------------------------------------------------
 # Instal a version of MongoDB
 # usage: MongoInstall <version>
 # https://docs.mongodb.com/manual/tutorial/install-mongodb-on-red-hat/
@@ -63,8 +79,8 @@ function MongoInstall(){
     semanage port -a -t mongod_port_t -p tcp 27017
     # Cria diretórios e altera direitos
     mkdir -p /var/lib/mongo
-    chown mongod:mongod /var/lib/mongo
     mkdir -p /var/log/mongodb
+    chown mongod:mongod /var/lib/mongo
     chown mongod:mongod /var/log/mongodb
     chown mongod:mongod $CONF_FILE
     # Start MongoDB
@@ -93,7 +109,8 @@ if [ "$CMD" == "--first" ]; then
 else
   #--- Set options and install
 #  GetMongoVersion
-  MongoInstall $(GetMongoVersion)
+#  MongoInstall $(GetMongoVersion)
+  GetMongoVerAtual
   #MongoMenu
   #MongoConfig
 
