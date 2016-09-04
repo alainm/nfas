@@ -52,6 +52,7 @@ HAPP=$2
 # Lê dados anteriores se existirem
 . /script/info/distro.var
 . /script/info/email.var
+. /script/info/virtualbox.var
 # Funções do sistema
 . /script/functions.sh
 VAR_FILE="/script/info/haproxy.var"
@@ -311,6 +312,8 @@ function GetCertificate(){
   local DOM_CERT=""
   local NEW_DOMAINS=""
   local HAS_SSL="N"
+  # Se é Virtualbox não faz certificado
+  [ "$IS_VIRTUALBOX" == "Y" ] && return 1
   # Cria lista das Aplicações, usuários Linux
   APP_LIST=$(GetAppList)
   echo "APP_LIST=[$APP_LIST]"
@@ -530,12 +533,12 @@ function HaproxyInstall(){
     local ARQ="/etc/rsyslog.d/49-haproxy.conf"
     if [ ! -e $ARQ ]; then
       cat <<- EOF > $ARQ
-      # file: /etc/rsyslog.d/49-haproxy.conf:
-      local0.* -/var/log/haproxy.log
-      & stop
-      # & ~ means not to put what matched in the above line anywhere else for the rest of the rules
-      # ~ is obsolete, now use "stop"
-      EOF
+			# file: /etc/rsyslog.d/49-haproxy.conf:
+			local0.* -/var/log/haproxy.log
+			& stop
+			# & ~ means not to put what matched in the above line anywhere else for the rest of the rules
+			# ~ is obsolete, now use "stop"
+			EOF
     fi
     # Configura Logrotate (ver no monit.sh)
     ARQ="/etc/logrotate.d/haproxy"
@@ -852,10 +855,13 @@ elif [ "$CMD" == "--reconfig" ]; then
   echo "---------------------"
   # Faz uma configuração preliminar, precisa dar acesso para criar certificado
   HaproxyReconfig
-  # Consegue Certificado, se precisar
-  GetCertificate
-  # refaz a configuração do HTTP, portas 80 e 443
-  HaproxyReconfig
+  # Se é VirtualBox não consegue autenticar
+  if [ "$IS_VIRTUALBOX" != "Y" ]; then
+    # Consegue Certificado, se precisar
+    GetCertificate
+    # refaz a configuração do HTTP, portas 80 e 443
+    HaproxyReconfig
+  fi
 
 elif [ "$CMD" == "--certonly" ]; then
   #-----------------------------------------------------------------------
