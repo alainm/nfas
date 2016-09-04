@@ -37,5 +37,5 @@ fi
 # Pasta default para Aplicação
 cd ~/app
 # Inicia com Forever para manter sempre no ar
-forever --watch start server.js
+forever --watch start server.js --max-old-space-size=128
 
