@@ -25,7 +25,7 @@ function GetMongoVersion(){
   if [ "$DISTRO_NAME" == "CentOS" ]; then
     # Get the correct URL for CentOS 6 and 7
     URL="https://repo.mongodb.org/yum/redhat/$DISTRO_VERSION/mongodb-org/stable/x86_64/RPMS"
-    VER_TMP=$(curl -s $URL/ |                                           \
+    VER_TMP=$(curl -s $URL/ |                                          \
     grep -E "href='mongodb-org-3.*.rpm'" |                             \
     sed -e 's/.*mongodb-org-\([0-9]\.[0-9]\.[0-9]-[0-9]\+\).*/\1/;' |  \
     tail -1)
@@ -52,6 +52,23 @@ function GetMongoVerAtual(){
 }
 
 #-----------------------------------------------------------------------
+# Setup MongoDB
+# Perform various setups for it to work...
+function SetupMongoConf(){
+  # Cria diretórios e altera direitos
+  mkdir -p /var/lib/mongo
+  mkdir -p /var/log/mongodb
+  chown mongod:mongod /var/lib/mongo
+  chown mongod:mongod /var/log/mongodb
+  chown mongod:mongod $CONF_FILE
+  # bindIp is allways changed to 0.0.0.0
+  if grep -E '^[ \t]*bindIp:[ \t]*127' $CONF_FILE; then
+    sed -i 's/\([ \t]*bindIp:.*\)/#\1/;' $CONF_FILE
+    sed -i '/bindIp:/{p;s/.*/  bindIp: 0.0.0.0/;}' $CONF_FILE
+  fi
+}
+
+#-----------------------------------------------------------------------
 # Instal a version of MongoDB
 # usage: MongoInstall <version>
 # https://docs.mongodb.com/manual/tutorial/install-mongodb-on-red-hat/
@@ -73,16 +90,14 @@ function MongoInstall(){
     rpm -Uvh $FILE2
     rpm -Uvh $FILE3
     rpm -Uvh $FILE4
+    # remove used files
+    rm -f $FILE1 $FILE2 $FILE3 $FILE4
     [ -e $CONF_FILE.orig ] || cp -afv $CONF_FILE $CONF_FILE.orig   # Preserva original
     # configura SElinux
     echo "Configurando SElinux..."
     semanage port -a -t mongod_port_t -p tcp 27017
-    # Cria diretórios e altera direitos
-    mkdir -p /var/lib/mongo
-    mkdir -p /var/log/mongodb
-    chown mongod:mongod /var/lib/mongo
-    chown mongod:mongod /var/log/mongodb
-    chown mongod:mongod $CONF_FILE
+    # Goneric configurations
+    SetupMongoConf
     # Start MongoDB
     chkconfig mongod on
     service mongod start
@@ -91,6 +106,42 @@ function MongoInstall(){
   fi
  echo "install"
 }
+
+#-----------------------------------------------------------------------
+# Select MongoDB version
+function MongoSelect(){
+  # Última versão do Node.js:
+  local EXE ERR_MSG OPTION
+  local STABLE_MONGO=$(GetMongoVersion)
+  local CUR_MONGO=$(GetMongoVerAtual)
+  local VERSAO=""
+
+  while [ "$VERSAO" == "" ]; do
+    EXE="whiptail --title \"$TITLE\""
+    # Opções de seleção
+    if [ "$CUR_MONGO" != "" ]; then
+      EXE+=" --nocancel --menu \"$ERR_MSG Selecione a versão no MongoDB que deseja instalar\" 12 75 2 "
+      EXE+="\"Atual\"    \"  manter versão atual (recomendado): $CUR_MONGO\" "
+      EXE+="\"Stable\"   \"  última versão Stable             : $STABLE_MONGO\" "
+    else
+      EXE+=" --nocancel --menu \"Selecione a versão no MongoDB que deseja instalar\" 13 75 1 "
+      EXE+="\"Stable\"   \"  versão Stable (recomendado)      : $STABLE_MONGO\" "
+    fi
+    OPTION=$(eval "$EXE 3>&1 1>&2 2>&3")
+    [ $? != 0 ] && return 1 # Cancelado
+
+    VERSAO="";ERR_MSG=""
+    if [ "$OPTION" == "Atual" ]; then
+      return
+    elif [ "$OPTION" == "Stable" ]; then
+      VERSAO="$STABLE_MONGO"
+    fi
+  done
+
+  # Instala ou re-instala o Node.js
+  MongoInstall $VERSAO
+}
+
 
 #=======================================================================
 # main()
@@ -101,18 +152,12 @@ function MongoInstall(){
 #-----------------------------------------------------------------------
 if [ "$CMD" == "--first" ]; then
   # same as not --first
-  MongoInstall
-  #MongoMenu
-  #MongoConfig
+  MongoSelect
 
 #-----------------------------------------------------------------------
 else
   #--- Set options and install
-#  GetMongoVersion
-#  MongoInstall $(GetMongoVersion)
-  GetMongoVerAtual
-  #MongoMenu
-  #MongoConfig
+  MongoSelect
 
 fi
 #-----------------------------------------------------------------------
