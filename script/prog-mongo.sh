@@ -6,6 +6,8 @@ set -x
 # <cmd>: --first       primeira instalação
 #        <sem nada>    Modo interativo, usado pelo nfas
 
+# Monit: http://stackoverflow.com/questions/34785499/monit-mongodb-check-does-not-work-with-pid-file-but-works-with-lock-file-why
+# Monit: /var/run/mongodb/mongod.pid
 
 #=======================================================================
 # Processa a linha de comando
@@ -60,11 +62,64 @@ function SetupMongoConf(){
   mkdir -p /var/log/mongodb
   chown mongod:mongod /var/lib/mongo
   chown mongod:mongod /var/log/mongodb
+  chown mongod:mongod /var/run/mongodb
+  chown mongod:mongod /var/run/mongodb/*
   chown mongod:mongod $CONF_FILE
   # bindIp is allways changed to 0.0.0.0
   if grep -E '^[ \t]*bindIp:[ \t]*127' $CONF_FILE; then
     sed -i 's/\([ \t]*bindIp:.*\)/#\1/;' $CONF_FILE
     sed -i '/bindIp:/{p;s/.*/  bindIp: 0.0.0.0/;}' $CONF_FILE
+  fi
+}
+
+#-----------------------------------------------------------------------
+# Set Upstart/Systemd for MongoDB
+# WORK IN PROGRESS, this is not working
+function MongoStart(){
+  if [ "$DISTRO_NAME_VERS" == "CentOS 6" ]; then
+    # remove o arquivo do init.d se existir
+    ARQ="/etc/init/mongod.conf"
+    cat <<- EOF > $ARQ
+			#!upstart
+			description "MongoDB"
+
+			# Recommended ulimit values for mongod or mongos
+			# See http://docs.mongodb.org/manual/reference/ulimit/#recommended-settings
+			limit fsize unlimited unlimited
+			limit cpu unlimited unlimited
+			limit as unlimited unlimited
+			limit nofile 64000 64000
+			limit rss unlimited unlimited
+			limit nproc 64000 64000
+
+			pre-start script
+			  MONGOUSER=mongod
+			  touch /var/run/mongodb.pid
+			  chown \$MONGOUSER /var/run/mongodb.pid
+			end script
+
+			start on runlevel [2345]
+			stop on runlevel [06]
+			# Mongod will fork once, "expect" accomodates for that
+			expect 3
+			respawn
+
+			script
+			  exec >/tmp/mongod.log 2>&1
+			  #. /etc/rc.d/init.d/functions
+			  ENABLE_MONGODB="yes"
+			  # if [ -f /etc/default/mongodb ]; then . /etc/default/mongodb; fi
+			  if [ "\$ENABLE_MONGODB" == "yes" ]; then
+			    if [ -f /var/lib/mongo/mongod.lock ]; then
+			      rm /var/lib/mongo/mongod.lock
+			      sudo -u \$MONGOUSER /usr/bin/mongod --config /etc/mongod.conf --repair
+			    fi
+			    exec sudo -u \$MONGOUSER /usr/bin/mongod --fork --config /etc/mongod.conf
+			  fi
+			end script
+		EOF
+    initctl reload-configuration
+    start mongod
   fi
 }
 
@@ -158,6 +213,7 @@ if [ "$CMD" == "--first" ]; then
 else
   #--- Set options and install
   MongoSelect
+  # MongoStart
 
 fi
 #-----------------------------------------------------------------------
