@@ -73,7 +73,6 @@ function NodeInstall(){
   pushd /usr/local
   tar --strip-components 1 --no-same-owner -xzf /root/$NODE_FILE
   # para Ubuntu: https://github.com/nodesource/distributions#debinstall
-  rm -f /root/$NODE_FILE
   popd
   rm -f /root/$NODE_FILE
   # Mostra versões para debug

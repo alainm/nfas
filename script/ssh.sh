@@ -29,6 +29,28 @@ VAR_FILE="/script/info/ssh.var"
 [ -e $VAR_FILE ] && . $VAR_FILE
 
 #-----------------------------------------------------------------------
+# get current SSHD version
+function GetSshdVersion(){
+  local PRG=$(which sshd)
+  # sshd has no command line to show version, use an inocuous option and read the mini-help
+  local VER=$($(which sshd)  -o 2>&1 | grep "OpenSSH_" | sed 's/OpenSSH_\([0-9]\+\.[0-9]\+\).*/\1/;')
+  echo $VER
+}
+
+#-----------------------------------------------------------------------
+# Test SSH version
+# usage TestSshVersion <min>
+# retuns true if current version is >= to given <min>
+function TestSshdVersion(){
+  local VER=$($(which sshd)  -o 2>&1 | grep "OpenSSH_" | sed 's/OpenSSH_\([0-9]\+\.[0-9]\+\).*/\1/;')
+  if [ -n "$VER" ] && version_ge $VER $1; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+#-----------------------------------------------------------------------
 # Configura para que a Umask seja usada em todas as conexões
 # http://serverfault.com/questions/228396/how-to-setup-sshs-umask-for-all-type-of-connections
 # http://linux-pam.org/Linux-PAM-html/sag-pam_umask.html
@@ -207,6 +229,19 @@ function SetSshIptables(){
 }
 
 #-----------------------------------------------------------------------
+# Set KeyExchange options
+# https://jbeekman.nl/blog/2015/05/ssh-logjam/
+function SetKexOption(){
+  local OPT=""
+  if TestSshdVersion 6.7; then
+    # This is available only from version 6.7
+    OPT+="curve25519-sha256@libssh.org,"
+  fi
+  OPT+="ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,diffie-hellman-group14-sha1"
+  EditConfSpace $SSHD_ARQ KexAlgorithms $OPT
+}
+
+#-----------------------------------------------------------------------
 # Salva variáveis de configuração
 # Neste módulo as variáveis são usadas sempre apartir do arquivo de configuração Real
 # Estas variáveis são guardadas apenas para recurso futuro de exportação
@@ -295,6 +330,10 @@ if [ "$CMD" == "--first" ]; then
   EditConfSpace $SSHD_ARQ IgnoreRhosts yes
   # Evita Senhas em branco
   EditConfSpace $SSHD_ARQ PermitEmptyPasswords no
+  # http://www.unixlore.net/articles/five-minutes-to-more-secure-ssh.html
+  EditConfSpace $SSHD_ARQ ChallengeResponseAuthentication no
+  # LONGJAM vulnerability
+  SetKexOption
   # Altera Porta do SSH, var: SSH_PORT
   AskSshPort $SSHD_ARQ
   EditConfSpace $SSHD_ARQ Port $SSH_PORT
@@ -315,7 +354,8 @@ if [ "$CMD" == "--first" ]; then
     MSG+="\n  Acesso ao SSH pela porta TCP=$SSH_PORT"
     MSG+="\n  Uso exclusivo do protocolo v2"
     MSG+="\n  Não permite usar senha vazia"
-    MSG+="\n  Bloquada autenticaçao Rhost (antiga)"
+    MSG+="\n  Bloquada autenticaçao Rhost e Chalenge (antiga)"
+    MSG+="\n  Bloqueada vilnerabilidade LongJam"
     # MSG+="\n  Bloquada mais que 5 acessos por minuto (por IP)"
   MSG+="\n\nUtilize o comando \"nfas\" após terminar a instalação"
     MSG+="\ne somente APÓS testar os acessos!!!"

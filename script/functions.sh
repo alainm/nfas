@@ -7,6 +7,13 @@
 # . /script/functions.sh
 
 #-----------------------------------------------------------------------
+# http://ask.xmodulo.com/compare-two-version-numbers.html
+function version_gt() { test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" != "$1"; }
+function version_le() { test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" == "$1"; }
+function version_lt() { test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)" != "$1"; }
+function version_ge() { test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)" == "$1"; }
+
+#-----------------------------------------------------------------------
 # Função para extrair IP da saída do ifconfig, deve funcionar sempre (pt, en, arm)
 # uso: IP=$(ifconfig eth0 | GetIpFromIfconfig)
 function GetIpFromIfconfig(){
