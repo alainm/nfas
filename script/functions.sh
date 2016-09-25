@@ -124,7 +124,7 @@ function EditConfEqualSafe(){
     sed -i /^[[:blank:]]*$PARAM[[:blank:]]*=/d $ARQ
   fi
   # linha com parametro não existe, acrescenta linha
-  echo "\n$PARAM=$VAL" 2>/dev/null >> $ARQ
+  echo -e "\n$PARAM=$VAL" 2>/dev/null >> $ARQ
 }
 
 #-----------------------------------------------------------------------
@@ -143,7 +143,7 @@ function EditConfEqualStr(){
     sed -i /^[[:blank:]]*$PARAM[[:blank:]]*=/d $ARQ
   fi
   # linha com parametro não existe, acrescenta linha
-  echo "\n$PARAM=\"$VAL\"" 2>/dev/null >> $ARQ
+  echo -e "\n$PARAM=\"$VAL\"" 2>/dev/null >> $ARQ
 }
 
 #-----------------------------------------------------------------------
@@ -173,7 +173,7 @@ function EditConfColon(){
     sed -i /^[[:blank:]]*$PARAM[[:blank:]]*:/d $ARQ
   fi
   # linha com parametro não existe, acrescenta linha
-  echo "\n$PARAM:   $VAL" >> $ARQ
+  echo -e "\n$PARAM:   $VAL" >> $ARQ
 }
 
 #-----------------------------------------------------------------------
@@ -212,7 +212,7 @@ function EditConfSpace(){
     eval "sed -i 's/^[[:blank:]]*#\?\([[:blank:]]*$PARAM[[:blank:]]\+\).*/\1$VAL/;' $ARQ"
   else
     # linha com parametro não existe, acrescenta linha no final
-    echo "\n$PARAM   $VAL" >> $ARQ
+    echo -e "\n$PARAM   $VAL" >> $ARQ
   fi
 }
 #-----------------------------------------------------------------------
@@ -231,7 +231,7 @@ function EditConfBashExport(){
     eval "sed -i 's/^[[:blank:]]*\(export[[:blank:]]*$PARAM[[:blank:]]*=\).*/\1$VAL/;' $ARQ"
   else
     # linha com parametro não existe, acrescenta linha no final
-    echo "\nexport $PARAM=$VAL" >> $ARQ
+    echo -e "\nexport $PARAM=$VAL" >> $ARQ
   fi
 }
 
