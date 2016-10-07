@@ -305,10 +305,11 @@ elif [ "$CMD" == "--newapp" ]; then
   # Chamado pelo menu do nfas.sh
   NewApp
   if [ $? == 0 ]; then
-    AskNewKey $APP_NAME /home/$APP_NAME
     /script/haproxy.sh --app $APP_NAME
     # Inicia App com exemplo padrão
     su - $APP_NAME $SU_C "nohup /home/$APP_NAME/auto.sh </dev/null 2>&1 >/dev/null &"
+    # .bashrc é configurado pelo haproxy.sh --app, então o teste de conexão tem que vir depois
+    AskNewKey $APP_NAME /home/$APP_NAME
   fi
 
 #-----------------------------------------------------------------------
