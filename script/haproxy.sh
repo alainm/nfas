@@ -718,6 +718,11 @@ function HaproxyReconfig(){
   echo "  timeout client-fin   30s # for badly closed connections"        >> $ARQ
   echo "  timeout tunnel       1h  # Used for WebSockets"                 >> $ARQ
   echo "  timeout http-request 5s  # SlowLorris"                          >> $ARQ
+  # Custom Log format: http://cbonte.github.io/haproxy-dconv/1.6/configuration.html#8.2.4
+  # Configura para mostrar ssl_version (ex: TLSv1) e ssl_ciphers (ex: AES-SHA), no final. Exemplo:
+  # Connect from 187.101.86.93:27554 (www-https) "GET / HTTP/1.1" TLSv1.1 AES128-SHA
+  # default: Connect from 187.101.86.93:3641 to 172.31.59.149:443 (www-https/HTTP)
+  echo "  log-format Connect\ from\ %ci:%cp\ (%f)\ %{+Q}r\ %sslv\ %sslc"  >> $ARQ
   echo "  log global"                                                     >> $ARQ
   echo ""                                                                 >> $ARQ
   echo "frontend www-http"                                                >> $ARQ
