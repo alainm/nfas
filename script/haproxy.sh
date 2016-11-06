@@ -727,6 +727,8 @@ function HaproxyReconfig(){
   echo ""                                                                 >> $ARQ
   echo "frontend www-http"                                                >> $ARQ
   echo "  bind :80"                                                       >> $ARQ
+  # Precisa comando para capturar o Request-Host para mostrar no log
+  echo "  capture request header Host len 250"                            >> $ARQ
   if [ "$HAS_SSL" == "Y" ]; then
     echo "  #{NFAS HTTPS-FRONT: Automação do Lets Encrypt}"               >> $ARQ
     echo "  acl letsencrypt-request path_beg -i /.well-known/acme-challenge/">> $ARQ
@@ -749,6 +751,8 @@ function HaproxyReconfig(){
         # default é nível Intermediário
         echo -e "$HAP_HTTPS_N2"                                           >> $ARQ
       fi
+      # Precisa comando para capturar o Request-Host para mostrar no log
+      echo "  capture request header Host len 250"                        >> $ARQ
       # Alerações do Header devem vir primeiro
       echo -e "  http-request set-header X-Forwarded-Proto https"         >> $ARQ
       # Se está na porta 443 mas não está encriptado, redireciona. "code 301" é: moved permanently
@@ -758,6 +762,8 @@ function HaproxyReconfig(){
     else
       # ainda não tem nenhum certificado
       echo "  bind :443"                                                  >> $ARQ
+      # Precisa comando para capturar o Request-Host para mostrar no log
+      echo "  capture request header Host len 250"                        >> $ARQ
     fi
   else
     echo "#{NFAS: Nenhuma Aplicação com SSL}"                             >> $ARQ
