@@ -626,7 +626,7 @@ function HaproxyReconfig(){
     TMP_FRONT="  # APP=$APP, URI=$DOM$DIR\n"
     if [ -z "$DIR" ]; then
       # Cotém só domínio
-      TMP_FRONT+="  acl host_"$APP"_"$NACL" req.hdr(host) -i $DOM\n"
+      TMP_FRONT+="  acl host_"$APP"_"$NACL" req.hdr(host) -m dom -i $DOM\n"
       if [ "$HTTP" == "N" ] && [ "$HTTPS" == "Y" ]; then
         # Precisa redirecionar
         HTTP_FRONT+=$TMP_FRONT
@@ -644,7 +644,7 @@ function HaproxyReconfig(){
     else
       if [ -n "$DOM" ]; then
         # Com domínio e com rota
-        TMP_FRONT+="  acl host_"$APP"_"$NACL"h req.hdr(host) -i $DOM\n"
+        TMP_FRONT+="  acl host_"$APP"_"$NACL"h req.hdr(host) -m dom -i $DOM\n"
         TMP_FRONT+="  acl host_"$APP"_"$NACL"d path_dir -i $DIR\n"
         if [ "$HTTP" == "N" ] && [ "$HTTPS" == "Y" ]; then
           # Precisa redirecionar
@@ -722,7 +722,7 @@ function HaproxyReconfig(){
   # Configura para mostrar ssl_version (ex: TLSv1) e ssl_ciphers (ex: AES-SHA), no final. Exemplo:
   # Connect from 187.101.86.93:27554 (www-https) "GET / HTTP/1.1" TLSv1.1 AES128-SHA
   # default: Connect from 187.101.86.93:3641 to 172.31.59.149:443 (www-https/HTTP)
-  echo "  log-format Connect\ from\ %ci:%cp\ (%f)\ %{+Q}r\ %sslv\ %sslc"  >> $ARQ
+  echo "  log-format Connect\ from\ %ci:%cp\ (%f)\ %{+Q}r\ %hrl\ %sslv\ %sslc"  >> $ARQ
   echo "  log global"                                                     >> $ARQ
   echo ""                                                                 >> $ARQ
   echo "frontend www-http"                                                >> $ARQ
