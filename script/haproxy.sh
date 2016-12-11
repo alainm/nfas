@@ -416,7 +416,7 @@ function GetCertificate(){
     # Renova com mesmo sistema automático
     # Usar "--test-cert" para teste (staging)
     # Usar "--renew-by-default" para forçar renovação
-    $LE_TOOL --renew-by-default --email "$EMAIL_ADMIN" renew 2>&1 | tee /root/certoutput.txt
+    $LE_TOOL --renew-by-default --no-self-upgrade --email "$EMAIL_ADMIN" renew 2>&1 | tee /root/certoutput.txt
     MSG="Seu Certificado foi RENOVADO, saida:\n--------------------\n"
     MSG+="$(cat /root/certoutput.txt)\n--------------------"
     if [ $? -eq 0 ] && ! grep "could not be renewed" /root/certoutput.txt ; then
