@@ -94,7 +94,7 @@ function AskPasswd(){
   eval TMP=\$$VAR
   # loop só sai com return
   while true; do
-    MSG="\nQual a senha de $SHOW"
+    MSG="\nQual a $SHOW"
     MSG+="\n\nCaracteres válidos: a-zA-Z0-9!@#$%^&*()_-+={};:,./?"
     MSG+="\n  (use senha segura...)"
     # Acrescenta mensagem de erro

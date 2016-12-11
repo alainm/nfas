@@ -625,7 +625,8 @@ function HaproxyReconfig(){
     echo "===== APP=$APP DOM=$DOM DIR=$DIR HTTP=$HTTP HTTPS=$HTTPS ====="
     TMP_FRONT="  # APP=$APP, URI=$DOM$DIR\n"
     if [ -z "$DIR" ]; then
-      # Cotém só domínio
+      # Cotém só domínio, agora pode vir com numero da porta, cf. RFC2616
+      # https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.23
       TMP_FRONT+="  acl host_"$APP"_"$NACL" req.hdr(host) -m dom -i $DOM\n"
       if [ "$HTTP" == "N" ] && [ "$HTTPS" == "Y" ]; then
         # Precisa redirecionar
@@ -643,7 +644,6 @@ function HaproxyReconfig(){
       fi
     else
       if [ -n "$DOM" ]; then
-        # Com domínio e com rota
         TMP_FRONT+="  acl host_"$APP"_"$NACL"h req.hdr(host) -m dom -i $DOM\n"
         TMP_FRONT+="  acl host_"$APP"_"$NACL"d path_dir -i $DIR\n"
         if [ "$HTTP" == "N" ] && [ "$HTTPS" == "Y" ]; then
