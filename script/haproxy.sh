@@ -383,8 +383,10 @@ function GetCertificate(){
     $LE_TOOL --agree-tos --renew-by-default --email "$EMAIL_ADMIN" \
              --standalone --standalone-supported-challenges        \
              http-01 --http-01-port 9999 certonly $NEW_DOMAINS 2>&1 | tee /root/certoutput.txt
+    # Limpa Arquivo
+    cat certoutput.txt | sed 's/.*\(IMPORTANT NOTES:\)/\1/' | sed -n '/IMPORTANT NOTES:/{h;${x;p;};d;};H;${x;p;}' >/root/certoutput2.txt
     MSG="Seu novo Certificado foi gerado para os domínios:\n$(echo "$DOM_LIST" | xargs -n1)\n"
-    MSG+="====================\n$(cat /root/certoutput.txt)\n===================="
+    MSG+="====================\n$(cat /root/certoutput2.txt)\n===================="
     if [ $? -eq 0 ]; then
       echo -e "$MSG" | tr -cd '\11\12\15\40-\176' | mail -s "Certificado gerado para [$(hostname)] - OK" $EMAIL_ADMIN
       LE_CERT_ATUAL="$(cat /root/certoutput.txt | sed -n 's/.*\/etc\/letsencrypt\/live\/\(.*\)\/fullchain.pem.*/\1/p')"
@@ -417,8 +419,10 @@ function GetCertificate(){
     # Usar "--test-cert" para teste (staging)
     # Usar "--renew-by-default" para forçar renovação
     $LE_TOOL --renew-by-default --no-self-upgrade --email "$EMAIL_ADMIN" renew 2>&1 | tee /root/certoutput.txt
+    # Limpa Arquivo
+    cat certoutput.txt | sed 's/.*\(IMPORTANT NOTES:\)/\1/' | sed -n '/IMPORTANT NOTES:/{h;${x;p;};d;};H;${x;p;}' >/root/certoutput2.txt
     MSG="Seu Certificado foi RENOVADO para os domínios:\n$(echo "$DOM_LIST" | xargs -n1)\n"
-    MSG+="====================\n$(cat /root/certoutput.txt)\n===================="
+    MSG+="====================\n$(cat /root/certoutput2.txt)\n===================="
     if [ $? -eq 0 ] && ! grep "could not be renewed" /root/certoutput.txt ; then
       echo -e "$MSG" | tr -cd '\11\12\15\40-\176' | mail -s "Certificado RENOVADO para [$(hostname)] - OK" $EMAIL_ADMIN
       # Path do Certificado, informado pelo Let's encrypt
