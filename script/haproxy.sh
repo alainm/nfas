@@ -610,7 +610,8 @@ function HaproxyReconfig(){
         # Cria todos os Backends
         HTTP_BAK+="\n#{NFAS HTTP-BAK: $APP}\n"
         HTTP_BAK+="backend http-$APP\n"
-        HTTP_BAK+="  option forwardfor # Original IP address\n"
+        HTTP_BAK+="  option forwardfor  # Original IP address\n"
+        HTTP_BAK+="  http-request del-header Proxy  # HTTPoxy Vulnerability\n"
         HTTP_BAK+="  http-response set-header X-Frame-Options SAMEORIGIN  # no clickjacking\n"
         if [ "$HAPP_HTTP" == "N" ] && [ "$HAPP_HTTPS" == "Y" ]; then
           # Acrescenta HSTS, só se deve redirecionar. Tem que ser > 6 mêses, 16000000
@@ -731,7 +732,7 @@ function HaproxyReconfig(){
   # default: Connect from 187.101.86.93:3641 to 172.31.59.149:443 (www-https/HTTP)
   echo "  log-format Connect\ from\ %ci:%cp\ (%f)\ %{+Q}r\ %hrl\ %sslv\ %sslc">> $ARQ
   echo "  log global"                                                     >> $ARQ
-  # Configura alertas por email
+  # Configura alertas por email: https://www.haproxy.com/doc/hapee/1.5r2/traffic_management/alerting.html
   echo "  email-alert mailers postfix-local"                              >> $ARQ
   # level=notice: para enviar UP e DOWN
   echo "  email-alert level notice"                                       >> $ARQ
