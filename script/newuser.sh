@@ -81,17 +81,18 @@ function AskName(){
 
 #-----------------------------------------------------------------------
 # Função para perguntar e verificar uma Senha
-# uso: AskPasswd <VAR> "Tipo de senha"
+# uso: AskPasswd <VAR> "Tipo de senha" <opt>
 # VAR é a variável que vai receber o Email
 # NOME é para mostrar na tela
 # Retorna: 0=ok, 1=Aborta se <Cancelar>
 function AskPasswd(){
   local VAR=$1
   local SHOW=$2
+  local OPT="$3"
   local MSG
   local TMP=""
   local ERR_ST=""
-  local PWD_TMP
+  local PWD_TMP PWD1 PWD2 PWD3
   # pega valor anterior do Email
   eval TMP=\$$VAR
   # loop só sai com return
@@ -102,13 +103,13 @@ function AskPasswd(){
     # Acrescenta mensagem de erro
     MSG+="\n\n$ERR_ST"
     # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
-    PWD1=$(whiptail --passwordbox --title "$TITLE"  "$MSG" 14 74 3>&1 1>&2 2>&3)
+    PWD1=$(whiptail --passwordbox $OPT --title "$TITLE"  "$MSG" 14 74 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
       echo "Operação cancelada!"
       return 1
     fi
     MSG="\n\nDigite novamente a senha para verificação\n\n\n\n"
-    PWD2=$(whiptail --passwordbox --title "$TITLE"  "$MSG" 14 74 3>&1 1>&2 2>&3)
+    PWD2=$(whiptail --passwordbox $OPT --title "$TITLE"  "$MSG" 14 74 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
       echo "Operação cancelada!"
       return 1
@@ -117,8 +118,12 @@ function AskPasswd(){
       ERR_ST="Senhas não são identicas, favor repetir a operação"
     else
       # Testa se só tem caracteres válidos
-      echo $PWD1 | grep -E '^[a-zA-Z0-9!@#$%^&*()_-+=\{\};:,./?]+$'
-      if [ $? -eq 0 ]; then
+      # Elimina aspas: A='ab"12"3'; echo "${A//'"'}"
+      # Elimina aspas: A="ab'12'3"; echo "${A//"'"}"
+      PWD2="${PWD1//'"'}"
+      PWD3="${PWD2//"'"}"
+      echo $PWD3 | grep -E '^[a-zA-Z0-9!@#$%^&*()_-+=\{\};:,./?]+$'
+      if [ $? -eq 0 ] && [ ${#PWD3} -ne 0 ] && [ "$PWD1" == "$PWD3" ]; then
         # Nome aceito, Continua
         eval "$VAR=$PWD1"
         return 0
@@ -306,10 +311,10 @@ if [ "$CMD" == "--first" ]; then
 elif [ "$CMD" == "--root-pwd" ]; then
   # chamado pelo first.sh, verifica se root tem senha
   # http://www.tldp.org/LDP/lame/LAME/linux-admin-made-easy/shadow-file-formats.html
-  if [ "$(cat /etc/shadow | grep -E "/$root.*/" | cut -d: -f2)" == "*" ]; then
-    AskPasswd  "Senha de root"
+  if [ "$(cat /etc/shadow | grep -E "^root" | cut -d: -f2)" == "*" ]; then
+    AskPasswd ROOT_PW "Senha de root (está sem senha)" --nocancel
     if [ "$DISTRO_NAME" == "CentOS" ]; then
-      echo "$ROOT_PW" | passwd --stdin $APP_NAME
+      echo "$ROOT_PW" | passwd --stdin root
     else
       # OBS: Ver na função NewApp
       echo "Ubuntu..."
