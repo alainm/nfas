@@ -15,6 +15,8 @@
 #   para verificar se existe uma nova, use o make sem parametros:
 #   cd /script/install/haproxy-1.6.3; make; cd
 
+. /script/info/hostname.var
+. /script/info/email.var
 # Sites de DownLoad do HAproxy e Lua da versão aprovada
 HAPROXY_DL="http://www.haproxy.org/download/1.6/src"
 LUA_DL="http://www.lua.org/ftp"
@@ -691,8 +693,7 @@ function HaproxyReconfig(){
   echo ""                                                                 >> $ARQ
   echo "global"                                                           >> $ARQ
   echo "  maxconn 20000"                                                  >> $ARQ
-  #echo "  log /dev/log local0 notice # notice/info/debug"                >> $ARQ
-  echo "  log "\${LOCAL_SYSLOG}:514" local0 notice # notice/info/debug"   >> $ARQ
+  echo "  log "\${LOCAL_SYSLOG}:514" local0 notice alert # notice/info/debug" >> $ARQ
   echo "  user   haproxy"                                                 >> $ARQ
   echo "  group  haproxy"                                                 >> $ARQ
   echo "  chroot /var/lib/haproxy"                                        >> $ARQ
@@ -728,8 +729,14 @@ function HaproxyReconfig(){
   # Configura para mostrar ssl_version (ex: TLSv1) e ssl_ciphers (ex: AES-SHA), no final. Exemplo:
   # Connect from 187.101.86.93:27554 (www-https) "GET / HTTP/1.1" TLSv1.1 AES128-SHA
   # default: Connect from 187.101.86.93:3641 to 172.31.59.149:443 (www-https/HTTP)
-  echo "  log-format Connect\ from\ %ci:%cp\ (%f)\ %{+Q}r\ %hrl\ %sslv\ %sslc"  >> $ARQ
+  echo "  log-format Connect\ from\ %ci:%cp\ (%f)\ %{+Q}r\ %hrl\ %sslv\ %sslc">> $ARQ
   echo "  log global"                                                     >> $ARQ
+  # Configura alertas por email
+  echo "  email-alert mailers postfix-local"                              >> $ARQ
+  # level=notice: para enviar UP e DOWN
+  echo "  email-alert level notice"                                       >> $ARQ
+  echo "  email-alert from HAproxy@$HOSTNAME_INFO"                        >> $ARQ
+  echo "  email-alert to $EMAIL_ADMIN"                                    >> $ARQ
   echo ""                                                                 >> $ARQ
   echo "frontend www-http"                                                >> $ARQ
   echo "  bind :80"                                                       >> $ARQ
@@ -787,6 +794,11 @@ function HaproxyReconfig(){
     echo "backend letsencrypt"                                            >> $ARQ
     echo "  server letsencrypt 127.0.0.1:9999"                            >> $ARQ
   fi
+  # Configura também servidor de Email
+  echo ""                                                                 >> $ARQ
+  echo "#{NFAS: Servidor de email local}"                                 >> $ARQ
+  echo "mailers postfix-local"                                            >> $ARQ
+  echo "  mailer smtp1 127.0.0.1:25"                                      >> $ARQ
   # Não tem site default
   # echo "backend http-backend"                                           >> $ARQ
   # Configura acesso restrito
