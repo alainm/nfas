@@ -48,7 +48,7 @@ function AskName(){
     MSG+="\n\n$ERR_ST\n"
     # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
     TMP=$(whiptail --title "$TITLE" --inputbox "$MSG" 14 74 $TMP 3>&1 1>&2 2>&3)
-    if [ $? -ne 0 ]; then
+    if [ $? -ne 0 ] || [ ${#TMP} -eq 0 ]; then
       echo "Operação cancelada!"
       return 1
     fi
