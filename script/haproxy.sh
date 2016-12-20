@@ -611,6 +611,7 @@ function HaproxyReconfig(){
         HTTP_BAK+="\n#{NFAS HTTP-BAK: $APP}\n"
         HTTP_BAK+="backend http-$APP\n"
         HTTP_BAK+="  option forwardfor  # Original IP address\n"
+        # https://www.digitalocean.com/community/tutorials/how-to-protect-your-server-against-the-httpoxy-vulnerability?utm_medium=newsletter&utm_source=newsletter&utm_campaign=072116
         HTTP_BAK+="  http-request del-header Proxy  # HTTPoxy Vulnerability\n"
         HTTP_BAK+="  http-response set-header X-Frame-Options SAMEORIGIN  # no clickjacking\n"
         if [ "$HAPP_HTTP" == "N" ] && [ "$HAPP_HTTPS" == "Y" ]; then
