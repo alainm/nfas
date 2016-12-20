@@ -3,7 +3,8 @@ set -x
 
 # Script para criar um novo usuário
 # Uso: /script/newuser.sh
-# <cmd>: --first       primeira instalação
+# <cmd>: --root-pwd    Verifica e pergunta senha de root
+#        --first       primeira instalação
 #        --newapp      cria nova aplicação
 #        --chgapp      altera acesso da aplicação
 #        <em branco>   modo interativo, não usado
@@ -17,6 +18,7 @@ CMD=$1
 # variaveis globais
 APP_NAME=""
 REPO_DIR=""
+ROOT_PW=""
 # Comando de execução do SU é diferente em cada distro
 [ "$DISTRO_NAME" == "CentOS" ] && SU_C="--session-command" || SU_C="-c"
 
@@ -298,6 +300,20 @@ if [ "$CMD" == "--first" ]; then
     /script/haproxy.sh --app $APP_NAME
     # Inicia App com exemplo padrão, facilita os teste, mesmo se vai rebootar
     su - $APP_NAME $SU_C "nohup /home/$APP_NAME/auto.sh </dev/null 2>&1 >/dev/null &"
+  fi
+
+#-----------------------------------------------------------------------
+elif [ "$CMD" == "--root-pwd" ]; then
+  # chamado pelo first.sh, verifica se root tem senha
+  # http://www.tldp.org/LDP/lame/LAME/linux-admin-made-easy/shadow-file-formats.html
+  if [ "$(cat /etc/shadow | grep -E "/$root.*/" | cut -d: -f2)" == "*" ]; then
+    AskPasswd  "Senha de root"
+    if [ "$DISTRO_NAME" == "CentOS" ]; then
+      echo "$ROOT_PW" | passwd --stdin $APP_NAME
+    else
+      # OBS: Ver na função NewApp
+      echo "Ubuntu..."
+    fi
   fi
 
 #-----------------------------------------------------------------------

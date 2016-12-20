@@ -73,6 +73,8 @@ if [ "$1" != "--ip-continue" ]; then
   /script/virtualbox.sh --first
   # aborta instalação e preserva a VM
   [ $? -ne 0 ] && exit 1
+  # Verifica se roote tem senha e pergunta
+  /script/newuser.sh --root-pwd
   # Console colorido, precisa executar como usuário
   chmod o+x /script/console.sh
   /script/console.sh --first
