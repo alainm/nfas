@@ -76,7 +76,8 @@ if [ "$1" != "--ip-continue" ]; then
   # Verifica se roote tem senha e pergunta
   /script/newuser.sh --root-pwd
   # Console colorido, precisa executar como usuário
-  chmod o+x /script/console.sh
+  chmod 775 /script/console.sh
+  chmod o+r /script/functions.sh
   /script/console.sh --first
   # Configurações e alterações na Rede
   /script/network.sh --first
