@@ -337,6 +337,7 @@ if [ "$CMD" != "--first" ]; then
   # Envio de email
   /script/monit.sh --email
   /script/progs.sh --email
+  /script/haproxy.sh --email
 fi
 
 #-----------------------------------------------------------------------

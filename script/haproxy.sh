@@ -7,6 +7,8 @@
 # <cmd>: --app <user>  altera configuração da Aplicação
 # <cmd>: --ssl         altera nível global de segurança SSL
 # <cmd>: --reconfig    Reconfigura se alguma coisa mudou
+# <cmd>: --hostname    Reconfigura para nomo Hostname
+# <cmd>: --email       Reconfigura para nomo Email
 # <cmd>: --certonly    Gera novo Certificado, testa antes se precisa
 
 # Instalando o Haproxy do fonte
@@ -734,8 +736,8 @@ function HaproxyReconfig(){
   echo "  log-format Connect\ from\ %ci:%cp\ (%f)\ %{+Q}r\ %hrl\ %sslv\ %sslc">> $ARQ
   echo "  log global"                                                     >> $ARQ
   # Configura alertas por email: https://www.haproxy.com/doc/hapee/1.5r2/traffic_management/alerting.html
-  echo "  email-alert mailers postfix-local"                              >> $ARQ
   # level=notice: para enviar UP e DOWN
+  echo "  email-alert mailers postfix-local"                              >> $ARQ
   echo "  email-alert level notice"                                       >> $ARQ
   echo "  email-alert from HAproxy@$HOSTNAME_INFO"                        >> $ARQ
   echo "  email-alert to $EMAIL_ADMIN"                                    >> $ARQ
@@ -877,6 +879,11 @@ elif [ "$CMD" == "--ssl" ]; then
   #-----------------------------------------------------------------------
   # Le o nível de segurança desejado, fica no $HAP_CRYPT_LEVEL
   GetHaproxyLevel
+
+elif [ "$CMD" == "--hostname" ] || [ "$CMD" == "--email" ]; then
+  #-----------------------------------------------------------------------
+  # Recria /etc/haproxy/haproxy.conf com novos dados
+  HaproxyReconfig
 
 elif [ "$CMD" == "--reconfig" ]; then
   #-----------------------------------------------------------------------

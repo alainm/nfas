@@ -173,7 +173,7 @@ else
 fi
 
 #-----------------------------------------------------------------------
-# Chama scripts que dependem do Email
+# Chama scripts que dependem do Hostname
 #-----------------------------------------------------------------------
 
 if [ "$CMD" != "--first" ]; then
@@ -181,6 +181,7 @@ if [ "$CMD" != "--first" ]; then
   /script/monit.sh --hostname
   /script/ssh.sh --hostname
   /script/progs.sh --hostname
+  /script/haproxy.sh --hostname
 fi
 
 #-----------------------------------------------------------------------
