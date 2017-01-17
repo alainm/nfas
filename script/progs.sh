@@ -35,11 +35,11 @@ function ProgsInstall(){
     NODE_OPT=NO
   fi
   local OPTIONS=$(whiptail --title "$TITLE"                            \
-    --checklist "\nSelect the programs that you need to $MSG:" 22 75 3 \
+    --checklist "\nSelect the programs that you need to $MSG:" 22 75 2 \
     'Node'     "  Node.js $NODE_MSG" $NODE_OPT       \
     'MongoDB'  "  DtataBase"    NO                   \
-    'Rabbit'   "  RabitMQ - AMQP queue server"  NO   \
     3>&1 1>&2 2>&3)
+    # 'Rabbit'   "  RabitMQ - AMQP queue server"  NO   \
   if [ $? == 0 ]; then
     # Remove quotation marks and force Node.js option
     OPTIONS=$(echo $OPTIONS | tr -d '\"')

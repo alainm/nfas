@@ -4,7 +4,7 @@
 # Script for installing and configuring Node.js
 # Usage: /script/prog-node.sh <cmd>
 # <cmd>: --first       First install
-#        <sem nada>    Interative mode, used by menu nfas
+#        <nothing>     Interative mode, used by menu nfas
 
 #=======================================================================
 # Process command line

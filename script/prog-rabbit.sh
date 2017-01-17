@@ -1,25 +1,25 @@
 #!/bin/bash
 # set -x
 
-# Script para instalar e configurar o RabbitMQ
-# Uso: /script/prog-rabbit.sh <cmd>
-# <cmd>: --first       primeira instalação
-#        <sem nada>    Modo interativo, usado pelo nfas
+# Script for installing and configuring RabbitMQ
+# Usage: /script/prog-rabbit.sh <cmd>
+# <cmd>: --first       First install
+#        <nothing>     Interative mode, used by menu nfas
 
 # Management: https://www.rabbitmq.com/management.html
 # Tunnel: ssh nfas -L 15672:192.168.0.159:15672 -N
 # http://localhost:15672  =>  User/passwd: admin/admin
 
 #=======================================================================
-# Processa a linha de comando
+# Process command line
 CMD=$1
-# Funções auxiliares
+# Auxiliary Functions
 . /script/functions.sh
-# Lê dados anteriores se existirem
+# Read previous configurations if they exist
 . /script/info/distro.var
 VAR_FILE="/script/info/rabit.var"
 CONF_FILE="/etc/rabbitmq/rabbitmq.config"
-TITLE="NFAS - Configuração do RabbitMQ"
+TITLE="NFAS - RabbitMQ configuration"
 
 #-----------------------------------------------------------------------
 
@@ -34,25 +34,25 @@ function AskRabbitPort(){
   PORT_TMP=$RABT_PORT
   # loop, only exists with Ok or Abort
   while true; do
-    MSG="\nPorta de acesso para o RabbitMQ, somente uso interno (default 5672)"
-    MSG+="\n\n<Enter> para manter o anterior sendo mostrado\n"
+    MSG="\nAccess port for RabbitMQ, internal use only (default 5672)"
+    MSG+="\n\n<Enter> to keep previous one being shown\n"
     # Acrescenta mensagem de erro
     MSG+="\n$ERR_ST"
     # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
     PORT_TMP=$(whiptail --title "$TITLE" --inputbox "$MSG" 14 74 $PORT_TMP 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
-      echo "Operação cancelada!"
+      echo "Operation aborted!"
       return 1
     fi
     # Validate port
     if [[ $PORT_TMP =~ [0-9]* ]] && [ $PORT_TMP -gt 0 ] && [ $PORT_TMP -lt 65536 ]; then
       # Port accepted
-      echo "Porta do servidor de RabbitMQ ok: $PORT_TMP"
+      echo "RabbitMQ service port ok: $PORT_TMP"
       # save result
       RABT_PORT=$PORT_TMP
       return 0
     else
-      ERR_ST="Porta inválida, por favor tente novamente"
+      ERR_ST="Service port invalid, Please try again"
     fi
   done
 }
@@ -67,26 +67,26 @@ function AskRabbitMemory(){
   MEM_TMP=$RABT_MEM
   # loop, only exists with Ok or Abort
   while true; do
-     MSG="\nQual a >Porcentagem< de memória que o RabbitMQ deve usar?"
-    MSG+="\n  (recomendamos 20%, limite superior é 30% maior)"
-    MSG+="\n\n<Enter> para manter o anterior sendo mostrado\n"
-    # Acrescenta mensagem de erro
+     MSG="\nWhat  >Porcentage< of memory should RabbitMQ use?"
+    MSG+="\n  (we recommend 20%, upper limit is 30% greater)"
+    MSG+="\n\n<Enter> to keep previous one being shown\n"
+    # Add error message
     MSG+="\n$ERR_ST"
-    # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
+    # whiptail usage: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
     MEM_TMP=$(whiptail --title "$TITLE" --inputbox "$MSG" 14 74 $MEM_TMP 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
-      echo "Operação cancelada!"
+      echo "Operation aborted!"
       return 1
     fi
     # Validate value
     if [[ $MEM_TMP =~ [0-9]* ]] && [ $MEM_TMP -ge 10 ] && [ $MEM_TMP -le 80 ]; then
       # Port accepted
-      echo "Memória para o RabbitMQ ok: $MEM_TMP"
+      echo "Memory share for RabbitMQ ok: $MEM_TMP"
       # save result
       RABT_MEM=$MEM_TMP
       return 0
     else
-      ERR_ST="Valor inválida, deve ser entre 10 e 80 (%)"
+      ERR_ST="Invalid value, must be between 10 and 80 (%)"
     fi
   done
 }
@@ -94,22 +94,22 @@ function AskRabbitMemory(){
 #-----------------------------------------------------------------------
 # Install RabbitMQ
 # https://www.digitalocean.com/community/tutorials/how-to-install-and-manage-rabbitmq
-# TODO: Procurar a versão mais nova, CUODADO com o dígito depois da versão
+# TODO: Search for newest version, CAUTION with the digit after the version number
 function RabbitInstall(){
   #set -x
   local PKT_VER PKT_FILE PKT_URL
-  if ! which rabbitmq-server >/dev/null; then
+#  if ! which rabbitmq-server >/dev/null; then
     # Not installed
     if [ "$DISTRO_NAME" == "CentOS" ]; then
       if [ "$DISTRO_VERSION" == "6" ]; then
         # Latest vertion for this version of Erlang
-        PKT_VER="3.5.7"
+        PKT_VER="3.2.2" # "3.5.7"
         # Add and enable relevant application repositories:
         # Note: We are enabling third party remi package repositories.
         wget http://rpms.famillecollet.com/enterprise/remi-release-6.rpm
         sudo rpm -Uvh remi-release-6*.rpm
       elif [ "$DISTRO_VERSION" == "7" ]; then
-        echo "CentOS 7 não tem no tutorial..."
+        echo "CentOS 7 has no tutorial..."
       fi
       # Finally, download and install Erlang:
       yum install -y erlang
@@ -137,7 +137,7 @@ function RabbitInstall(){
     chkconfig rabbitmq-server on
     service rabbitmq-server start
     # Copy the example file...
-  fi
+#  fi
   #set +x
 }
 
@@ -162,18 +162,18 @@ function RabbitConfig(){
 function RabbitMenu(){
   local MSG MENU_IT MN_PORT MN_MEM
   # Cancel button message
-  [ "$CMD" == "--first" ] && CAN_MSG="Terminar" || CAN_MSG="Retornar"
+  # [ "$CMD" == "--first" ] && CAN_MSG="End" || CAN_MSG="Retornar"
   # Loop do Menu principal interativo
   while true; do
-    MN_PORT="Porta de acesso,                ATUAL=$RABT_PORT"
-     MN_MEM="Uso de Memória, limite inferior ATUAL=$RABT_MEM%"
-    MENU_IT=$(whiptail --title "$TITLE" --fb --cancel-button "$CAN_MSG" \
-        --menu "\nOpções de configuração:" 18 78 2  \
-        "1" "$MN_PORT"                              \
-        "2" "$MN_MEM"                               \
+    MN_PORT="Access port                CURRENT=$RABT_PORT"
+     MN_MEM="Memory usage, lower limit  CURRENT=$RABT_MEM%"
+    MENU_IT=$(whiptail --title "$TITLE" --fb --cancel-button "End" \
+        --menu "\nConfiguration options:" 18 78 2  \
+        "1" "$MN_PORT"                             \
+        "2" "$MN_MEM"                              \
         3>&1 1>&2 2>&3)
     if [ $? != 0 ]; then
-        echo "Terminou"
+        echo "Finished"
         return 0
     fi
     # Funções que ficam em Procedures
@@ -217,6 +217,7 @@ if [ "$CMD" == "--first" ]; then
 #-----------------------------------------------------------------------
 else
   #--- Set options and install
+set -x
   RabbitInstall
   RabbitMenu
   RabbitConfig
