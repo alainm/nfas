@@ -11,7 +11,7 @@
 CMD=$1
 # Auxiliary Functions
 . /script/functions.sh
-# Read previous configuration if they exist
+# Read previous configurations if they exist
 . /script/info/distro.var
 VAR_FILE="/script/info/progs.var"
 [ -e $VAR_FILE ] && . $VAR_FILE
@@ -125,7 +125,7 @@ function NodeSelect(){
     # Opções de seleção
     if [ "$CUR_NODE" != "" ]; then
       EXE+=" --nocancel --menu \"$ERR_MSG Select the NODE version you need to install\" 13 75 4 "
-      EXE+="\"Current\"    \"  keep current version (recomended): $CUR_NODE\" "
+      EXE+="\"Current\"  \"  keep current version (recomended): $CUR_NODE\" "
       EXE+="\"LTS\"      \"  LTS version                      : $LTS_NODE\" "
     else
       EXE+=" --nocancel --menu \"Select the NODE version you need to install\" 14 75 3 "

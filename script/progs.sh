@@ -13,7 +13,7 @@
 CMD=$1
 # Auxiliary Functions
 . /script/functions.sh
-# Read previous configuration if they exist
+# Read previous configurations if they exist
 . /script/info/distro.var
 . /script/info/hostname.var
 . /script/info/email.var

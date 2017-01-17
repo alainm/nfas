@@ -1,60 +1,60 @@
 #!/bin/bash
 # set -x
 
-# Script para instalar e configurar o GIT
-# Uso: /script/prog-git.sh <cmd>
-# <cmd>: --first       primeira instalação
-#        --hostname    Alterado hostname, usado por git
-#        --email       Alterado Email, usado por git
-#        <sem nada>    Não faz nada!
+# # Script for installing and configuring GIT
+# Usage: /script/prog-git.sh <cmd>
+# <cmd>: --first       First install
+#        --hostname    Hostname changed (used by git)
+#        --email       Email changed (used by git)
+#        <sem nada>    Do noting!
 
 #=======================================================================
-# Processa a linha de comando
+# Process command line
 CMD=$1
-# Lê dados anteriores se existirem
+# Read previous configurations if they exist
 . /script/info/hostname.var
 . /script/info/email.var
 VAR_FILE="/script/info/progs.var"
 [ -e $VAR_FILE ] && . $VAR_FILE
 
 #-----------------------------------------------------------------------
-# Rotina para configurar o GIT
-# faz apenas a configuração global de email e usuário=hostname
+# GIt configuration function
+# only sets global email and user (-hostname)
 function SetupGit(){
   local MSG
-  # Configura mesmo email que sistema
+  # Set same email as system
   git config --global user.email "$EMAIL_ADMIN"
-  # Configura hostname como nome default
+  # Set user same as host name by default
   git config --global user.name "$HOSTNAME_INFO"
-  # Faz o git criar arquivos com acesso de grupo
+  # Forces Git to create files with group access
   git config --global core.sharedRepository 0660
-  # Mensagem de aviso informativo
-     MSG=" Instalados utilitários de compilação: GCC, Make, etc.."
-  MSG+="\n\nGIT foi instalado e configurado:"
-    MSG+="\n  Nome e Email globais iguais ao do administrador,"
-    MSG+="\n  Criação de arquivos com máscara 660 para acesso em grupo."
+  # Information only message
+     MSG=" Instaled compilation utilities: GCC, Make, etc.."
+  MSG+="\n\nGIT was installed and configured:"
+    MSG+="\n  Name and Email globals same as administrator's,"
+    MSG+="\n  New file creation with mask 660 for group access."
   whiptail --title "$TITLE" --msgbox "$MSG" 13 70
 }
 
 #-----------------------------------------------------------------------
 
-TITLE="NFAS - Configuração e Instalaçao do GIT"
+TITLE="NFAS - Installing and Configuring GIT"
 if [ "$CMD" == "--first" ]; then
-  #--- Configura o git
+  #--- Configure o git
   SetupGit
 
 #-----------------------------------------------------------------------
 elif [ "$CMD" == "--hostname" ]; then
-  # Re-configura hostname como nome default
+   # Re-configure hostname as default name
   git config --global user.name "$HOSTNAME_INFO"
 
 #-----------------------------------------------------------------------
 elif [ "$CMD" == "--email" ]; then
-  # Re-configura mesmo email que sistema
+  # Re-configura email the same as sistem's
   git config --global user.email "$EMAIL_ADMIN"
 
 #-----------------------------------------------------------------------
 else
-  #--- não faz nada!
+  #--- do nothing!
 
 fi
