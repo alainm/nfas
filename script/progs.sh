@@ -1,55 +1,55 @@
 #!/bin/bash
 # set -x
 
-# Script para instalar e configurar programas mais comuns
-# Uso: /script/ssh.sh <cmd>
-# <cmd>: --first       primeira instalação
-#        --hostname    Alterado hostname, usado por git
-#        --email       Alterado Email, usado por git
-#        <sem nada>    Modo interativo, usado pelo nfas
+# Script to install and configure most used programs
+# Usage: /script/ssh.sh <cmd>
+# <cmd>: --first       first instalation
+#        --hostname    Hostname has changed (used by git)
+#        --email       Email has changed (used by git)
+#        <nothing>     Interactive mode, used by nfas menu
 
 #=======================================================================
-# Processa a linha de comando
+# Process command line
 CMD=$1
-# Funções auxiliares
+# Auxiliary Functions
 . /script/functions.sh
-# Lê dados anteriores se existirem
+# Read previous configuration if they exist
 . /script/info/distro.var
 . /script/info/hostname.var
 . /script/info/email.var
 VAR_FILE="/script/info/progs.var"
 [ -e $VAR_FILE ] && . $VAR_FILE
-
+TITLE="NFAS - Configuration and Instalation: Utilities"
 
 #-----------------------------------------------------------------------
-# Instala programas pré configurados
+# Install pre-configured programs
 function ProgsInstall(){
   local MSG1=""
   if [ "$CMD" == "--first" ]; then
-    MSG="Instalar"
-    NODE_MSG=" (Obrigatório)"
+    MSG="Install"
+    NODE_MSG=" (Mandatory)"
     NODE_OPT=YES
   else
-    MSG="Instalar/Alterar"
+    MSG="Install/Config"
     NODE_MSG=""
     NODE_OPT=NO
   fi
-  local OPTIONS=$(whiptail --title "$TITLE"                         \
-    --checklist "\nSelecione os programas que deseja $MSG:" 22 75 3 \
-    'Node'     "  Node.js $NODE_MSG" $NODE_OPT            \
-    'MongoDB'  "  Banco de dados"    NO                   \
-    'Rabbit'   "  RabitMQ - Servidor de filas AMQP"  NO   \
+  local OPTIONS=$(whiptail --title "$TITLE"                            \
+    --checklist "\nSelect the programs that you need to $MSG:" 22 75 3 \
+    'Node'     "  Node.js $NODE_MSG" $NODE_OPT       \
+    'MongoDB'  "  DtataBase"    NO                   \
+    'Rabbit'   "  RabitMQ - AMQP queue server"  NO   \
     3>&1 1>&2 2>&3)
   if [ $? == 0 ]; then
-    # Tira as Aspas e Força a opção Node
+    # Remove quotation marks and force Node.js option
     OPTIONS=$(echo $OPTIONS | tr -d '\"')
     if [ "$CMD" == "--first" ]; then
       echo $OPTIONS | grep "Node"; [ $? -ne 0 ] && OPTIONS="Node $OPTIONS"
     fi
-    #--- Instala programas selecionados
+    #--- Install selected programs
     echo "Opt list=[$OPTIONS]"
     for OPT in $OPTIONS; do
-      echo "Instalação: $OPT"
+      echo "Instaling: $OPT"
       case $OPT in
         "Node")
           /script/prog-node.sh $CMD
@@ -61,7 +61,7 @@ function ProgsInstall(){
           /script/prog-rabit.sh $CMD
         ;;
         "MQTT")
-          echo "Instala MQTT..."
+          echo "Install MQTT..."
         ;;
       esac
     done # for OPT
@@ -70,9 +70,8 @@ function ProgsInstall(){
 #-----------------------------------------------------------------------
 # main()
 
-TITLE="NFAS - Configuração e Instalaçao de Utilitários"
 if [ "$CMD" == "--first" ]; then
-  #--- Seleciona os programas a instalar
+  #--- First run, select programs to install
   /script/prog-git.sh --first
   ProgsInstall
 
@@ -86,6 +85,7 @@ elif [ "$CMD" == "--email" ]; then
 
 #-----------------------------------------------------------------------
 else
-  #--- Seleciona os programas a instalar
+  #--- Select programs to install
   ProgsInstall
 fi
+#-----------------------------------------------------------------------

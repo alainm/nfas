@@ -1,24 +1,24 @@
 #!/bin/bash
 # set -x
 
-# Script para instalar e configurar programas mais comuns
-# Uso: /script/prog-node.sh <cmd>
-# <cmd>: --first       primeira instalação
-#        <sem nada>    Modo interativo, usado pelo nfas
+# Script for installing and configuring Node.js
+# Usage: /script/prog-node.sh <cmd>
+# <cmd>: --first       First install
+#        <sem nada>    Interative mode, used by menu nfas
 
 #=======================================================================
-# Processa a linha de comando
+# Process command line
 CMD=$1
-# Funções auxiliares
+# Auxiliary Functions
 . /script/functions.sh
-# Lê dados anteriores se existirem
+# Read previous configuration if they exist
 . /script/info/distro.var
 VAR_FILE="/script/info/progs.var"
 [ -e $VAR_FILE ] && . $VAR_FILE
-TITLE="NFAS - Configuração e Instalaçao do Node.js"
+TITLE="NFAS - Installing and Configuring Node.js"
 
 #-----------------------------------------------------------------------
-# Verifica se uma versão de Node Existe
+# Verify if a version of Node Exists
 function CheckVerNode(){
   local NODE_URL="https://nodejs.org/dist/$1/node-$1-linux-x64.tar.gz"
   if [[ `wget -S --spider $NODE_URL  2>&1 | grep 'HTTP/1.1 200 OK'` ]]; then
@@ -29,27 +29,27 @@ function CheckVerNode(){
 }
 
 #-----------------------------------------------------------------------
-# Fornece a versão do Node Stable mais novo
+# Gives the newest version of Node Stable
 function GetVerNodeStable(){
-  # usa o WGET com "--no-dns-cache -4" para melhorar a velocidade de conexão
+  # use WGET with "--no-dns-cache -4" to increase connection speed
   local NEW_NODE=$(wget --quiet --no-dns-cache -4 http://nodejs.org/dist/latest/ -O - | sed -n 's/.*\(node.*linux-x64\.tar\.gz\).*/\1/p' | sed -n 's/node-\(v[0-9\.]*\).*/\1/p')
   echo "$NEW_NODE"
 }
 
 #-----------------------------------------------------------------------
-# Fornece a versão do Node LTS mais novo
-# procura na tabela em https://nodejs.org/dist/index.tab
-#   foi dica daqui: https://github.com/nodejs/node/issues/4569#issuecomment-169746908
+# Gives the newest version of Node LTS
+# Serachs in table in https://nodejs.org/dist/index.tab
+#   ref: https://github.com/nodejs/node/issues/4569#issuecomment-169746908
 function GetVerNodeLts(){
-  # Baixa lista oficial de versões, coluna1: versão, coluna10: novme lts,
-  #   tira primeira linha header, só linhas co nome Lts, sort, última linha, versão
+  # Download offical versions list, column1: version, column10: lts name,
+  #   remove first header line, keep only lines with LTS name, last line, version
   local LTS_NODE=$(wget --quiet --no-dns-cache -4 https://nodejs.org/dist/index.tab -O - | awk '{print $1 "\t" $10}' | tail -n +2 | \
     awk '$2 != "-"' | sort | tail -n 1 | cut -f1)
   echo "$LTS_NODE"
 }
 
 #-----------------------------------------------------------------------
-# Fornece a versão atual do Node instalada
+# Gives current installed verion of Node
 function GetVerNodeAtual(){
   if which node >/dev/null; then
     echo $(node -v)
@@ -59,29 +59,29 @@ function GetVerNodeAtual(){
 }
 
 #-----------------------------------------------------------------------
-# Rotina para instalar Node.js (latest)
+# Procedure to install Node.js (latest)
 # site: https://nodejs.org/dist/v4.2.6/node-v4.2.6-linux-x64.tar.gz
-# Uso: NodeInstall <versão>
+# Usage: NodeInstall <versão>
 function NodeInstall(){
-  # Localização e nome do arquivo da versão solicitada
+  # Location and name of file for the requested version
   local NODE_URL="https://nodejs.org/dist/$1/node-$1-linux-x64.tar.gz"
   local NODE_FILE="node-$1-linux-x64.tar.gz"
   echo "Instalar Node: $NODE_FILE"
-  # baixa no diretório root
+  # download in root dir
   wget --no-dns-cache -4 -r $NODE_URL -O /root/$NODE_FILE
-  echo "wget err=$?"
-  pushd /usr/local
+  [ $? -ne 0 ] && echo "wget error=$?"
+  pushd /usr/local >/dev/null
   tar --strip-components 1 --no-same-owner -xzf /root/$NODE_FILE
-  # para Ubuntu: https://github.com/nodesource/distributions#debinstall
-  popd
+  # for Ubuntu: https://github.com/nodesource/distributions#debinstall
+  popd             >/dev/null
   rm -f /root/$NODE_FILE
-  # Mostra versões para debug
-  node -v
-  npm -v
+  # show versions for debug
+  echo "Node version: $(node -v)"
+  echo "Npm version: $(npm -v)"
 }
 
 #-----------------------------------------------------------------------
-# Pergunta a versão do Node.js
+# Asks Node.js version
 function AskNodeVersion(){
   local FIM N_LIN VER_TMP ERR_MSG
   FIM="N"
@@ -89,20 +89,20 @@ function AskNodeVersion(){
   ERR_MSG=""
   N_LIN=10
   while [ "$FIM" != "Y" ]; do
-    MSG="\nQual a versao do Node.js desejada:\n$ERR_MSG"
+    MSG="\nWhich version of Node.js do you need:\n$ERR_MSG"
     VER_TMP=$(whiptail --title "$TITLE" --inputbox "$MSG" $N_LIN 74 $VER_TMP 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
       return 1
     else
-      # Verifica se tem o "v" na versão...
+      # Verify if "v" is included in the version name
       [ "${VER_TMP:0:1}" != "v" ] && VER_TMP="v$VER_TMP"
       CheckVerNode $VER_TMP
       if [ $? -eq 0 ]; then
         echo "$VER_TMP"
         return 0
       else
-        ERR_MSG="\nERRO: essa versão não foi encontrada, tente novamente"
-        ERR_MSG+="\n (verifique versões em https://nodejs.org/dist)"
+        ERR_MSG="\nERROR: this version was not found, please try again"
+        ERR_MSG+="\n (check versions at https://nodejs.org/dist)"
         N_LIN=13
       fi
     fi
@@ -110,49 +110,51 @@ function AskNodeVersion(){
 }
 
 #-----------------------------------------------------------------------
-# Instala programas pré configurados
+# Select version of Node.js to install
 function NodeSelect(){
-  # Última versão do Node.js:
-  local EXE ERR_MSG OPTION
+  # Last versions of Node.js:
+  local EXE OPTION
+  local ERR_MSG="\n"
   local LTS_NODE=$(GetVerNodeLts)
   local STB_NODE=$(GetVerNodeStable)
   local CUR_NODE=$(GetVerNodeAtual)
-  local VERSAO=""
+  local VERSION=""
 
-  while [ "$VERSAO" == "" ]; do
+  while [ "$VERSION" == "" ]; do
     EXE="whiptail --title \"$TITLE\""
     # Opções de seleção
     if [ "$CUR_NODE" != "" ]; then
-      EXE+=" --nocancel --menu \"$ERR_MSG Selecione a versão no NODE que deseja instalar\" 12 75 4 "
-      EXE+="\"Atual\"    \"  manter versão atual (recomendado): $CUR_NODE\" "
-      EXE+="\"LTS\"      \"  versão LTS                       : $LTS_NODE\" "
+      EXE+=" --nocancel --menu \"$ERR_MSG Select the NODE version you need to install\" 13 75 4 "
+      EXE+="\"Current\"    \"  keep current version (recomended): $CUR_NODE\" "
+      EXE+="\"LTS\"      \"  LTS version                      : $LTS_NODE\" "
     else
-      EXE+=" --nocancel --menu \"Selecione a versão no NODE que deseja instalar\" 13 75 3 "
-      EXE+="\"LTS\"      \"  versão LTS (recomendado)         : $LTS_NODE\" "
+      EXE+=" --nocancel --menu \"Select the NODE version you need to install\" 14 75 3 "
+      EXE+="\"LTS\"      \"  LTS version (recomended)         : $LTS_NODE\" "
     fi
-    EXE+="\"Stable\"     \"  versão latest/stable             : $STB_NODE\" "
-    EXE+="\"Custom\"     \"  selecionar a versão manualmente\" "
+    EXE+="\"Stable\"     \"  latest/stable version            : $STB_NODE\" "
+    EXE+="\"Custom\"     \"  manually input a version number\" "
     OPTION=$(eval "$EXE 3>&1 1>&2 2>&3")
-    [ $? != 0 ] && return 1 # Cancelado
+    [ $? != 0 ] && return 1 # Canceled
 
-    VERSAO="";ERR_MSG=""
-    if [ "$OPTION" == "Atual" ]; then
+    VERSION="";ERR_MSG="\n"
+    if [ "$OPTION" == "Current" ]; then
+      echo "Keep current version"
       return
     elif [ "$OPTION" == "LTS" ]; then
-      VERSAO="$LTS_NODE"
+      VERSION="$LTS_NODE"
     elif [ "$OPTION" == "Stable" ]; then
-      VERSAO="$STB_NODE"
+      VERSION="$STB_NODE"
     elif [ "$OPTION" == "Custom" ]; then
-      VERSAO=$(AskNodeVersion)
-      [ $? != 0 ] && ERR_MSG="(Erro...)"
+      VERSION=$(AskNodeVersion)
+      [ $? != 0 ] && ERR_MSG="(Error...)"
     fi
   done
 
-  # Instala ou re-instala o Node.js
-  NodeInstall $VERSAO
-  # Reinstalou Node.js, precisa reinstalar o Forever
+  # Install ou re-install Node.js
+  NodeInstall $VERSION
+  # Reinstaled Node.js, needs to reinstall Forever
   npm -g install forever
-  # Permite execução para "other", não é padrão!!!
+  # allow execution by "other", not standard!!!
   chmod -R o+rx /usr/local/lib/node_modules
 }
 
@@ -161,14 +163,13 @@ function NodeSelect(){
 # main()
 
 if [ "$CMD" == "--first" ]; then
-  #--- Primeira instalação
+  #--- First instalation
   NodeSelect
 
 #-----------------------------------------------------------------------
 else
-  #--- Seleciona os programas a instalar
+  #--- Select version to install
   NodeSelect
 
 fi
-
-
+#-----------------------------------------------------------------------
