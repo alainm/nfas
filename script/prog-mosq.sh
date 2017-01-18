@@ -1,6 +1,8 @@
 #!/bin/bash
 # set -x
 
+# CAUTION: not tested (removed from menu)
+
 # Script para instalar e configurar MQTT - Mosquitto
 # Uso: /script/prog-mosq.sh <cmd>
 # <cmd>: --first       primeira instalação

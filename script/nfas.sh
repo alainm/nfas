@@ -43,7 +43,7 @@ while true; do
   [ "$MENU_IT" == "1" ] && echo "1: listar"
   [ "$MENU_IT" == "2" ] && echo "2: App"
   [ "$MENU_IT" == "3" ] && echo "3: máquina"
-  [ "$MENU_IT" == "4" ] && echo "4: segurança"
+  [ "$MENU_IT" == "4" ] && /script/ssh.sh
   [ "$MENU_IT" == "5" ] && /script/progs.sh
 
 done # loop menu principal

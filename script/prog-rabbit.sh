@@ -1,6 +1,8 @@
 #!/bin/bash
 # set -x
 
+# CAUTION: not tested, problem reconfiguring (removed from menu)
+
 # Script for installing and configuring RabbitMQ
 # Usage: /script/prog-rabbit.sh <cmd>
 # <cmd>: --first       First install
