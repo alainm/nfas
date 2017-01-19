@@ -7,6 +7,7 @@
 #        --first       First install
 #        --newapp      Create a new application
 #        --chgapp      Change Config of an existing application
+#        --list        List all Apps with URIs
 #        <nothing>     not used
 
 #=======================================================================
@@ -176,9 +177,9 @@ function SelectApp(){
   # create Array of existing users
   NUSR=0
   for USR in $(ls /home) ; do
-    id $USR
+    id $USR > /dev/null
     if [ $? -eq 0 ]; then
-      echo "User found: $USR"
+      # echo "User found: $USR"
       AUSR[$NUSR]=$USR
       let NUSR=NUSR+1 # Number of lines
     fi
@@ -295,14 +296,13 @@ function ConfigApp(){
 #-----------------------------------------------------------------------
 # List all Applications and domains
 function ListAllAppDomains() {
-  local USR DOM DOMS MSG
-set -x
+  local USR DOM DOMS
   local LIST=""
   for USR in $(ls /home) ; do
     echo "User found: $USR"
     LIST+="\n$USR"
     # Get all configs and domains for this application
-    HAPP_HTTP=""; HAPP_HTTPS=""; HAPP_URIS=""
+    HAPP_HTTP=""; HAPP_HTTPS=""; $HAPP_PORT=""; HAPP_URIS=""
     [ -e /script/info/hap-$USR.var ] && . /script/info/hap-$USR.var
     [ "$HAPP_HTTP" == "Y" ] && [ "$HAPP_HTTPS" == "N" ] && LIST+=" - HTTP only"
     [ "$HAPP_HTTP" == "N" ] && [ "$HAPP_HTTPS" == "Y" ] && LIST+=" - HTTPS only"
@@ -323,7 +323,6 @@ set -x
     whiptail --title "$TITLE" --textbox --scrolltext /root/tmp-list.txt 15 75
     rm -f /root/tmp-list.txt
   fi
-set +x
 }
 
 #-----------------------------------------------------------------------

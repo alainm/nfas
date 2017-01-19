@@ -181,7 +181,7 @@ function GetAppConnType(){
   fi
   MENU_IT=$(whiptail --title "$TITLE" --nocancel                       \
     --menu "$MSG" --default-item "$DEF_OPT" --fb 20 70 3               \
-    "HTTPS only" "  HTTP will be redirected (usa HSTS para \"A+\")"    \
+    "HTTPS only" "  HTTP will be redirected (uses HSTS for \"A+\")"    \
     "Both"       "  Implement both and do not redirect (unsafe)"       \
     "HTTP only"  "  Implement only simple HTTP (for test only)"        \
     3>&1 1>&2 2>&3)
@@ -215,13 +215,13 @@ function GetAppUriList(){
   URIS=$HAPP_URIS
   while true; do
     # coloca cada URL em uma linha e guarda em atquivo temporário
-    rm -r /root/tmp-uri.list
+    rm -r $TMP_ARQ
     for U in $URIS; do
       echo -e "$U"             2>/dev/null >> $TMP_ARQ
     done
     touch $TMP_ARQ
     # Usa o DIALOG para perguntar as URI
-    # para PuTTY mostrar os quadros na tela com linhas
+    # para PuTTY mostrar os quadros na tela com linhas (Windows)
     export NCURSES_NO_UTF8_ACS=1
     # precisa de um loop porque sempre pode sair com Esc
     OK="N";
@@ -896,15 +896,6 @@ elif [ "$CMD" == "--newapp" ]; then
   # Configuration has been changed, mark to reconfigure
   HAP_NEW_CONF="Y"
 
-elif [ "$CMD" == "--app" ]; then
-  #-----------------------------------------------------------------------
-  # Lê Configurações para aquela App
-  EditAppConfig
-  if [ $? == 0 ]; then
-    # Configuração foi alterada e aceita
-    HAP_NEW_CONF="Y"
-  fi
-
 elif [ "$CMD" == "--ssl" ]; then
   #-----------------------------------------------------------------------
   # Le o nível de segurança desejado, fica no $HAP_CRYPT_LEVEL
@@ -940,6 +931,15 @@ elif [ "$CMD" == "--certonly" ]; then
   date
   # Consegue Certificado, se precisar
   GetCertificate
+
+# elif [ "$CMD" == "--app" ]; then
+#   #-----------------------------------------------------------------------
+#   # Lê Configurações para aquela App
+#   EditAppConfig
+#   if [ $? == 0 ]; then
+#     # Configuração foi alterada e aceita
+#     HAP_NEW_CONF="Y"
+#   fi
 
 fi
   # Salva Variáveis alteradas

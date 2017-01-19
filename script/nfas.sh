@@ -20,11 +20,72 @@ if [ "$(id -u)" != "0" ]; then
 fi
 
 #-----------------------------------------------------------------------
+# Check Application Configuration
+# usage: CheckAppConfig <app>
+function CheckAppConfig(){
+  local MSG OPT PORT
+  local HAPP=$1
+  # Get all configs and domains for this application
+  HAPP_HTTP=""; HAPP_HTTPS=""; HAPP_PORT=""; HAPP_URIS=""
+  [ -e /script/info/hap-$HAPP.var ] && . /script/info/hap-$HAPP.var
+  [ "$HAPP_HTTP" == "Y" ] && [ "$HAPP_HTTPS" == "N" ] && OPT="HTTP only"
+  [ "$HAPP_HTTP" == "N" ] && [ "$HAPP_HTTPS" == "Y" ] && OPT="HTTPS only"
+  [ "$HAPP_HTTP" == "Y" ] && [ "$HAPP_HTTPS" == "Y" ] && OPT="HTTP and HTTPS"
+  # show connection port
+  [ -n "$HAPP_PORT" ] && PORT="$HAPP_PORT" || PORT="error!"
+  # include all domanis and URIs
+  DOMS=$(echo $HAPP_URIS | xargs -n1)
+  for DOM in $DOMS; do
+    LIST+="\n  $DOM"
+  done
+
+  MSG=" Check your configuration for Application: $HAPP"
+  MSG+="\n\nSecure (or not) connection type: $OPT"
+  MSG+="\n\nURIs to access this application:"
+  local HAPP_URI=""
+  for URI in $HAPP_URIS; do
+    # Lista URIs na tela
+    MSG+="\n  $URI"
+    # Guarda primeira como principal
+    [ -z "$HAPP_URI" ] && HAPP_URI="$URI"
+  done
+  MSG+="\n\nAmbient variables created:"
+  MSG+="\n  PORT=$HAPP_PORT"
+  MSG+="\n  ROOT_URL=$HAPP_URI"
+  MSG+="\n\n Is this correct?"
+  if ( ! whiptail --title "NFAS - Configure an Application" --yesno "$MSG" --no-button "Back" 22 78) then
+    return 1
+  fi
+  return 0
+}
+
+#-----------------------------------------------------------------------
 # Application Configuration Menu
 function ConfigAppMenu() {
   # Read read return variables from selection/creation
   . /script/info/tmp.var
-  whiptail --title "$TITLE" --msgbox "ConfigAppMenu, App=$APP_NAME" 8 60
+  while true; do
+    MENU_IT=$(whiptail --title "NFAS - Configure an Application" --cancel-button "Back" \
+        --menu "\nSelect a configuration for App: $APP_NAME" --fb 20 75 5 \
+        "1" "Configure HTTP and/or HTTPS access          "                \
+        "2" "Configure access URL/URIs (domains)"                         \
+        "3" "Add a Public Key"                                            \
+        "4" "Remove a Public Key"                                         \
+        "5" "Create a GIT repository"                                     \
+        3>&1 1>&2 2>&3)
+    if [ $? != 0 ]; then
+      CheckAppConfig $APP_NAME
+      [ $? == 0 ] && return
+    fi
+
+    # Next menu or operation
+    [ "$MENU_IT" == "1" ] && echo "1: HTTPS"
+    [ "$MENU_IT" == "2" ] && echo "2: URL"
+    [ "$MENU_IT" == "3" ] && echo "3: Add"
+    [ "$MENU_IT" == "4" ] && echo "4: Remove"
+    [ "$MENU_IT" == "5" ] && echo "5: git"
+
+  done # menu loop
 }
 
 #-----------------------------------------------------------------------
@@ -38,11 +99,11 @@ function AppMenu(){
     [ "$HAP_CRYPT_LEVEL" == "2" ] && CUR_SSL="INTERMEDIATE"
     [ "$HAP_CRYPT_LEVEL" == "3" ] && CUR_SSL="ANTIQUE"
     # Show menu
-    MENU_IT=$(whiptail --title "$TITLE" --cancel-button "Back"     \
-        --menu "Select a reconfiguration command:" --fb 20 75 4    \
+    MENU_IT=$(whiptail --title "NFAS - Manage Applications" --cancel-button "Back"     \
+        --menu "\nSelect a reconfiguration command:" --fb 20 75 4    \
         "1" "Config an existing Application"                       \
         "2" "Create a NEW Application (Linux user)"                \
-        "3" "List existing Applications and domains/URIs"               \
+        "3" "List existing Applications and domains/URIs"          \
         "4" "Global Security Level for HTTP/SSL, current=$CUR_SSL" \
         3>&1 1>&2 2>&3)
     [ $? != 0 ] && return
@@ -60,7 +121,7 @@ function AppMenu(){
       /script/userapp.sh --newapp      # Create and configure defaults
       [ $? == 0 ] && ConfigAppMenu     # if not aborted, Next Menu
     fi
-  done # loop menu principal
+  done # menu loop
 }
 
 #-----------------------------------------------------------------------
@@ -69,7 +130,7 @@ function AppMenu(){
 while true; do
   MENU_IT=$(whiptail --title "$TITLE" --cancel-button "End"     \
       --menu "\nSelect a reconfiguration command:" --fb 20 75 5 \
-      "1" "List existing Applications and domains/URIs"              \
+      "1" "List existing Applications and domains/URIs"         \
       "2" "Manage Applications, create/config and Access"       \
       "3" "Machine config: Hostname, notificaçions, RTC..."     \
       "4" "Machine Security: SSH, root..."                      \
@@ -91,7 +152,7 @@ while true; do
   [ "$MENU_IT" == "3" ] && echo "3: máquina"
   [ "$MENU_IT" == "4" ] && /script/ssh.sh
   [ "$MENU_IT" == "5" ] && /script/progs.sh
-done # loop menu principal
+done #  menu loop
 
 #-----------------------------------------------------------------------
 # Loop do Menu principal interativo
