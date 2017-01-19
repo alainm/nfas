@@ -172,7 +172,6 @@ function NewApp(){
 # Uses as reference directories in /home
 function SelectApp(){
   local I AUSR USR NUSR KEYS
-set -x
   APP_NAME="" # Clear output variable
   # create Array of existing users
   NUSR=0
@@ -200,7 +199,6 @@ set -x
   APP_NAME=$KEYS
   # Returns the Application name to the caller
   echo "APP_NAME=$APP_NAME" >/script/info/tmp.var
-set +x
 }
 
 #-----------------------------------------------------------------------
@@ -293,6 +291,41 @@ function ConfigApp(){
   done
 }
 
+
+#-----------------------------------------------------------------------
+# List all Applications and domains
+function ListAllAppDomains() {
+  local USR DOM DOMS MSG
+set -x
+  local LIST=""
+  for USR in $(ls /home) ; do
+    echo "User found: $USR"
+    LIST+="\n$USR"
+    # Get all configs and domains for this application
+    HAPP_HTTP=""; HAPP_HTTPS=""; HAPP_URIS=""
+    [ -e /script/info/hap-$USR.var ] && . /script/info/hap-$USR.var
+    [ "$HAPP_HTTP" == "Y" ] && [ "$HAPP_HTTPS" == "N" ] && LIST+=" - HTTP only"
+    [ "$HAPP_HTTP" == "N" ] && [ "$HAPP_HTTPS" == "Y" ] && LIST+=" - HTTPS only"
+    [ "$HAPP_HTTP" == "Y" ] && [ "$HAPP_HTTPS" == "Y" ] && LIST+=" - HTTP and HTTPS"
+    # show connection port
+    [ -n "$HAPP_PORT" ] && LIST+=" - PORT=$HAPP_PORT" || LIST+=" - PORT error!"
+    # include all domanis and URIs
+    DOMS=$(echo $HAPP_URIS | xargs -n1)
+    for DOM in $DOMS; do
+      LIST+="\n  $DOM"
+    done
+  done
+  if [ -z "$LIST" ]; then
+    whiptail --title "$TITLE" --msgbox "No Application was found." 8 50
+    return 1
+  else
+    echo "List af all Applications and URIs:\n$LIST" > /root/tmp-list.txt
+    whiptail --title "$TITLE" --textbox --scrolltext /root/tmp-list.txt 15 75
+    rm -f /root/tmp-list.txt
+  fi
+set +x
+}
+
 #-----------------------------------------------------------------------
 # main()
 
@@ -338,6 +371,11 @@ elif [ "$CMD" == "--chgapp" ]; then
   # if [ $? == 0 ]; then
   #   ConfigApp $APP_NAME
   # fi
+
+#-----------------------------------------------------------------------
+elif [ "$CMD" == "--list" ]; then
+  # Called by menu nfas.sh
+  ListAllAppDomains
 
 #-----------------------------------------------------------------------
 fi

@@ -42,13 +42,13 @@ function AppMenu(){
         --menu "Select a reconfiguration command:" --fb 20 75 4    \
         "1" "Config an existing Application"                       \
         "2" "Create a NEW Application (Linux user)"                \
-        "3" "List existing Applications and domains"               \
+        "3" "List existing Applications and domains/URIs"               \
         "4" "Global Security Level for HTTP/SSL, current=$CUR_SSL" \
         3>&1 1>&2 2>&3)
     [ $? != 0 ] && return
 
     # Next menu or operation
-    [ "$MENU_IT" == "3" ] && echo "2: listar"
+    [ "$MENU_IT" == "3" ] && /script/userapp.sh --list
     [ "$MENU_IT" == "4" ] && /script/haproxy.sh --ssl
 
     # Create or select an Application
@@ -69,7 +69,7 @@ function AppMenu(){
 while true; do
   MENU_IT=$(whiptail --title "$TITLE" --cancel-button "End"     \
       --menu "\nSelect a reconfiguration command:" --fb 20 75 5 \
-      "1" "List existing Applications and domains"              \
+      "1" "List existing Applications and domains/URIs"              \
       "2" "Manage Applications, create/config and Access"       \
       "3" "Machine config: Hostname, notificaçions, RTC..."     \
       "4" "Machine Security: SSH, root..."                      \
@@ -86,7 +86,7 @@ while true; do
   fi
 
   # Próximo menu ou funções para cada operação
-  [ "$MENU_IT" == "1" ] && echo "1: listar"
+  [ "$MENU_IT" == "1" ] && /script/userapp.sh --list
   [ "$MENU_IT" == "2" ] && AppMenu
   [ "$MENU_IT" == "3" ] && echo "3: máquina"
   [ "$MENU_IT" == "4" ] && /script/ssh.sh
