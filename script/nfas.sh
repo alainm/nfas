@@ -22,36 +22,43 @@ fi
 #-----------------------------------------------------------------------
 # Application Configuration Menu
 function ConfigAppMenu() {
+  # Read read return variables from selection/creation
+  . /script/info/tmp.var
   whiptail --title "$TITLE" --msgbox "ConfigAppMenu, App=$APP_NAME" 8 60
 }
 
 #-----------------------------------------------------------------------
 # Applications Menu loop
 function AppMenu(){
-  # Read read return variables from selection/creation
-  . /script/info/tmp.var
+  local CUR_SSL
   while true; do
-    MENU_IT=$(whiptail --title "$TITLE" --cancel-button "Back"  \
-        --menu "Select a reconfiguration command:" --fb 20 75 4 \
-        "1" "Global Server security level for HTTP/SSL(TLS)"    \
-        "2" "List existing Applications ans domains"            \
-        "3" "Change an existing Application"                    \
-        "4" "Create a new Application (Linux user)"             \
+    # Get global security level every time, it may change
+    . /script/info/haproxy.var
+    [ "$HAP_CRYPT_LEVEL" == "1" ] && CUR_SSL="MODERN"
+    [ "$HAP_CRYPT_LEVEL" == "2" ] && CUR_SSL="INTERMEDIATE"
+    [ "$HAP_CRYPT_LEVEL" == "3" ] && CUR_SSL="ANTIQUE"
+    # Show menu
+    MENU_IT=$(whiptail --title "$TITLE" --cancel-button "Back"     \
+        --menu "Select a reconfiguration command:" --fb 20 75 4    \
+        "1" "Config an existing Application"                       \
+        "2" "Create a NEW Application (Linux user)"                \
+        "3" "List existing Applications and domains"               \
+        "4" "Global Security Level for HTTP/SSL, current=$CUR_SSL" \
         3>&1 1>&2 2>&3)
     [ $? != 0 ] && return
 
-    # Próximo menu ou funções para cada operação
-    [ "$MENU_IT" == "1" ] && echo "1: globalSSL" # GetHaproxyLevel
-    [ "$MENU_IT" == "2" ] && echo "2: listar"
+    # Next menu or operation
+    [ "$MENU_IT" == "3" ] && echo "2: listar"
+    [ "$MENU_IT" == "4" ] && /script/haproxy.sh --ssl
 
     # Create or select an Application
-    if [ "$MENU_IT" == "3" ]; then
-      /script/userapp.sh --chgapp      # Select from /home and users
+    if [ "$MENU_IT" == "1" ]; then
+      /script/userapp.sh --chgapp      # Select Application from /home and users
       ConfigAppMenu                    # Next Menu
     fi
-    if [ "$MENU_IT" == "4" ]; then
+    if [ "$MENU_IT" == "2" ]; then
       /script/userapp.sh --newapp      # Create and configure defaults
-      ConfigAppMenu                    # Next Menu
+      [ $? == 0 ] && ConfigAppMenu     # if not aborted, Next Menu
     fi
   done # loop menu principal
 }
@@ -60,13 +67,13 @@ function AppMenu(){
 # Main iteractive loop
 # main()
 while true; do
-  MENU_IT=$(whiptail --title "$TITLE" --cancel-button "End"   \
-      --menu "Select a reconfiguration command:" --fb 20 75 5 \
-      "1" "List existing Applications ans domains"            \
-      "2" "Configure/Create an Application (Linux user)"      \
-      "3" "Machine config: Hostname, notificaçions, RTC..."   \
-      "4" "Machine Security: SSH, root..."                    \
-      "5" "Install pre-configured Programs"                   \
+  MENU_IT=$(whiptail --title "$TITLE" --cancel-button "End"     \
+      --menu "\nSelect a reconfiguration command:" --fb 20 75 5 \
+      "1" "List existing Applications and domains"              \
+      "2" "Manage Applications, create/config and Access"       \
+      "3" "Machine config: Hostname, notificaçions, RTC..."     \
+      "4" "Machine Security: SSH, root..."                      \
+      "5" "Install pre-configured Programs"                     \
       3>&1 1>&2 2>&3)
   if [ $? != 0 ]; then
       echo "Menu closed."
