@@ -28,6 +28,8 @@ function ConfigAppMenu() {
 #-----------------------------------------------------------------------
 # Applications Menu loop
 function AppMenu(){
+  # Read read return variables from selection/creation
+  . /script/info/tmp.var
   while true; do
     MENU_IT=$(whiptail --title "$TITLE" --cancel-button "Back"  \
         --menu "Select a reconfiguration command:" --fb 20 75 4 \
@@ -41,10 +43,14 @@ function AppMenu(){
     # Próximo menu ou funções para cada operação
     [ "$MENU_IT" == "1" ] && echo "1: globalSSL" # GetHaproxyLevel
     [ "$MENU_IT" == "2" ] && echo "2: listar"
-    [ "$MENU_IT" == "3" ] && /script/userapp.sh --chgapp
+
+    # Create or select an Application
+    if [ "$MENU_IT" == "3" ]; then
+      /script/userapp.sh --chgapp      # Select from /home and users
+      ConfigAppMenu                    # Next Menu
+    fi
     if [ "$MENU_IT" == "4" ]; then
       /script/userapp.sh --newapp      # Create and configure defaults
-      . /script/info/tmp.var           # Read read return variables
       ConfigAppMenu                    # Next Menu
     fi
   done # loop menu principal

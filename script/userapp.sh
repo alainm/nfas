@@ -171,7 +171,7 @@ function NewApp(){
 # Application select screen
 # Uses as reference directories in /home
 function SelectApp(){
-  local AUSR USR NUSR KEYS
+  local I AUSR USR NUSR KEYS
 set -x
   APP_NAME="" # Clear output variable
   # create Array of existing users
@@ -180,7 +180,7 @@ set -x
     id $USR
     if [ $? -eq 0 ]; then
       echo "User found: $USR"
-      AUSR[$I]=$USR
+      AUSR[$NUSR]=$USR
       let NUSR=NUSR+1 # Number of lines
     fi
   done
@@ -198,7 +198,8 @@ set -x
   KEYS=$(eval "$EXE 3>&1 1>&2 2>&3")
   [ $? != 0 ] && return 2 # Aborted
   APP_NAME=$KEYS
-  echo "Selected Application: $APP_NAME"
+  # Returns the Application name to the caller
+  echo "APP_NAME=$APP_NAME" >/script/info/tmp.var
 set +x
 }
 
@@ -334,9 +335,9 @@ elif [ "$CMD" == "--newapp" ]; then
 elif [ "$CMD" == "--chgapp" ]; then
   # Called by menu nfas.sh
   SelectApp
-  if [ $? == 0 ]; then
-    ConfigApp $APP_NAME
-  fi
+  # if [ $? == 0 ]; then
+  #   ConfigApp $APP_NAME
+  # fi
 
 #-----------------------------------------------------------------------
 fi

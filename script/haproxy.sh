@@ -163,7 +163,6 @@ function ConnType2Text(){
 #-----------------------------------------------------------------------
 # Ask the Connection Security Level for an application: HTTP and/or HTTPS
 # Usage: GetAppConnType <app>
-
 # Returns: ErrLevel 0=changed, 1=aborted, Text: "HPPT only"/"Both"/"HTTPS only"
 function GetAppConnType(){
   local DEF_OPT MSG MENU_IT HAPP
@@ -894,6 +893,8 @@ elif [ "$CMD" == "--newapp" ]; then
   GetSingleAppVars $HAPP
   # create defaults, config and save, uses $HAPP for identification
   ConfigSingleApp
+  # Configuration has been changed, mark to reconfigure
+  HAP_NEW_CONF="Y"
 
 elif [ "$CMD" == "--app" ]; then
   #-----------------------------------------------------------------------
