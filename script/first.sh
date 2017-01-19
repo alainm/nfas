@@ -74,7 +74,7 @@ if [ "$1" != "--ip-continue" ]; then
   # aborta instalação e preserva a VM
   [ $? -ne 0 ] && exit 1
   # Verifica se roote tem senha e pergunta
-  /script/newuser.sh --root-pwd
+  /script/userapp.sh --root-pwd
   # Console colorido, precisa executar como usuário
   chmod 775 /script/console.sh
   chmod o+r /script/functions.sh
@@ -110,7 +110,7 @@ fi # --ip-continue
 # Instala programas
 /script/progs.sh --first
 # Cria novo usuário
-/script/newuser.sh --first
+/script/userapp.sh --first
 # Reconfigura HAproxy caso haja alguma alteração pendente
 . /script/info/haproxy.var
 if [ "$HAP_NEW_CONF" == "Y" ]; then

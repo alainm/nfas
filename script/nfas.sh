@@ -9,6 +9,8 @@
 
 # Read prvious config
 . /script/info/email.var
+# Global variables
+APP_NAME=""
 TITLE="NFAS - Node.js Full Application Server - Menu"
 
 # Only root can run this script
@@ -18,11 +20,42 @@ if [ "$(id -u)" != "0" ]; then
 fi
 
 #-----------------------------------------------------------------------
+# Application Configuration Menu
+function ConfigAppMenu() {
+  whiptail --title "$TITLE" --msgbox "ConfigAppMenu, App=$APP_NAME" 8 60
+}
+
+#-----------------------------------------------------------------------
+# Applications Menu loop
+function AppMenu(){
+  while true; do
+    MENU_IT=$(whiptail --title "$TITLE" --cancel-button "Back"  \
+        --menu "Select a reconfiguration command:" --fb 20 75 4 \
+        "1" "Global Server security level for HTTP/SSL(TLS)"    \
+        "2" "List existing Applications ans domains"            \
+        "3" "Change an existing Application"                    \
+        "4" "Create a new Application (Linux user)"             \
+        3>&1 1>&2 2>&3)
+    [ $? != 0 ] && return
+
+    # Próximo menu ou funções para cada operação
+    [ "$MENU_IT" == "1" ] && echo "1: globalSSL" # GetHaproxyLevel
+    [ "$MENU_IT" == "2" ] && echo "2: listar"
+    [ "$MENU_IT" == "3" ] && /script/userapp.sh --chgapp
+    if [ "$MENU_IT" == "4" ]; then
+      /script/userapp.sh --newapp      # Create and configure defaults
+      . /script/info/tmp.var           # Read read return variables
+      ConfigAppMenu                    # Next Menu
+    fi
+  done # loop menu principal
+}
+
+#-----------------------------------------------------------------------
 # Main iteractive loop
 # main()
 while true; do
   MENU_IT=$(whiptail --title "$TITLE" --cancel-button "End"   \
-      --menu "Select a reconfiguration command:" --fb 22 75 5 \
+      --menu "Select a reconfiguration command:" --fb 20 75 5 \
       "1" "List existing Applications ans domains"            \
       "2" "Configure/Create an Application (Linux user)"      \
       "3" "Machine config: Hostname, notificaçions, RTC..."   \
@@ -41,14 +74,13 @@ while true; do
 
   # Próximo menu ou funções para cada operação
   [ "$MENU_IT" == "1" ] && echo "1: listar"
-  [ "$MENU_IT" == "2" ] && echo "2: App"
+  [ "$MENU_IT" == "2" ] && AppMenu
   [ "$MENU_IT" == "3" ] && echo "3: máquina"
   [ "$MENU_IT" == "4" ] && /script/ssh.sh
   [ "$MENU_IT" == "5" ] && /script/progs.sh
-
 done # loop menu principal
 
-  #-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Loop do Menu principal interativo
 function OldMenu(){
   while true; do
@@ -106,11 +138,11 @@ function OldMenu(){
     fi
     # Comando local: criar nova Aplicação
     if [ "$MENU_IT" == "8" ]; then
-      /script/newuser.sh --newapp
+      /script/userapp.sh --newapp
     fi
     # Comando local: Configurar acesso a uma Aplicação
     if [ "$MENU_IT" == "9" ]; then
-      /script/newuser.sh --chgapp
+      /script/userapp.sh --chgapp
     fi
   done # loop menu principal
   return

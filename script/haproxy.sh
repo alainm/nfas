@@ -4,6 +4,7 @@
 # Script para Instalar e Configurar o HAprozy
 # Uso: /script/haproxy.sh <cmd>
 # <cmd>: --first       primeira instalação
+# <cmd>: --newapp      create default config for new Application
 # <cmd>: --app <user>  altera configuração da Aplicação
 # <cmd>: --ssl         altera nível global de segurança SSL
 # <cmd>: --reconfig    Reconfigura se alguma coisa mudou
@@ -88,8 +89,8 @@ function GetHaproxyLevel(){
 }
 
 #-----------------------------------------------------------------------
-# Lê dados de uma APP se existirem
-# uso: GetSingleAppVars <app>
+# Read APP configuration if it exists, set default for compatibility
+# usage: GetSingleAppVars <app>
 function GetSingleAppVars(){
   local APP_FILE="/script/info/hap-$1.var"
   # Apaga variáveis anteriores e gera compatibilidade
@@ -105,13 +106,15 @@ function GetSingleAppVars(){
 }
 
 #-----------------------------------------------------------------------
-# Salve dados de uma APP
-# Usa a variável $HAPP para identificar
-function ConfigSingleApp(){
+# Create Default configuration for a new Application
+# usage: SaveSingleAppVars <app>
+function SaveSingleAppVars(){
+  local HAPP=$1
   local APP_FILE="/script/info/hap-$HAPP.var"
-  # Se não tinha PORT atribuida, usa a próxima e recalcula
+  # if there was no PORT set, use next and recalculate
   if [ -z "$HAPP_PORT" ]; then
     HAPP_PORT=$HAP_NXT_PORT
+    # NOTE: HAP_* are are read and saved for every run of haproxy.sh
     HAP_NXT_PORT=$(( $HAP_NXT_PORT + 100 ))
   fi
   echo "HAPP_HTTP=\"$HAPP_HTTP\""                    2>/dev/null >  $APP_FILE
@@ -119,12 +122,21 @@ function ConfigSingleApp(){
   echo "HAPP_URIS=\"$HAPP_URIS\""                    2>/dev/null >> $APP_FILE
   echo "HAPP_PORT=\"$HAPP_PORT\""                    2>/dev/null >> $APP_FILE
   echo "HAPP_INIT=\"Y\""                             2>/dev/null >> $APP_FILE
-  # Coloca no .bashrc, no diretório home da App
+}
+
+#-----------------------------------------------------------------------
+# Save config variables and configure one Application
+# Use variable $HAPP for identification
+function ConfigSingleApp(){
+  local APP_FILE="/script/info/hap-$HAPP.var"
+  # save config variables and set defaults
+  SaveSingleAppVars $HAPP
+  # Config in .bashrc, in the App's home directory
   local ARQ=/home/$HAPP/.bashrc
-  # Precisa usar echo com Aspas simples para evitar expansão da expressão
+  # This needs to be set with echo to cope with variable expansion
   if ! grep "{NFAS-NodeVars}" $ARQ >/dev/null; then
     echo ""                                                                     >> $ARQ
-    echo "#{NFAS-NodeVars} configurado automáticamente: Variáveis do Node.js"   >> $ARQ
+    echo "#{NFAS-NodeVars} automatic configuration: Variables for Node.js"      >> $ARQ
     echo "export PORT=$HAPP_PORT"                                               >> $ARQ
     echo "export ROOT_URL=$HAPP_URI"                                            >> $ARQ
     echo ""                                                                     >> $ARQ
@@ -137,28 +149,32 @@ function ConfigSingleApp(){
 }
 
 #-----------------------------------------------------------------------
-# Converte tipo de comunicação para Texto
+# Converts connection type to text
 function ConnType2Text(){
   if [ "$HAPP_HTTP" != "Y" ] &&  [ "$HAPP_HTTPS" == "Y" ]; then
-    echo "Só HTTPS"
+    echo "HTTPS only"
   elif [ "$HAPP_HTTP" == "Y" ] &&  [ "$HAPP_HTTPS" == "Y" ]; then
-    echo "Ambos"
+    echo "Both"
   else
-    echo "Só HTTP"
+    echo "HTTP only"
   fi
 }
+
 #-----------------------------------------------------------------------
-# Pergunta Nível de Conexão Segura de uma Aplicação
-# HTTP e/ou HTTPS
-# Retorna: 0=alteração completada, 1=cancelada
+# Ask the Connection Security Level for an application: HTTP and/or HTTPS
+# Usage: GetAppConnType <app>
+
+# Returns: ErrLevel 0=changed, 1=aborted, Text: "HPPT only"/"Both"/"HTTPS only"
 function GetAppConnType(){
-  local DEF_OPT,MSG,MENU_IT
-   MSG="\nSelecione o tipo de Conexão para o seu Aplicativo."
-  MSG+="\nOs certificados serão providenciados automáticamente"
-  MSG+="\n usando o Let's Encrypt."
+  local DEF_OPT MSG MENU_IT HAPP
+  HAPP=$1
+  # Lê dados desta aplicação, se existirem
+  GetSingleAppVars $HAPP
+   MSG="\nSelect the Connection type for this Application: $HAPP"
+  MSG+="\nCertificados will be provided automaticali using Let's Encrypt."
   if [ "$HAPP_INIT" != "Y" ]; then
-    # Como não foi inicializado, cria default
-    DEF_OPT="Só HTTPS"
+    # Has not been initialized: create default
+    DEF_OPT="HTTPS only"
     MSG+="\n\n"
   else
     DEF_OPT=$(ConnType2Text)
@@ -166,21 +182,25 @@ function GetAppConnType(){
   fi
   MENU_IT=$(whiptail --title "$TITLE" --nocancel                       \
     --menu "$MSG" --default-item "$DEF_OPT" --fb 20 70 3               \
-    "Só HTTPS" "  HTTP será redirecionado (usa HSTS para \"A+\")"  \
-    "Ambos"    "  Implementa ambos e não redireciona (inseguro)"       \
-    "Só HTTP"  "  Só implementa HTTP simples (só para testes)"         \
+    "HTTPS only" "  HTTP will be redirected (usa HSTS para \"A+\")"    \
+    "Both"       "  Implement both and do not redirect (unsafe)"       \
+    "HTTP only"  "  Implement only simple HTTP (for test only)"        \
     3>&1 1>&2 2>&3)
 
   # Interpreta Opções
-  if [ "$MENU_IT" == "Só HTTPS" ];then
+  if [ "$MENU_IT" == "HTTPS only" ];then
     HAPP_HTTP="N"
     HAPP_HTTPS="Y"
-  elif [ "$MENU_IT" == "Ambos" ];then
+  elif [ "$MENU_IT" == "Both" ];then
     HAPP_HTTP="Y"
     HAPP_HTTPS="Y"
   else
     HAPP_HTTP="Y"
     HAPP_HTTPS="N"
+  fi
+  if [ "$DEF_OPT" != "$MENU_IT" ]; then
+    # Changed, save and reconfigure
+    ConfigSingleApp
   fi
   return 0
 }
@@ -251,7 +271,7 @@ function EditAppConfig(){
   # Lê dados desta aplicação, se existirem
   GetSingleAppVars $HAPP
   # Pergunta tipo de Conexão
-  GetAppConnType
+#  GetAppConnType
   # Pergunta
   GetAppUriList
   # Pede confirmação dos dados
@@ -865,6 +885,15 @@ if [ "$CMD" == "--first" ]; then
   GetHaproxyLevel
   # Cria uma configuração básica sem nada, Start serviço
   HaproxyReconfig
+
+elif [ "$CMD" == "--newapp" ]; then
+  #-----------------------------------------------------------------------
+  # Create default configuration for a new Application
+  HAPP=$2
+  # Read possibly existing variables
+  GetSingleAppVars $HAPP
+  # create defaults, config and save, uses $HAPP for identification
+  ConfigSingleApp
 
 elif [ "$CMD" == "--app" ]; then
   #-----------------------------------------------------------------------
