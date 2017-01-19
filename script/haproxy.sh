@@ -68,23 +68,23 @@ VAR_FILE="/script/info/haproxy.var"
 function GetHaproxyLevel(){
   local MENU_IT MSG LEVEL
   if [ "$CMD" == "--first" ]; then
-    MSG="\nQual o Nível de Segurança de Criptografia para o Servidor:"
+    MSG="\nSelect GLOBAL cryptography security level for this server:"
   else
-    MSG="\nQual o Nível de Segurança de Criptografia (ATUAL=$HAP_CRYPT_LEVEL)"
+    MSG="\nSelect GLOBAL cryptography security level (Current=$HAP_CRYPT_LEVEL)"
   fi
 
   MENU_IT=$(whiptail --title "$TITLE" --nocancel --default-item "$HAP_CRYPT_LEVEL" \
-    --menu "$MSG" --fb 20 76 3                                           \
-    "1" "Moderno - Comunicação segura, só Browsers novos (nível A+)"     \
-    "2" "Intermediário - Compatibilidade, aceita a maioria dos Browsers" \
-    "3" "Antigo - Baixa Segurança, WinXP e IE6"                          \
+    --menu "$MSG" --fb 20 75 3                                               \
+    "1" "Modern       - Enforce secure comunication and modern Browsers (A+)"\
+    "2" "Intermediate - Compatibility, accepts most Browsers"                \
+    "3" "Antique      - Low security, WinXP e IE6"                           \
     3>&1 1>&2 2>&3)
   if [ "$HAP_CRYPT_LEVEL" != "$MENU_IT" ]; then
     HAP_CRYPT_LEVEL=$MENU_IT
     # Configuração foi alterada e aceita
     HAP_NEW_CONF="Y"
   fi
-  echo $MENU_IT
+  # echo $MENU_IT
   return 0
 }
 
