@@ -932,14 +932,14 @@ elif [ "$CMD" == "--certonly" ]; then
   # Consegue Certificado, se precisar
   GetCertificate
 
-# elif [ "$CMD" == "--app" ]; then
-#   #-----------------------------------------------------------------------
-#   # Lê Configurações para aquela App
-#   EditAppConfig
-#   if [ $? == 0 ]; then
-#     # Configuração foi alterada e aceita
-#     HAP_NEW_CONF="Y"
-#   fi
+elif [ "$CMD" == "--app" ]; then
+  #-----------------------------------------------------------------------
+  # Lê Configurações para aquela App
+  EditAppConfig
+  if [ $? == 0 ]; then
+    # Configuração foi alterada e aceita
+    HAP_NEW_CONF="Y"
+  fi
 
 fi
   # Salva Variáveis alteradas
