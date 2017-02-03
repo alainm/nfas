@@ -264,7 +264,7 @@ function GetAppUriList(){
 }
 
 #-----------------------------------------------------------------------
-# Edit ona Application configurations
+# Edit one Application configurations
 # Retorns: 0=changes completed, 1=aborted
 function EditAppConfig(){
   local OPT,URI
@@ -272,7 +272,7 @@ function EditAppConfig(){
   GetSingleAppVars $HAPP
   # Ask Connection type
 #  GetAppConnType
-  # Ask
+  # Ask list of URIs and Domains
   GetAppUriList
   # Ask for confirmation
   OPT=$(ConnType2Text)
@@ -281,9 +281,9 @@ function EditAppConfig(){
   MSG+="\n\nURIs para acesso ao aplicativo:"
   local HAPP_URI=""
   for URI in $HAPP_URIS; do
-    # Lista URIs na tela
+    # List URIs on screen
     MSG+="\n  $URI"
-    # Guarda primeira como principal
+    # Save first as "main URI"
     [ -z "$HAPP_URI" ] && HAPP_URI="$URI"
   done
   MSG+="\n\nVariáveis de ambiente criadas:"
@@ -299,7 +299,7 @@ function EditAppConfig(){
     echo "AppConfig Cancelado"
     return 1
   fi
-  # foi confirmado, grava configuração da Aplicação
+  # confirmed, save Application configs
   ConfigSingleApp
   return 0
 }
@@ -330,8 +330,8 @@ function LetsEncryptInstall(){
 # https://blog.brixit.nl/automating-letsencrypt-and-haproxy
 # See the Certificate content: openssl x509 -in /etc/haproxy/ssl/letsencrypt.pem -text
 function GetCertificate(){
-  local APP_LIST APP URI DOM DOM1 DATE_CERT DIAS MSG
-  local LE_TOOL LE_CERT_PATH LE_CERT_ATUAL
+  local APP_LIST APP URI DOM DOM1 DATE_CERT DAYS MSG
+  local LE_TOOL LE_CERT_PATH LE_CURRENT_CERT
   local DOM_LIST=""
   local DOM_CERT=""
   local NEW_DOMAINS=""
@@ -373,8 +373,8 @@ function GetCertificate(){
     # Get the validity date of Certificado
     DATE_CERT=$(openssl x509 -in /etc/haproxy/ssl/letsencrypt.pem -text | grep "Not After" | sed -n 's/\s*Not After : \(.*\)/\1/p')
     # Calculate the number of days remaining
-    DIAS=$(( ($(date -d "$DATE_CERT" +%s) - $(date +%s)) / 86400 ))
-    echo "There already exists an installed certificate, valid for: $DIAS days"
+    DAYS=$(( ($(date -d "$DATE_CERT" +%s) - $(date +%s)) / 86400 ))
+    echo "There already exists an installed certificate, valid for: $DAYS days"
   else
     echo "No certificate found"
     DOM_CERT=""
@@ -409,15 +409,15 @@ function GetCertificate(){
              http-01 --http-01-port 9999 certonly $NEW_DOMAINS 2>&1 | tee /root/certoutput.txt
     # Limpa Arquivo
     cat certoutput.txt | sed 's/.*\(IMPORTANT NOTES:\)/\1/' | sed -n '/IMPORTANT NOTES:/{h;${x;p;};d;};H;${x;p;}' >/root/certoutput2.txt
-    MSG="Your new Certificate was generated foi generated for the domains:\n$(echo "$DOM_LIST" | xargs -n1)\n"
+    MSG="Your new Certificate was generated for the domains:\n$(echo "$DOM_LIST" | xargs -n1)\n"
     MSG+="====================\n$(cat /root/certoutput2.txt)\n===================="
     if [ $? -eq 0 ]; then
       echo -e "$MSG" | tr -cd '\11\12\15\40-\176' | mail -s "Certificate generated for [$(hostname)] - OK" $EMAIL_ADMIN
-      LE_CERT_ATUAL="$(cat /root/certoutput.txt | sed -n 's/.*\/etc\/letsencrypt\/live\/\(.*\)\/fullchain.pem.*/\1/p')"
-      if [ "$DOM1" != "$LE_CERT_ATUAL" ]; then
+      LE_CURRENT_CERT="$(cat /root/certoutput.txt | sed -n 's/.*\/etc\/letsencrypt\/live\/\(.*\)\/fullchain.pem.*/\1/p')"
+      if [ "$DOM1" != "$LE_CURRENT_CERT" ]; then
         echo "First domain : $DOM1"
-        echo "Reported in Cert: $LE_CERT_ATUAL"
-        echo "ERRO: Certificate was not seved in the expected directory"
+        echo "Reported in Cert: $LE_CURRENT_CERT"
+        echo "ERRO: Certificate was not saved in the expected directory"
         read -p "Press <Enter> to continue" A
         # abort to keepprevious configuration
         exit 1
@@ -434,13 +434,13 @@ function GetCertificate(){
       echo -e "$MSG" | tr -cd '\11\12\15\40-\176' | mail -s "ERROR gerating certificate for [$(hostname)]" $EMAIL_ADMIN
       echo "Error geranting Certificate"
     fi
-  elif [ $DIAS -lt $LE_VAL ]; then
+  elif [ $DAYS -lt $LE_VAL ]; then
     echo -e "\n         ┌────────────────────────────────────────┐"
     echo -e   "         │      Renewing SSL Certificate ...      │"
     echo -e   "         └────────────────────────────────────────┘\n"
 #set -x
     # Renew with the same automated system
-    # Use"--test-cert" for testing (staging)
+    # Use "--test-cert" for testing (staging)
     # Use "--renew-by-default" to force renewal
     $LE_TOOL --renew-by-default --no-self-upgrade --email "$EMAIL_ADMIN" renew 2>&1 | tee /root/certoutput.txt
     # Clear file
@@ -450,7 +450,7 @@ function GetCertificate(){
     if [ $? -eq 0 ] && ! grep "could not be renewed" /root/certoutput.txt ; then
       echo -e "$MSG" | tr -cd '\11\12\15\40-\176' | mail -s "Certificate RENEWED for [$(hostname)] - OK" $EMAIL_ADMIN
       # Path do Certificado, informado pelo Let's encrypt
-      LE_CERT_ATUAL=$(cat /root/certoutput.txt | sed -n -e '/have been renewed/,$p' | sed -n 's/.*\/etc\/letsencrypt\/live\/\(.*\)\/fullchain.pem.*/\1/p')
+      LE_CURRENT_CERT=$(cat /root/certoutput.txt | sed -n -e '/have been renewed/,$p' | sed -n 's/.*\/etc\/letsencrypt\/live\/\(.*\)\/fullchain.pem.*/\1/p')
       # Cat the certificate chain and the private key together for haproxy
       # Fica guardado com o nome do primeiro certificado (ordem alfabetica...)
       rm -rf /etc/haproxy/ssl/*
@@ -521,7 +521,7 @@ function HaproxyInstall(){
 
   local HAP_CUR_VER=$(haproxy -v | grep "HA-Proxy version" | sed -n 's/.* \([0-9]*\.[0-9]*\).*/\1/p')
   if [ "$HAP_CUR_VER" != "1.6" ]; then
-    # Load las version of HAproxy 1.6
+    # Load last version of HAproxy 1.6
     HAPROXY_VER=$(GetVerHaproxy)
     # download and expand
     rm -f $HAPROXY_VER.tar.gz
@@ -657,7 +657,7 @@ function HaproxyReconfig(){
     echo "===== APP=$APP DOM=$DOM DIR=$DIR HTTP=$HTTP HTTPS=$HTTPS ====="
     TMP_FRONT="  # APP=$APP, URI=$DOM$DIR\n"
     if [ -z "$DIR" ]; then
-      # Cotains only domain, now can come with port number, cf. RFC2616
+      # Cotains only domain, now can come with port number, as of RFC2616
       # https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.23
       TMP_FRONT+="  acl host_"$APP"_"$NACL" req.hdr(host) -m dom -i $DOM\n"
       if [ "$HTTP" == "N" ] && [ "$HTTPS" == "Y" ]; then
@@ -803,13 +803,13 @@ function HaproxyReconfig(){
       echo "  capture request header Host len 250"                        >> $ARQ
     fi
   else
-    echo "#{NFAS: Nenhuma Aplicação com SSL}"                             >> $ARQ
+    echo "#{NFAS: No Application has SSL}"                                >> $ARQ
   fi
   # Create BackEnds
   echo -e "$HTTP_BAK"                                                     >> $ARQ
   if [ "$HAS_SSL" == "Y" ]; then
     # Backend for redirecting HTTP=>HTTPS in the correct sequence
-    echo "#{NFAS HTTPS-BAK: Redireciona HTTP}"                            >> $ARQ
+    echo "#{NFAS HTTPS-BAK: Redirects HTTP}"                              >> $ARQ
     echo "backend http-redirect"                                          >> $ARQ
     echo "  redirect scheme https"                                        >> $ARQ
     # Last is Backend for Lets encrypt
