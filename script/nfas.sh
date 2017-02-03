@@ -67,7 +67,7 @@ function ConfigAppMenu() {
   while true; do
     MENU_IT=$(whiptail --title "NFAS - Configure an Application" --cancel-button "Back" \
         --menu "\nSelect a configuration for App: $APP_NAME" --fb 20 75 5 \
-        "1" "Configure HTTP and/or HTTPS access          "                \
+        "1" "Configure HTTP and/or HTTPS access"                          \
         "2" "Configure access URL/URIs (domains)"                         \
         "3" "Add a Public Key"                                            \
         "4" "Remove a Public Key"                                         \

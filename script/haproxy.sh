@@ -924,7 +924,7 @@ elif [ "$CMD" == "--reconfig" ]; then
 
 elif [ "$CMD" == "--certonly" ]; then
   #-----------------------------------------------------------------------
-  # Should be called fromCRON, comes with no environment
+  # Should be called from CRON, comes with no environment
   SHELL=/bin/bash
   PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
   # Create a timestamp in the log
