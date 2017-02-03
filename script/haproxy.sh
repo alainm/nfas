@@ -925,8 +925,11 @@ elif [ "$CMD" == "--reconfig" ]; then
 elif [ "$CMD" == "--certonly" ]; then
   #-----------------------------------------------------------------------
   # Should be called from CRON, comes with no environment
+  # Python Bombs if HOME ans PWD are different!
   SHELL=/bin/bash
   PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+  HOME=/root
+  cd /root
   # Create a timestamp in the log
   date
   # Get the Certificate, if needed
