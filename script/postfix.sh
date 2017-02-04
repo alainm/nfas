@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+# set -x
 
 # Script para (re)configurar o envio de Email usando o POSTFIX
 # O mesmo Script é usado para a primeira vez e para alterar a configuração

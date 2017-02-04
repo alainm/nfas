@@ -2,7 +2,7 @@
 # set -x
 
 # Script to create a new Application (Linux user)
-# Uso: /script/userapp.sh
+# Usage: /script/userapp.sh <cmd>
 # <cmd>: --root-pwd     Check and asks root password if none exists
 #        --first        First install
 #        --newapp       Create a new application
@@ -165,7 +165,7 @@ function NewApp(){
   # Create default HAproxy configuration
   /script/haproxy.sh --newapp $APP_NAME
   # Returns the Application name to the caller
-  echo "APP_NAME=$APP_NAME" >/script/info/tmp.var
+  echo "APP_NAME=$APP_NAME" >/tmp/nfas-appname.var
   return 0
 }
 
@@ -200,7 +200,7 @@ function SelectApp(){
   [ $? != 0 ] && return 2 # Aborted
   APP_NAME=$KEYS
   # Returns the Application name to the caller
-  echo "APP_NAME=$APP_NAME" >/script/info/tmp.var
+  echo "APP_NAME=$APP_NAME" >/tmp/nfas-appname.var
 }
 
 #-----------------------------------------------------------------------
@@ -330,11 +330,37 @@ function ListAllAppDomains() {
 # main()
 
 if [ "$CMD" == "--first" ]; then
+#      /script/userapp.sh --newapp      # Create and configure defaults
+#      [ $? == 0 ] && ConfigAppMenu     # if not aborted, Next Menu
+  # Create first Application during instalation
   NewApp
   if [ $? == 0 ]; then
-    AskNewKey $APP_NAME /home/$APP_NAME
-    /script/haproxy.sh --app $APP_NAME
-    # Start with a default example App, this helps tests
+    # Ask for PublicKey, conType and URIs
+    AskNewKey $APP_NAME /home/$APP_NAME     # This is in functions.sh
+    /script/haproxy.sh --appconn $APP_NAME
+    /script/haproxy.sh --appuris $APP_NAME
+    # Start with a default example App
+    su - $APP_NAME $SU_C "nohup /home/$APP_NAME/auto.sh </dev/null 2>&1 >/dev/null &"
+    # Show config menu for the new app
+    # /script/nfas.sh --appcfg $APP_NAME
+  fi
+#  if [ $? == 0 ]; then
+#    AskNewKey $APP_NAME /home/$APP_NAME
+#    /script/haproxy.sh --app $APP_NAME
+#    # Start with a default example App, this helps tests
+#    su - $APP_NAME $SU_C "nohup /home/$APP_NAME/auto.sh </dev/null 2>&1 >/dev/null &"
+#  fi
+
+#-----------------------------------------------------------------------
+elif [ "$CMD" == "--newapp" ]; then
+  # Called by menu nfas.sh
+  NewApp
+  if [ $? == 0 ]; then
+    # Ask for PublicKey, conType and URIs
+    AskNewKey $APP_NAME /home/$APP_NAME     # This is in functions.sh
+    /script/haproxy.sh --appconn $APP_NAME
+    /script/haproxy.sh --appuris $APP_NAME
+    # Start with a default example App
     su - $APP_NAME $SU_C "nohup /home/$APP_NAME/auto.sh </dev/null 2>&1 >/dev/null &"
   fi
 
@@ -351,18 +377,6 @@ elif [ "$CMD" == "--root-pwd" ]; then
       echo "Ubuntu..."
     fi
   fi
-
-#-----------------------------------------------------------------------
-elif [ "$CMD" == "--newapp" ]; then
-  # Called by menu nfas.sh
-  NewApp
-  # if [ $? == 0 ]; then
-  #   /script/haproxy.sh --app $APP_NAME
-  #   # Start with a default example App
-  #   su - $APP_NAME $SU_C "nohup /home/$APP_NAME/auto.sh </dev/null 2>&1 >/dev/null &"
-  #   # .bashrc is configured by haproxy.sh --app, so the connection test must come last
-  #   AskNewKey $APP_NAME /home/$APP_NAME
-  # fi
 
 #-----------------------------------------------------------------------
 elif [ "$CMD" == "--newgit" ]; then

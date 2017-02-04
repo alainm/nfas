@@ -6,7 +6,12 @@
 # Called by the command: nfas
 # Allows access to configurations available after install
 # A link was created in /usr/bin/nfas for this script script
+# Usage: /script/nfas.sh <cmd>
+# <cmd>: --appcfg     Application config menu
+#        <nothing>    Interactive mode
 
+# Process command line
+CMD=$1
 # Auxiliary Functions
 . /script/functions.sh
 # Read prvious config
@@ -76,9 +81,10 @@ function CheckAppConfig(){
 
 #-----------------------------------------------------------------------
 # Application Configuration Menu
+# Input: App name in $APP_NAME
 function ConfigAppMenu() {
   # Read read return variables from selection/creation
-  . /script/info/tmp.var
+  . /tmp/nfas-appname.var
   while true; do
     MENU_IT=$(whiptail --title "NFAS - Configure an Application" --cancel-button "Back"  \
         --menu "\nSelect a configuration for App: $APP_NAME" --fb 20 75 5                \
@@ -142,35 +148,52 @@ function AppMenu(){
 
 #-----------------------------------------------------------------------
 # Main iteractive loop
-# main()
-while true; do
-  MENU_IT=$(whiptail --title "$TITLE" --cancel-button "End"     \
-      --menu "\nSelect a reconfiguration command:" --fb 20 75 5 \
-      "1" "List existing Applications and domains/URIs"         \
-      "2" "Manage Applications, create/config and Access"       \
-      "3" "Machine config: Hostname, notificaçions, RTC..."     \
-      "4" "Machine Security: SSH, root..."                      \
-      "5" "Install pre-configured Programs"                     \
-      3>&1 1>&2 2>&3)
-  if [ $? != 0 ]; then
-      echo "Menu closed."
-      # Before exiting, must verify if HAproxy canfig has changed
-      . /script/info/haproxy.var
-      if [ "$HAP_NEW_CONF" == "Y" ]; then
-        /script/haproxy.sh --reconfig
-      fi
-      exit 0
-  fi
+function NfasMenu(){
+  while true; do
+    MENU_IT=$(whiptail --title "$TITLE" --cancel-button "End"     \
+        --menu "\nSelect a reconfiguration command:" --fb 20 75 5 \
+        "1" "List existing Applications and domains/URIs"         \
+        "2" "Manage Applications, create/config and Access"       \
+        "3" "Machine config: Hostname, notificaçions, RTC..."     \
+        "4" "Machine Security: SSH, root..."                      \
+        "5" "Install pre-configured Programs"                     \
+        3>&1 1>&2 2>&3)
+    if [ $? != 0 ]; then
+        echo "Menu closed."
+        # Before exiting, must verify if HAproxy canfig has changed
+        . /script/info/haproxy.var
+        if [ "$HAP_NEW_CONF" == "Y" ]; then
+          /script/haproxy.sh --reconfig
+        fi
+        exit 0
+    fi
 
-  # Próximo menu ou funções para cada operação
-  [ "$MENU_IT" == "1" ] && /script/userapp.sh --list
-  [ "$MENU_IT" == "2" ] && AppMenu
-  [ "$MENU_IT" == "3" ] && echo "3: máquina"
-  [ "$MENU_IT" == "4" ] && /script/ssh.sh
-  [ "$MENU_IT" == "5" ] && /script/progs.sh
-done #  menu loop
+    # Próximo menu ou funções para cada operação
+    [ "$MENU_IT" == "1" ] && /script/userapp.sh --list
+    [ "$MENU_IT" == "2" ] && AppMenu
+    [ "$MENU_IT" == "3" ] && echo "3: máquina"
+    [ "$MENU_IT" == "4" ] && /script/ssh.sh
+    [ "$MENU_IT" == "5" ] && /script/progs.sh
+  done #  menu loop
+}
+
+#=======================================================================
+
+if [ "$CMD" == "--appcfg" ]; then
+  # Application configure Menu, called by userapp.sh after creating first
+  APP_NAME=$2
+  ConfigAppMenu
 
 #-----------------------------------------------------------------------
+else
+  #interactive mode
+  NfasMenu
+
+#-----------------------------------------------------------------------
+fi
+exit 0
+
+#----------------------------------------------------------------------- <= Obsolete
 # Loop do Menu principal interativo
 function OldMenu(){
   while true; do

@@ -222,7 +222,7 @@ function EditConfBashExport(){
   if grep -E "^[[:blank:]]*export[[:blank:]]*$PARAM[[:blank:]]*=" $FILE; then
     # Line already exists, edit inplace
     # Caution, with grep use "+" with sed use "\+"
-    eval "sed -i 's/^[[:blank:]]*\(export[[:blank:]]*$PARAM[[:blank:]]*=\).*/\1$VAL/;' $FILE"
+    eval "sed -i 's#^[[:blank:]]*\(export[[:blank:]]*$PARAM[[:blank:]]*=\).*#\1$VAL#;' $FILE"
   else
     # Line with param does not exist, append new at the end
     echo -e "\nexport $PARAM=$VAL" >> $FILE

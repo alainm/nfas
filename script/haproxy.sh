@@ -153,8 +153,8 @@ function ConfigSingleApp(){
   else
     # Altera variáveis já definidas no arquivo
     EditConfBashExport $ARQ PORT $HAPP_PORT
-    EditConfBashExport $ARQ NODE_PORT $HAPP_PORT
     EditConfBashExport $ARQ ROOT_URL $HAPP_URI
+    # EditConfBashExport $ARQ NODE_PORT $HAPP_PORT
   fi
 }
 
@@ -962,14 +962,14 @@ elif [ "$CMD" == "--certonly" ]; then
   # Get the Certificate, if needed
   GetCertificate
 
-elif [ "$CMD" == "--app" ]; then
-  #-----------------------------------------------------------------------
-  # Read configuration for one Application
-  EditAppConfig
-  if [ $? == 0 ]; then
-    # Configuration was edited and accepted
-    HAP_NEW_CONF="Y"
-  fi
+# elif [ "$CMD" == "--app" ]; then
+#  #-----------------------------------------------------------------------
+#  # Read configuration for one Application
+#  EditAppConfig
+#  if [ $? == 0 ]; then
+#    # Configuration was edited and accepted
+#    HAP_NEW_CONF="Y"
+#  fi
 
 fi
 # Save Variables
