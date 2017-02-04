@@ -79,8 +79,8 @@ function ConfigAppMenu() {
     fi
 
     # Next menu or operation
-    [ "$MENU_IT" == "1" ] && echo "1: HTTPS"
-    [ "$MENU_IT" == "2" ] && echo "2: URL"
+    [ "$MENU_IT" == "1" ] && /script/haproxy.sh --appconn $APP_NAME
+    [ "$MENU_IT" == "2" ] && /script/haproxy.sh --appuris $APP_NAME
     [ "$MENU_IT" == "3" ] && echo "3: Add"
     [ "$MENU_IT" == "4" ] && echo "4: Remove"
     [ "$MENU_IT" == "5" ] && echo "5: git"

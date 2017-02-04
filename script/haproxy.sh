@@ -4,12 +4,14 @@
 # Script for installing and configuring  HAprozy
 # Usage: /script/haproxy.sh <cmd>
 # <cmd>: --first       First install
-# <cmd>: --newapp      create default config for new Application
-# <cmd>: --app <user>  altera configuração da Aplicação           <= old?
-# <cmd>: --ssl         Change global HAproxy SSL secutity level
-# <cmd>: --reconfig    Reconfigure everything, when anything changeg
 # <cmd>: --hostname    Reconfigure for new Hostname
 # <cmd>: --email       Reconfigure for new Email
+# <cmd>: --ssl         Change global HAproxy SSL secutity level
+# <cmd>: --newapp      create default config for new Application
+# <cmd>: --appconn     Get Connection type for one Application
+# <cmd>: --appuris     Edit list of URIs
+# <cmd>: --app <user>  altera configuração da Aplicação           <= old?
+# <cmd>: --reconfig    Reconfigure everything, when anything changeg
 # <cmd>: --certonly    Generate a new Certificate, check if it is needed
 
 # Installing Haproxy from source
@@ -132,6 +134,12 @@ function ConfigSingleApp(){
   local APP_FILE="/script/info/hap-$HAPP.var"
   # save config variables and set defaults
   SaveSingleAppVars $HAPP
+  # Get first URI to set as default
+  local HAPP_URI=""
+  for URI in $HAPP_URIS; do
+    # Save first as "main URI"
+    [ -z "$HAPP_URI" ] && HAPP_URI="$URI"
+  done
   # Config in .bashrc, in the App's home directory
   local ARQ=/home/$HAPP/.bashrc
   # This needs to be set with echo to cope with variable expansion
@@ -168,17 +176,17 @@ function ConnType2Text(){
 function GetAppConnType(){
   local DEF_OPT MSG MENU_IT HAPP
   HAPP=$1
-  # Lê dados desta aplicação, se existirem
+  # Read configs for one App, it they exist
   GetSingleAppVars $HAPP
    MSG="\nSelect the Connection type for this Application: $HAPP"
-  MSG+="\nCertificados will be provided automaticali using Let's Encrypt."
+  MSG+="\nCertificates will be provided automaticaly using Let's Encrypt."
   if [ "$HAPP_INIT" != "Y" ]; then
     # Has not been initialized: create default
     DEF_OPT="HTTPS only"
     MSG+="\n\n"
   else
     DEF_OPT=$(ConnType2Text)
-    MSG+="\n\n Sua opção atual é $DEF_OPT"
+    MSG+="\n\n Your current option is $DEF_OPT"
   fi
   MENU_IT=$(whiptail --title "$TITLE" --nocancel                       \
     --menu "$MSG" --default-item "$DEF_OPT" --fb 20 70 3               \
@@ -211,8 +219,13 @@ function GetAppConnType(){
 # Retorns: 0=editon complete, 1=canceled
 # RegEx: http://stackoverflow.com/questions/3809401/what-is-a-good-regular-expression-to-match-a-url
 function GetAppUriList(){
-  local URI URIS MSG OK N T LIN
+  local URI URIS OLD_URIS MSG OK N T LIN
   local TMP_ARQ="/root/tmp-uri.list"
+set -x
+  # Read configs for this App, if exist
+  GetSingleAppVars $HAPP
+  # Previous list of URIs
+  OLD_URIS=$HAPP_URIS
   URIS=$HAPP_URIS
   while true; do
     # Put each URL in one line and save in a temporary file
@@ -232,6 +245,7 @@ function GetAppUriList(){
         --nocancel --editbox $TMP_ARQ 18 70)
       [ $? == 0 ] && OK="Y"
     done
+    clear # dialog screen is not erased
     OK="Y";N=0;LIN=""
     # Join all URIs in one line, check if they are valid
     URIS=$(echo $URIS | sed ':a;$!N;s/\n//;ta;')
@@ -255,10 +269,15 @@ function GetAppUriList(){
         HAPP_URIS+="$T$URI"
         T=" "
       done
-      echo "URIs=[$HAPP_URIS]"
+      echo "URIs=[$HAPP_URIS] old=[$OLD_URIS]"
+      if [ "$OLD_URIS" != "$HAPP_URIS" ]; then
+        # Configuration has changed, set Application
+        ConfigSingleApp
+      fi
+set +x
       return 0
     fi
-    MSG="\n The URI in line $LIN is invelid, please fix it...\n\n"
+    MSG="\n The URI in line $LIN is invalid, please fix it...\n\n"
     whiptail --title "$TITLE" --msgbox "$MSG" 11 60
   done
 }
@@ -270,8 +289,6 @@ function EditAppConfig(){
   local OPT,URI
   # Read configs for this App, if exist
   GetSingleAppVars $HAPP
-  # Ask Connection type
-#  GetAppConnType
   # Ask list of URIs and Domains
   GetAppUriList
   # Ask for confirmation
@@ -884,6 +901,16 @@ if [ "$CMD" == "--first" ]; then
   GetHaproxyLevel
   # Create a basic empty configuration, Strat service
   HaproxyReconfig
+
+elif [ "$CMD" == "--appconn" ]; then
+  #-----------------------------------------------------------------------
+  # Get Connection type for one Application
+  GetAppConnType
+
+elif [ "$CMD" == "--appuris" ]; then
+  #-----------------------------------------------------------------------
+  # Edit list of URIs
+  GetAppUriList
 
 elif [ "$CMD" == "--newapp" ]; then
   #-----------------------------------------------------------------------
