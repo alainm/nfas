@@ -7,6 +7,8 @@
 # Allows access to configurations available after install
 # A link was created in /usr/bin/nfas for this script script
 
+# Auxiliary Functions
+. /script/functions.sh
 # Read prvious config
 . /script/info/email.var
 # Global variables
@@ -18,6 +20,19 @@ if [ "$(id -u)" != "0" ]; then
   echo "Only root can run this command"
   exit 255
 fi
+
+#-----------------------------------------------------------------------
+# Read Application Security and translate to string
+# usage: GetAppSecurity <app>
+function GetAppSecurity(){
+  local HAPP=$1
+  # Get all configs and domains for this application
+  HAPP_HTTP=""; HAPP_HTTPS=""; HAPP_PORT=""; HAPP_URIS=""
+  [ -e /script/info/hap-$HAPP.var ] && . /script/info/hap-$HAPP.var
+  [ "$HAPP_HTTP" == "Y" ] && [ "$HAPP_HTTPS" == "N" ] && echo "HTTP only"
+  [ "$HAPP_HTTP" == "N" ] && [ "$HAPP_HTTPS" == "Y" ] && echo "HTTPS only"
+  [ "$HAPP_HTTP" == "Y" ] && [ "$HAPP_HTTPS" == "Y" ] && echo "HTTP and HTTPS"
+}
 
 #-----------------------------------------------------------------------
 # Check Application Configuration
@@ -65,9 +80,9 @@ function ConfigAppMenu() {
   # Read read return variables from selection/creation
   . /script/info/tmp.var
   while true; do
-    MENU_IT=$(whiptail --title "NFAS - Configure an Application" --cancel-button "Back" \
-        --menu "\nSelect a configuration for App: $APP_NAME" --fb 20 75 5 \
-        "1" "Configure HTTP and/or HTTPS access"                          \
+    MENU_IT=$(whiptail --title "NFAS - Configure an Application" --cancel-button "Back"  \
+        --menu "\nSelect a configuration for App: $APP_NAME" --fb 20 75 5                \
+        "1" "Configure HTTP and/or HTTPS access, current is: $(GetAppSecurity $APP_NAME)"\
         "2" "Configure access URL/URIs (domains)"                         \
         "3" "Add a Public Key"                                            \
         "4" "Remove a Public Key"                                         \
@@ -81,9 +96,10 @@ function ConfigAppMenu() {
     # Next menu or operation
     [ "$MENU_IT" == "1" ] && /script/haproxy.sh --appconn $APP_NAME
     [ "$MENU_IT" == "2" ] && /script/haproxy.sh --appuris $APP_NAME
-    [ "$MENU_IT" == "3" ] && echo "3: Add"
-    [ "$MENU_IT" == "4" ] && echo "4: Remove"
-    [ "$MENU_IT" == "5" ] && echo "5: git"
+    # These are in functions.sh
+    [ "$MENU_IT" == "3" ] && AskNewKey $APP_NAME /home/$APP_NAME
+    [ "$MENU_IT" == "4" ] && DeleteKeys $APP_NAME /home/$APP_NAME
+    [ "$MENU_IT" == "5" ] && /script/userapp.sh --newgit $APP_NAME
 
   done # menu loop
 }

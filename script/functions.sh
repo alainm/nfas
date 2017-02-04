@@ -1,10 +1,12 @@
 #
-# Arquivo Com funções básicas, incluído por diversos scripts
+# File with all basic functions, this is included by several scripts
 #
 # set -x
 
-# Uso: atraves do comando ". " (ponto espaço)
+# Use: with the command ". " (dot espaço)
 # . /script/functions.sh
+
+# TODO: move some functions (loke ask PublicKey) to a separate file
 
 #-----------------------------------------------------------------------
 # http://ask.xmodulo.com/compare-two-version-numbers.html
@@ -14,58 +16,50 @@ function version_lt() { test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)"
 function version_ge() { test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)" == "$1"; }
 
 #-----------------------------------------------------------------------
-# Função para extrair IP da saída do ifconfig, deve funcionar sempre (pt, en, arm)
-# uso: IP=$(ifconfig eth0 | GetIpFromIfconfig)
+# Function to extract an IP from ifconfig output, has to work everywhere (pt, en, arm)
+# usage: IP=$(ifconfig eth0 | GetIpFromIfconfig)
 function GetIpFromIfconfig(){
   # sed -n '/.*inet /s/ *\(inet *\)\([A-Za-z\.: ]*\)\([\.0-9]*\).*/\3/p'
   sed -n '/.*inet /s/ *inet \+[A-Za-z\.: ]*\([\.0-9]*\).*/\1/p'
 }
 
 #-----------------------------------------------------------------------
-# Função para extrair o IPv4 de um dispositivo
-# uso: IP=$(GetIPv4 eth0)
+# Function to extract IPv4 of a device
+# usage: IP=$(GetIPv4 eth0)
 function GetIPv4(){
   local DEV=$1
-  [ -z "$DEV" ] && echo "DevInvalido"
+  [ -z "$DEV" ] && echo "InvalidDev"
   LANG=C ifconfig $DEV | GetIpFromIfconfig
 }
 
 #-----------------------------------------------------------------------
-# Função para extrair o NetMask4 de um dispositivo
-# uso: IP=$(GetIPv4 eth0)
+# Function to extract NetMask4 ao a device
+# usage: IP=$(GetIPv4 eth0)
 function GetMask4(){
   local DEV=$1
   [ -z "$DEV" ] && echo "DevInvalido"
   LANG=C ifconfig $DEV | grep "inet addr:" | sed -n 's/.*Mask:\([0-9.]*\).*/\1/p'
 }
 #-----------------------------------------------------------------------
-# Função para extrair o GATEWAY
-# uso GW=$(GetGateway)
+# Function to extract the GATEWAY
+# usage GW=$(GetGateway)
 function GetGateway(){
   route -n | grep -E "^0.0.0.0.*UG.*" | tr -s ' ' | cut -d' ' -f2 | tail -1
 }
 #-----------------------------------------------------------------------
-# Função para extrair o DNS
-# uso GW=$(GetDnsServer)
+# Function to extract the DNS server
+# usage GW=$(GetDnsServer)
 function GetDnsServer(){
   # cat /etc/resolv.conf | grep -m 1 -E "^nameserver" | sed -n 's/.* \([0-9.]*\)/\1/p'
   cat /etc/resolv.conf | grep -E "^nameserver" | sed -n 's/.* \([0-9.]*\)/\1/p' | tr  '\n' ' '
 }
 
 #-----------------------------------------------------------------------
-# Função para testar de network está UP ou DOWN
-# uso: NET=$(GetNetworkState eth0)
-# retorna na variável "UP" ou "DOWN"
-# function GetNetworkState(){
-#   ip a | sed -n "/$1:/s/.* state \([A-Z]*\).*/\1/p"
-# }
-
-#-----------------------------------------------------------------------
-# Função para destecte se ping retorna "Network is unreachable"
-# uso: NET_OK=$(NetwokState)
-# retorna: "OK"   se network está ok
-#          "DOWN" se está deconectado ou DOWN
-#          "UN"   se está UP mas está "UNREACHEABLE": problema com route
+# Function to detect if ping returns "Network is unreachable"
+# usage: NET_OK=$(NetwokState)
+# retorns: "OK"   if network is ok
+#          "DOWN" if network is disconnected or DOWN
+#          "UN"   if network is UP but is "UNREACHEABLE": problem with route
 function GetNetwokState(){
   local ST=$(ip a | sed -n "/eth0:/s/.* state \([A-Z]*\).*/\1/p")
   if [ "$ST" == "DOWN" ]; then
@@ -81,26 +75,26 @@ function GetNetwokState(){
 }
 
 #-----------------------------------------------------------------------
-# Função para determinar se login foi password ou publickey
+# Function to determine if login used password oo publickey
 function GetLoginType(){
-  # Determina porta de retorno da conexão atual
+  # Determine return port of current connection
   local LOG_PORT=$(echo $SSH_CONNECTION | cut -d' ' -f2)
   if [ -z "$LOG_PORT" ]; then
     echo "NotSsh"
   else
-    # Pega mensagem de log da conexão atual
+    # Get Log message for current connection
     local LOG_MSG=$(grep "Accepted [password|publickey]" /var/log/secure | grep -m1 "port $LOG_PORT"| tail -1)
-    # retorna palavra chave
+    # retorns keyword
     echo  "$LOG_MSG" | sed -n 's/.*\(password\|publickey\).*/\1/p'
   fi
 }
 
 #-----------------------------------------------------------------------
-# Retorna uma lista da Aplicações existentes (usuários Linux)
+# Retuns a list of existing Applications (Linux users)
 function GetAppList(){
   local U
   local APP_LIST=""
-  # Cria lista das Aplicações, usuários Linux
+  # Create lis of Applications as Linux users
   for U in $(ls -d /home/*); do
     USR=$(echo "$U" | sed -n 's@/home/\(.*\)*@\1@p')
     [ -n "$APP_LIST" ] && APP_LIST+=" "
@@ -110,173 +104,169 @@ function GetAppList(){
 }
 
 #-----------------------------------------------------------------------
-# Função para editar Arquivo de configuração, parametro separado por "="
-# Formato dos parametros: "param=valor", separador é "="
-# Estilo Bash, sem <space> antes/depois do "="
-# uso: EditConfEqualSafe <Arquivo> <param> <valor>
-# usado por: clock, function, network, RabitMQ
+# Function to edit a Config file, param separated by "="
+# Param format is: "param=value", separator is "="
+# Bash style, without <space> before/after "="
+# usage: EditConfEqualSafe <file> <param> <value>
+# used by: clock, function, network, RabitMQ
 function EditConfEqualSafe(){
-  local ARQ=$1
+  local FILE=$1
   local PARAM=$2
   local VAL=$3
-  if grep -E "^[[:blank:]]*$PARAM[[:blank:]]*=" $ARQ; then
-    # linha já existe, precisa apagar antes de criar de novo
-    sed -i /^[[:blank:]]*$PARAM[[:blank:]]*=/d $ARQ
+  if grep -E "^[[:blank:]]*$PARAM[[:blank:]]*=" $FILE; then
+    # Line already exists, need to remove before creating a new one
+    sed -i /^[[:blank:]]*$PARAM[[:blank:]]*=/d $FILE
   fi
-  # linha com parametro não existe, acrescenta linha
-  echo -e "\n$PARAM=$VAL" 2>/dev/null >> $ARQ
+  # Line with param does not exist (or was deleted), append that line
+  echo -e "\n$PARAM=$VAL" 2>/dev/null >> $FILE
 }
 
 #-----------------------------------------------------------------------
-# Função para editar Arquivo de configuração, parametro separado por "="
-# Formato dos parametros: "param=\"valor\"", separador é "="
-# Versão String: valor entre aspas
-# Estilo Bash, sem <space> antes/depois do "="
-# uso: EditConfEqualStr <Arquivo> <param> <valor>
+# Function to edit a Config file, param separated by "="
+# Param format is: "param=\"value\"", separator is "="
+# String version: value is between quotes
+# Bash style, without <space> before/after "="
+# usage: EditConfEqualStr <file> <param> <value>
 # usado por: clock, function
 function EditConfEqualStr(){
-  local ARQ=$1
+  local FILE=$1
   local PARAM=$2
   local VAL=$3
-  if grep -E "^[[:blank:]]*$PARAM[[:blank:]]*=" $ARQ; then
-    # linha já existe, precisa apagar antes de criar de novo
-    sed -i /^[[:blank:]]*$PARAM[[:blank:]]*=/d $ARQ
+  if grep -E "^[[:blank:]]*$PARAM[[:blank:]]*=" $FILE; then
+    # Line already exists, need to remove before creating a new one
+    sed -i /^[[:blank:]]*$PARAM[[:blank:]]*=/d $FILE
   fi
-  # linha com parametro não existe, acrescenta linha
-  echo -e "\n$PARAM=\"$VAL\"" 2>/dev/null >> $ARQ
+  # Line with param does not exist (or was deleted), append that line
+  echo -e "\n$PARAM=\"$VAL\"" 2>/dev/null >> $FILE
 }
 
 #-----------------------------------------------------------------------
-# Le parametro de Arquivo de configuração, parametro separado por "="
-# uso: GetConfEqual <Arquivo> <param>
-# Elimina as Aspas, se honverem. TODO: só se forem no começo/fim
+# Function to READ a Config file, param separated by "="
+# usage: GetConfEqual <file> <param>
+# Remove quotes, if they exist. TODO: only if at begin/end
 function GetConfEqual(){
-  local ARQ=$1
+  local FILE=$1
   local PARAM=$2
-  local TMP=$(eval "sed -n 's|^[[:blank:]]*$PARAM=\(.*\)|\1|p' $ARQ | tr -d \"\\\"\"")
+  local TMP=$(eval "sed -n 's|^[[:blank:]]*$PARAM=\(.*\)|\1|p' $FILE | tr -d \"\\\"\"")
   echo "$TMP"
 }
 
 #-----------------------------------------------------------------------
-# Função para editar Arquivo de configuração, parametro separado por ":"
-# Formato dos parametros: "param:  valor" de separador é ":"
-# uso: EditConfColon <Arquivo> <param> <valor>
-# usa método de apagar e recriar, é mais seguro!
-#   (alguns caracteres poderiam ser interpretados pelo SED)
-# usado por: postfix (/etc/aliases)
+# Function to edit a Config file, param separated by ":"
+# Format of params: "param:  value", the separator is ":"
+# usage: EditConfColon <file> <param> <value>
+# Uses method of Delete and Create, this is safer!
+#   (some caracters could be interpreted by SED)
+# used by: postfix (/etc/aliases)
 function EditConfColon(){
-  local ARQ=$1
+  local FILE=$1
   local PARAM=$2
   local VAL=$3
-  if grep -E "^[[:blank:]]*$PARAM[[:blank:]]*:" $ARQ; then
-    # linha já existe, precisa apagar antes de criar de novo
-    sed -i /^[[:blank:]]*$PARAM[[:blank:]]*:/d $ARQ
+  if grep -E "^[[:blank:]]*$PARAM[[:blank:]]*:" $FILE; then
+    # Line already exists, need to remove before creating a new one
+    sed -i /^[[:blank:]]*$PARAM[[:blank:]]*:/d $FILE
   fi
-  # linha com parametro não existe, acrescenta linha
-  echo -e "\n$PARAM:   $VAL" >> $ARQ
+  # Line with param does not exist (or was deleted), append that line
+  echo -e "\n$PARAM:   $VAL" >> $FILE
 }
 
 #-----------------------------------------------------------------------
-# Função para ler Arquivo de configuração, parametro separado por " "
-# Formato dos parametros: "param  valor" de separador é " "
-# uso: GetConfSpace <Arquivo> <param>
-# usado por sshd.conf
+# Function to READ a Config file, param separated by " "
+# Format of params: "param  value" the separator is " "
+# usage: GetConfSpace <file> <param>
+# used by sshd.conf
 function GetConfSpace(){
-  local ARQ=$1
+  local FILE=$1
   local PARAM=$2
-  # Le vaiável direto do arquivo
-  local TMP=$(eval "sed -n 's/^[[:blank:]]*"$PARAM"[[:blank:]]\+\(.*\)[[:blank:]]*$/\1/p'" $ARQ)
+  # Read vaiable from file
+  local TMP=$(eval "sed -n 's/^[[:blank:]]*"$PARAM"[[:blank:]]\+\(.*\)[[:blank:]]*$/\1/p'" $FILE)
   if [ -z "$TMP" ]; then
-    # Tenta ler em comentários, geralmente é o default
-    TMP=$(eval "sed -n 's/^[[:blank:]]*#\?[[:blank:]]*"$PARAM"[[:blank:]]\+\(.*\)[[:blank:]]*$/\1/p'" $ARQ)
+    # Try to read from comments, usualy this is the default
+    TMP=$(eval "sed -n 's/^[[:blank:]]*#\?[[:blank:]]*"$PARAM"[[:blank:]]\+\(.*\)[[:blank:]]*$/\1/p'" $FILE)
   fi
   echo $TMP
 }
 
 #-----------------------------------------------------------------------
-# Função para editar Arquivo de configuração, parametro separado por " "
-# Formato dos parametros: "param  valor" de separador é " "
-# uso: EditConfSpace <Arquivo> <param> <valor>
-# usa método de substituir, CUIDADO com caracteres que podeminterferir com o SED
-# usado por sshd.conf
+# Function to edit a Config file, param separated by " "
+# Format of params: "param  value" the separator is " "
+# usage: EditConfSpace <file> <param> <value>
+# Uses replace method, BEWARE of characters that could be interpreted by SED
+# used by sshd.conf
 function EditConfSpace(){
-  local ARQ=$1
+  local FILE=$1
   local PARAM=$2
   local VAL=$3
-  if grep -E "^[[:blank:]]*$PARAM[[:blank:]]+" $ARQ; then
-    # linha já existe, substituir no local
-    # Cuidado no grep é "+" e no sed é "\+"
-    eval "sed -i 's/^\([[:blank:]]*$PARAM[[:blank:]]\+\).*/\1$VAL/;' $ARQ"
-   elif grep -E "^[[:blank:]]*#*[[:blank:]]*$PARAM[[:blank:]]+" $ARQ; then
-    # linha já existe, substituir no local, Retirar comentário
-    eval "sed -i 's/^[[:blank:]]*#\?\([[:blank:]]*$PARAM[[:blank:]]\+\).*/\1$VAL/;' $ARQ"
+  if grep -E "^[[:blank:]]*$PARAM[[:blank:]]+" $FILE; then
+    # Line already exists, edit inplace
+    # Caution, with grep use "+" with sed use "\+"
+    eval "sed -i 's/^\([[:blank:]]*$PARAM[[:blank:]]\+\).*/\1$VAL/;' $FILE"
+  elif grep -E "^[[:blank:]]*#*[[:blank:]]*$PARAM[[:blank:]]+" $FILE; then
+    # Line already exists in comment, remove comment
+    eval "sed -i 's/^[[:blank:]]*#\?\([[:blank:]]*$PARAM[[:blank:]]\+\).*/\1$VAL/;' $FILE"
   else
-    # linha com parametro não existe, acrescenta linha no final
-    echo -e "\n$PARAM   $VAL" >> $ARQ
+    # Line with param does not exist, append new at the end
+    echo -e "\n$PARAM   $VAL" >> $FILE
   fi
 }
 #-----------------------------------------------------------------------
-# Função para editar Arquivo Bash, parametro separado por " "
-# Formato dos parametros: "param  valor" de separador é " "
-# uso: EditConfSpace <Arquivo> <param> <valor>
-# usa método de substituir, CUIDADO com caracteres que podeminterferir com o SED
-# usado por sshd.conf
+# Function to edit a Bash file, param separated by " "
+# Format of params: "param  value" the separator is " "
+# usage: EditConfSpace <file> <param> <value>
+# Uses replace method, BEWARE of characters that could be interpreted by SED
+# used by sshd.conf
 function EditConfBashExport(){
-  local ARQ=$1
+  local FILE=$1
   local PARAM=$2
   local VAL=$3
-  if grep -E "^[[:blank:]]*export[[:blank:]]*$PARAM[[:blank:]]*=" $ARQ; then
-    # linha já existe, substituir no local
-    # Cuidado no grep é "+" e no sed é "\+"
-    eval "sed -i 's/^[[:blank:]]*\(export[[:blank:]]*$PARAM[[:blank:]]*=\).*/\1$VAL/;' $ARQ"
+  if grep -E "^[[:blank:]]*export[[:blank:]]*$PARAM[[:blank:]]*=" $FILE; then
+    # Line already exists, edit inplace
+    # Caution, with grep use "+" with sed use "\+"
+    eval "sed -i 's/^[[:blank:]]*\(export[[:blank:]]*$PARAM[[:blank:]]*=\).*/\1$VAL/;' $FILE"
   else
-    # linha com parametro não existe, acrescenta linha no final
-    echo -e "\nexport $PARAM=$VAL" >> $ARQ
+    # Line with param does not exist, append new at the end
+    echo -e "\nexport $PARAM=$VAL" >> $FILE
   fi
 }
 
 
 #-----------------------------------------------------------------------
-# Função para editar Arquivo de configuração, parametro separado por "="
-# Formato dos parametros:
+# Function to edit a Config file with sections, param separated by "="
+# Format of params:
 #     [section]
-#     param = valor
-# uso: EditConfIgual <Arquivo> <section> <param> <valor>
-# usa método de substituir, CUIDADO com caracteres que podeminterferir com o SED
-# usado para: fail2ban
-function EditConfIgualSect(){
-  local ARQ=$1
+#     param = value
+# usage: EditConfEqualSect <file> <section> <param> <value>
+# Uses replace method, BEWARE of characters that could be interpreted by SED
+# used by: fail2ban
+function EditConfEqualSect(){
+  local FILE=$1
   local SECTION=$2
   local PARAM=$3
   local VAL=$4
-  local TMP=$(eval "sed -n '/[$SECTION]/,/\[.*/ { /^[[:blank:]]*$PARAM[[:blank:]]*=/p }' $ARQ")
+  local TMP=$(eval "sed -n '/[$SECTION]/,/\[.*/ { /^[[:blank:]]*$PARAM[[:blank:]]*=/p }' $FILE")
   if [ -n "$TMP" ]; then
-    # linha já existe, substituir no local
-    # Cuidado no grep é "+" e no sed é "\+"
-    # eval "sed -i 's/^\([[:blank:]]*$PARAM[[:blank:]]*=[[:blank:]]*\).*/\1$VAL/;' $ARQ"
-    eval "sed -i '/[$SECTION]/,/\[.*/ { s/^\([[:blank:]]*$PARAM[[:blank:]]*=[[:blank:]]*\).*/\1$VAL/ }' $ARQ"
+    # Line already exists, edit inplace
+    eval "sed -i '/[$SECTION]/,/\[.*/ { s/^\([[:blank:]]*$PARAM[[:blank:]]*=[[:blank:]]*\).*/\1$VAL/ }' $FILE"
    else
-     # elif grep -E "^[[:blank:]]*#*[[:blank:]]*$PARAM[[:blank:]]*=[[:blank:]]*" $ARQ; then
-     TMP=$(eval "sed -n '/[$SECTION]/,/\[.*/ { /^[[:blank:]]*#[[:blank:]]*$PARAM[[:blank:]]*=/p }' $ARQ")
+     TMP=$(eval "sed -n '/[$SECTION]/,/\[.*/ { /^[[:blank:]]*#[[:blank:]]*$PARAM[[:blank:]]*=/p }' $FILE")
      if [ -n "$TMP" ]; then
-       # linha já existe, substituir no local, Retirar comentário
-       # eval "sed -i 's/^[[:blank:]]*#\?\([[:blank:]]*$PARAM[[:blank:]]*=[[:blank:]]*\).*/\1$VAL/;' $ARQ"
-       eval "sed -i '/[$SECTION]/,/\[.*/ { s/^[[:blank:]]*#\?[[:blank:]]*\($PARAM[[:blank:]]*=[[:blank:]]*\).*/\1$VAL/ }' $ARQ"
+       # Line already exists in comment, remove comment and edit in place
+       eval "sed -i '/[$SECTION]/,/\[.*/ { s/^[[:blank:]]*#\?[[:blank:]]*\($PARAM[[:blank:]]*=[[:blank:]]*\).*/\1$VAL/ }' $FILE"
      else
-       # Arquivo do fail2ban é separado por [paragrafos], não pode acrescentar no final
+       # File is separated in []sections], cannot append a line
        false
      fi
   fi
 }
 
 #-----------------------------------------------------------------------
-# Altera localtime do sistema
-# uso: SetLocaltime <zone>
+# Modify system's localtime
+# usage: SetLocaltime <zone>
 function SetLocaltime(){
   local NEW_TZ=$1
   if [ -e "/usr/share/zoneinfo/$NEW_TZ" ]; then
     ln -sf /usr/share/zoneinfo/$NEW_TZ /etc/localtime
-    # altera arquivo de configuração, conforme a Distro
+    # Change config file, changes for different distros
     if [ "$DISTRO_NAME" == "CentOS" ]; then
       EditConfEqualStr /etc/sysconfig/clock ZONE "$NEW_TZ"
     else
@@ -289,7 +279,7 @@ function SetLocaltime(){
 }
 
 #-----------------------------------------------------------------------
-# Fornece o String do Time-Zone
+# Get system timezone String
 function GetLocaltime(){
     if [ "$DISTRO_NAME" == "CentOS" ]; then
       echo "$(GetConfEqual /etc/sysconfig/clock ZONE)"
@@ -300,8 +290,8 @@ function GetLocaltime(){
 }
 
 #-----------------------------------------------------------------------
-# Importa uma PublicKey
-# Uso: AskNewKey usuario diretorio
+# Import a PublicKey
+# Usage: AskNewKey <user> <diretory>
 function AskNewKey(){
   local TMP
   local MSG
@@ -312,61 +302,61 @@ function AskNewKey(){
   local GRP=$(id -G -n  $USR | cut -d ' ' -f 1)
   # loop só sai com return
   while true; do
-       MSG="\nForneca o Certificado Chave Pública (PublicKey) para acesso como \"$USR\""
-      MSG+="\n (deixe em branco se não pretende usar)"
-    MSG+="\n\nUse estes comandos no Linux para gerar as chaves com identificação"
-      MSG+="\n(copiar e executar uma linha por vez com <Ctrl+Shift+C> <Ctrl+Shift+V>)"
-    MSG+="\n\n   ARQ=\"\$USER@\$(hostname).key.pub\""
-      MSG+="\n   ssh-keygen -t rsa -b 4096 -f ~/.ssh/$USR@$(hostname).key -C \$ARQ"
+       MSG="\nSupply a PublicKey for access as user \"$USR\""
+      MSG+="\n (leave it blank if you don't intend to use one)"
+    MSG+="\n\nUse these Linux comands to generate a new Key Pair with identification"
+      MSG+="\n (copy and execute one line at a time with <Ctrl+Shift+C> <Ctrl+Shift+V>)"
+    MSG+="\n\n   FILE=\"\$USER@\$(hostname).key.pub\""
+      MSG+="\n   ssh-keygen -t rsa -b 4096 -f ~/.ssh/$USR@$(hostname).key -C \$FILE"
       MSG+="\n   cat ~/.ssh/$USR@$(hostname).key.pub"
-    MSG+="\n\nCopie o resultado no campo abaixo (começando em \"ssh-rsa\" até \".pub\"):"
+    MSG+="\n\nCopy the result in the space below (from \"ssh-rsa\" up to \".pub\"):"
     MSG+="\n"
-    # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
-    TMP=$(whiptail --title "Chave Pública do usuário $USR" --inputbox "$MSG" 21 78 3>&1 1>&2 2>&3)
+    # using whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
+    TMP=$(whiptail --title "PublicKey for user $USR" --inputbox "$MSG" 21 78 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ] || [ -z "$TMP" ]; then
-      echo "Operação cancelada!"
+      echo "Operation aborted!"
       return 1
     else
-      # Cria diretório caso não exista
+      # Create diretory if non existant
       mkdir -p $DIR/.ssh/; chown $USR:$GRP $DIR/.ssh/; chmod 700 $DIR/.ssh/
       if [ "$DISTRO_NAME" == "CentOS" ]; then
         ## >>CentOS<<: http://wiki.centos.org/HowTos/Network/SecuringSSH
         # Ensure the correct SELinux contexts are set:
         restorecon -Rv $DIR/.ssh
       fi
-      # Testa se já existe uma PublicKey com essa identificação
+      # Test if a PublicKey with this identification already exists
       OLD_N=$(eval "sed -n '/"$(echo -n $TMP | cut -d' ' -f3)"/p' $DIR/.ssh/authorized_keys | wc -l")
       if [ $OLD_N -ne 0 ]; then
-        MSG="Já exisste uma Chave Pública (PublicKey) com esta identificação"
-        MSG+="\n\n Deseja mesmo SUBSTITUÍ-LA?"
-        if ( ! whiptail --title "Chave Pública do usuário $USR" --yesno "$MSG" 10 78) then
+        MSG="A PublicKey with this identification already exists"
+        MSG+="\n\n Do you really want to REPLACE IT?"
+        if ( ! whiptail --title "PublicKey for user $USR" --yesno "$MSG" 10 78) then
           continue
         fi
       fi
-      # Elimina entradas com mesma identificação
+      # Elimate entries with the same identification
       eval "sed -i '/"$(echo -n $TMP | cut -d' ' -f3)"/d' $DIR/.ssh/authorized_keys"
-      # Acrescenta a nova publickey
+      # Add a new PublicKey
       echo -e "\n$TMP" >> $DIR/.ssh/authorized_keys
-      # Tem que ter permissões bloqueadas
+      # It is mandatory to have restrictive permisions
       chown $USR:$GRP $DIR/.ssh/authorized_keys;
       chmod 600 $DIR/.ssh/authorized_keys
-      # Elimina linhas em branco
+      # Remove blank lines
       sed -i '/^$/d' $DIR/.ssh/authorized_keys
-      # Envia Email com instruções de acesso
+      # Send Email with access instructions
       /script/ssh.sh --email $USR
-      # Mensagem de confirmação
+      # Confirmation message
       if [ $OLD_N -eq 0 ]; then
-        MSG="\nA sua Chave Pública (PublicKey) foi acrescentada para acesso seguro."
+        MSG="\nYour PublicKey was added for safe access."
       else
-        MSG="\nA sua Chave Pública (PublicKey) foi substituida para acesso seguro."
+        MSG="\nYour PublicKey was replaced for safe access."
       fi
-      MSG+="\nO seu comando para acessar este servidor por SSH é:"
+      MSG+="\nYour command to access this server using SSH is:"
       MSG+="\n\n   ssh -i ~/.ssh/$USR@$(hostname).key $USR@$(ifconfig eth0 | GetIpFromIfconfig)"
-      MSG+="\n\n==>> Um email foi enviado com estas instruções <<=="
-      MSG+="\nRecomendamos que teste agora..."
-      MSG+="\n\nOK? SIM para continuar, NÃO para repetir operação"
-      if (whiptail --title "Chave Pública do usuário $USR" --yesno "$MSG" 17 78) then
-        echo "Chave Pública cadastrada com sucesso"
+      MSG+="\n\n==>> An email was sent with these instuctions <<=="
+      MSG+="\nPlease test it NOW..."
+      MSG+="\n\nOK? YES to continue, NO to repeat the operation"
+      if (whiptail --title "PublicKey for user $USR" --yesno "$MSG" 17 78) then
+        echo "PublicKey successfuly added"
         return 0
       fi
     fi
@@ -374,38 +364,40 @@ function AskNewKey(){
 }
 
 #-----------------------------------------------------------------------
-# Remove PublicKeys existentes
-# Uso: DeleteKeys usuario diretorio
+# Remove existing PublicKeys
+# Usage: DeleteKeys <user> <diretory>
 function DeleteKeys(){
-  local I, LIN, MSG, AMSG, EXE, KEYS
+  local I LIN MSG EXE KEYS
+  local AMSG=
   local USR=$1
   local DIR=$2
-  local TITLE="NFAS - Removendo Chaves Públicas do usuário $USR"
-    # Elimina linhas em branco
+  local TITLE="NFAS - Removing PublicKeys for user: $USR"
+    # Remove blank lines
+    [ ! -e $DIR/.ssh/authorized_keys ] && touch $DIR/.ssh/authorized_keys
     sed -i '/^$/d' $DIR/.ssh/authorized_keys
-    # Lista as chaves existentes e coloca numa array
+    # List all existing keys and place them in an array
     I=0
     while read LIN ; do
       AMSG[$I]=$(echo $LIN | cut -d' ' -f3)
       let I=I+1
     done < $DIR/.ssh/authorized_keys
-    N_LIN=${#AMSG[*]} # Número de linhas
+    N_LIN=${#AMSG[*]} # Number of lines
     if [ "$N_LIN" == "0" ]; then
-      # uso do whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
-      whiptail --title "$TITLE" --msgbox "Não foi encontrada nenhuma Chave Pública para o usuário $USR.\n\nOK para continuar" 10 70
+      # using whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
+      whiptail --title "$TITLE" --msgbox "No PublicKey was found for user $USR.\n\nOK to continue" 10 70
       return 0
     fi
     EXE="whiptail --title \"$TITLE\""
-    EXE+=" --checklist \"\nSelecione as Chaves Públicas que deseja remover\" 22 75 $N_LIN"
+    EXE+=" --checklist \"\nSelect the PublicKeys that you want to remove\" 22 75 $N_LIN"
     for ((I=0; I<N_LIN; I++)); do
-      # Cria as mensagens para seleção das chaves que pretende remover
+      # Create mensages for selecting the Keys to be removed
       EXE+=" \"${AMSG[$I]}\" \"\" OFF"
     done
     KEYS=$(eval "$EXE 3>&1 1>&2 2>&3")
-    [ $? != 0 ] && return 0 # Cancelado
-    # Remove as chaves selecionadas
+    [ $? != 0 ] && return 0 # Aborted
+    # Remove selected keys
     for K in $(echo $KEYS | tr -d '\"'); do
-      echo "Removendo chave: $K"
+      echo "Removing Key: $K"
       eval "sed -i '/"$K"/d' $DIR/.ssh/authorized_keys"
     done
 }

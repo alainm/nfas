@@ -3,12 +3,13 @@
 
 # Script to create a new Application (Linux user)
 # Uso: /script/userapp.sh
-# <cmd>: --root-pwd    Check and asks root password if none exists
-#        --first       First install
-#        --newapp      Create a new application
-#        --chgapp      Change Config of an existing application
-#        --list        List all Apps with URIs
-#        <nothing>     not used
+# <cmd>: --root-pwd     Check and asks root password if none exists
+#        --first        First install
+#        --newapp       Create a new application
+#        --newgit <app> Create a Git repository for an Application
+#        --chgapp       Change Config of an existing application
+#        --list         List all Apps with URIs
+#        <nothing>      not used
 
 #=======================================================================
 # Process command line
@@ -231,7 +232,7 @@ function AskRepoName(){
       ls /home/$USR/$REPO_TMP  &> /dev/null
       if [ $? -eq 0 ]; then
         # Diretory name is in use
-        ERR_ST="Este nome já está em uso, por favor tente novamente"
+        ERR_ST="This name already exists, please try again"
       else
         eval "$VAR=/home/$USR/$REPO_TMP"
         return 0
@@ -253,9 +254,9 @@ function CreateRepo(){
   su $USR -l -c "mkdir -p $REPO_DIR"
 }
 
-#-----------------------------------------------------------------------
+#----------------------------------------------------------------------- <= Obsolete
 # Submenu to configue Application access
-# Input global variable: APP_NAME
+# Input: global variable: APP_NAME
 function ConfigApp(){
   local MENU_IT
   local MSG9
@@ -299,10 +300,10 @@ function ListAllAppDomains() {
   local USR DOM DOMS
   local LIST=""
   for USR in $(ls /home) ; do
-    echo "User found: $USR"
+    # echo "User found: $USR"
     LIST+="\n$USR"
     # Get all configs and domains for this application
-    HAPP_HTTP=""; HAPP_HTTPS=""; $HAPP_PORT=""; HAPP_URIS=""
+    HAPP_HTTP=""; HAPP_HTTPS=""; HAPP_PORT=""; HAPP_URIS=""
     [ -e /script/info/hap-$USR.var ] && . /script/info/hap-$USR.var
     [ "$HAPP_HTTP" == "Y" ] && [ "$HAPP_HTTPS" == "N" ] && LIST+=" - HTTP only"
     [ "$HAPP_HTTP" == "N" ] && [ "$HAPP_HTTPS" == "Y" ] && LIST+=" - HTTPS only"
@@ -320,7 +321,7 @@ function ListAllAppDomains() {
     return 1
   else
     echo "List af all Applications and URIs:\n$LIST" > /root/tmp-list.txt
-    whiptail --title "$TITLE" --textbox --scrolltext /root/tmp-list.txt 15 75
+    whiptail --title "$TITLE" --textbox --scrolltext /root/tmp-list.txt 21 75
     rm -f /root/tmp-list.txt
   fi
 }
@@ -362,6 +363,11 @@ elif [ "$CMD" == "--newapp" ]; then
   #   # .bashrc is configured by haproxy.sh --app, so the connection test must come last
   #   AskNewKey $APP_NAME /home/$APP_NAME
   # fi
+
+#-----------------------------------------------------------------------
+elif [ "$CMD" == "--newgit" ]; then
+  # Create a Git repository for an Application
+  CreateRepo $2
 
 #-----------------------------------------------------------------------
 elif [ "$CMD" == "--chgapp" ]; then

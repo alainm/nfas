@@ -3,16 +3,17 @@
 
 # Script for installing and configuring  HAprozy
 # Usage: /script/haproxy.sh <cmd>
-# <cmd>: --first       First install
-# <cmd>: --hostname    Reconfigure for new Hostname
-# <cmd>: --email       Reconfigure for new Email
-# <cmd>: --ssl         Change global HAproxy SSL secutity level
-# <cmd>: --newapp      create default config for new Application
-# <cmd>: --appconn     Get Connection type for one Application
-# <cmd>: --appuris     Edit list of URIs
-# <cmd>: --app <user>  altera configuração da Aplicação           <= old?
-# <cmd>: --reconfig    Reconfigure everything, when anything changeg
-# <cmd>: --certonly    Generate a new Certificate, check if it is needed
+# <cmd>: --first          First install
+# <cmd>: --hostname       Reconfigure for new Hostname
+# <cmd>: --email          Reconfigure for new Email
+# <cmd>: --ssl            Change global HAproxy SSL secutity level
+# <cmd>: --newapp         create default config for new Application
+# <cmd>: --appconn <app>  Get Connection type for one Application
+# <cmd>: --appuris <app>  Edit list of URIs
+# <cmd>: --reconfig       Reconfigure everything, when anything changed
+# <cmd>: --certonly       Generate a new Certificate, check if it is needed
+
+# <cmd>: --app <user>     altera configuração da Aplicação           <= old?
 
 # Installing Haproxy from source
 # @original by Marcos de Lima Carlos, adapted by Alain Mouette
@@ -171,11 +172,10 @@ function ConnType2Text(){
 
 #-----------------------------------------------------------------------
 # Ask the Connection Security Level for an application: HTTP and/or HTTPS
-# Usage: GetAppConnType <app>
+# Uses $HAPP for application name
 # Returns: ErrLevel 0=changed, 1=aborted, Text: "HPPT only"/"Both"/"HTTPS only"
 function GetAppConnType(){
-  local DEF_OPT MSG MENU_IT HAPP
-  HAPP=$1
+  local DEF_OPT MSG MENU_IT
   # Read configs for one App, it they exist
   GetSingleAppVars $HAPP
    MSG="\nSelect the Connection type for this Application: $HAPP"
@@ -221,7 +221,6 @@ function GetAppConnType(){
 function GetAppUriList(){
   local URI URIS OLD_URIS MSG OK N T LIN
   local TMP_ARQ="/root/tmp-uri.list"
-set -x
   # Read configs for this App, if exist
   GetSingleAppVars $HAPP
   # Previous list of URIs
@@ -274,7 +273,6 @@ set -x
         # Configuration has changed, set Application
         ConfigSingleApp
       fi
-set +x
       return 0
     fi
     MSG="\n The URI in line $LIN is invalid, please fix it...\n\n"
@@ -282,7 +280,7 @@ set +x
   done
 }
 
-#-----------------------------------------------------------------------
+#----------------------------------------------------------------------- <= Obsolete
 # Edit one Application configurations
 # Retorns: 0=changes completed, 1=aborted
 function EditAppConfig(){
@@ -905,11 +903,13 @@ if [ "$CMD" == "--first" ]; then
 elif [ "$CMD" == "--appconn" ]; then
   #-----------------------------------------------------------------------
   # Get Connection type for one Application
+  HAPP=$2
   GetAppConnType
 
 elif [ "$CMD" == "--appuris" ]; then
   #-----------------------------------------------------------------------
   # Edit list of URIs
+  HAPP=$2
   GetAppUriList
 
 elif [ "$CMD" == "--newapp" ]; then

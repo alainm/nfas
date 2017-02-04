@@ -151,11 +151,11 @@ function Fail2banConf(){
 		maxretry = 3
 		EOF
   # Configura Exclusão se falhas máximas em 2 minutos
-  # EditConfIgualSect $ARQ DEFAULT bantime  600
-  # EditConfIgualSect $ARQ DEFAULT findtime 120
+  # EditConfEqualSect $ARQ DEFAULT bantime  600
+  # EditConfEqualSect $ARQ DEFAULT findtime 120
   #
   # configura arquivo de log
-  EditConfIgualSect /etc/fail2ban/fail2ban.conf Definition logtarget "\\/var\\/log\\/fail2ban.log"
+  EditConfEqualSect /etc/fail2ban/fail2ban.conf Definition logtarget "\\/var\\/log\\/fail2ban.log"
   # Opção para fazer o ban com DROP
   # https://github.com/fail2ban/fail2ban/issues/507
   ARQ="/etc/fail2ban/action.d/iptables-common.local"
@@ -166,7 +166,7 @@ function Fail2banConf(){
   # blocktype define a maneira como é feito o bloqueio
   # não responde nada (demora para o cliente retornar): DROP
   # envia "Connection refused": REJECT --reject-with icmp-port-unreachable
-  EditConfIgualSect $ARQ Init blocktype "REJECT --reject-with icmp-port-unreachable"
+  EditConfEqualSect $ARQ Init blocktype "REJECT --reject-with icmp-port-unreachable"
   # Reinicia
   service fail2ban reload
   # Configura Logrotate (ver no monit.sh)
