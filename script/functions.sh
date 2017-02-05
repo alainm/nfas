@@ -373,7 +373,7 @@ function DeleteKeys(){
   local DIR=$2
   local TITLE="NFAS - Removing PublicKeys for user: $USR"
     # Remove blank lines
-    [ ! -e $DIR/.ssh/authorized_keys ] && touch $DIR/.ssh/authorized_keys
+  if [ -e $DIR/.ssh/authorized_keys ]; then
     sed -i '/^$/d' $DIR/.ssh/authorized_keys
     # List all existing keys and place them in an array
     I=0
@@ -382,9 +382,12 @@ function DeleteKeys(){
       let I=I+1
     done < $DIR/.ssh/authorized_keys
     N_LIN=${#AMSG[*]} # Number of lines
+  else
+    N_LIN=0
+  fi
     if [ "$N_LIN" == "0" ]; then
       # using whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
-      whiptail --title "$TITLE" --msgbox "No PublicKey was found for user $USR.\n\nOK to continue" 10 70
+      whiptail --title "$TITLE" --msgbox "No PublicKey was found for user $USR.\n\n                   Press OK to continue..." 9 70
       return 0
     fi
     EXE="whiptail --title \"$TITLE\""

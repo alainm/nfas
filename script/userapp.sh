@@ -173,7 +173,7 @@ function NewApp(){
 # Application select screen
 # Uses as reference directories in /home
 function SelectApp(){
-  local I AUSR USR NUSR KEYS
+  local I AUSR USR NUSR NSCR KEYS
   APP_NAME="" # Clear output variable
   # create Array of existing users
   NUSR=0
@@ -191,7 +191,9 @@ function SelectApp(){
   fi
   # whiptail: http://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
   EXE="whiptail --title \"$TITLE\""
-  EXE+=" --menu \"\nSelecect the Aplication/User to configure\" 20 60 $NUSR"
+  # Max number of lines to use scroll
+  [ "$NUSR" -le "14" ] && NSCR=NUSR || NSCR=14
+  EXE+=" --menu \"\nSelecect the Aplication/User to configure\" 22 60 $NSCR"
   for ((I=0; I<NUSR; I++)); do
     # Create the messages for application selection
     EXE+=" \"${AUSR[$I]}\" \"\""
@@ -301,7 +303,7 @@ function ListAllAppDomains() {
   local LIST=""
   for USR in $(ls /home) ; do
     # echo "User found: $USR"
-    LIST+="\n$USR"
+    LIST+="\n────────────────────────────────────────────────────────────────────\nApp: $USR"
     # Get all configs and domains for this application
     HAPP_HTTP=""; HAPP_HTTPS=""; HAPP_PORT=""; HAPP_URIS=""
     [ -e /script/info/hap-$USR.var ] && . /script/info/hap-$USR.var
@@ -313,14 +315,14 @@ function ListAllAppDomains() {
     # include all domanis and URIs
     DOMS=$(echo $HAPP_URIS | xargs -n1)
     for DOM in $DOMS; do
-      LIST+="\n  $DOM"
+      LIST+="\n        $DOM"
     done
   done
   if [ -z "$LIST" ]; then
     whiptail --title "$TITLE" --msgbox "No Application was found." 8 50
     return 1
   else
-    echo "List af all Applications and URIs:\n$LIST" > /root/tmp-list.txt
+    echo "List af all Applications and URIs:$LIST" > /root/tmp-list.txt
     whiptail --title "$TITLE" --textbox --scrolltext /root/tmp-list.txt 21 75
     rm -f /root/tmp-list.txt
   fi

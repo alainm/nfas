@@ -59,8 +59,8 @@ function CheckAppConfig(){
     LIST+="\n  $DOM"
   done
 
-  MSG=" Check your configuration for Application: $HAPP"
-  MSG+="\n\nSecure (or not) connection type: $OPT"
+  MSG=" Check your configuration for Application:\n  $HAPP"
+  MSG+="\n\nSecure (or not) connection type:\n  $OPT"
   MSG+="\n\nURIs to access this application:"
   local HAPP_URI=""
   for URI in $HAPP_URIS; do
@@ -73,7 +73,7 @@ function CheckAppConfig(){
   MSG+="\n  PORT=$HAPP_PORT"
   MSG+="\n  ROOT_URL=$HAPP_URI"
   MSG+="\n\n Is this correct?"
-  if ( ! whiptail --title "NFAS - Configure an Application" --yesno "$MSG" --no-button "Back" 22 78) then
+  if ( ! whiptail --title "NFAS - Configure an Application" --yesno "$MSG" --yes-button "Ok" --no-button "Return" 22 78) then
     return 1
   fi
   return 0
@@ -86,9 +86,9 @@ function ConfigAppMenu() {
   # Read read return variables from selection/creation
   . /tmp/nfas-appname.var
   while true; do
-    MENU_IT=$(whiptail --title "NFAS - Configure an Application" --cancel-button "Back"  \
-        --menu "\nSelect a configuration for App: $APP_NAME" --fb 20 75 5                \
-        "1" "Configure HTTP and/or HTTPS access, current is: $(GetAppSecurity $APP_NAME)"\
+    MENU_IT=$(whiptail --title "NFAS - Configure an Application" --cancel-button "Back"      \
+        --menu "\nSelect a configuration for App: $APP_NAME" --fb 20 75 5                    \
+        "1" "Configure HTTP and/or HTTPS access, current is: \"$(GetAppSecurity $APP_NAME)\""\
         "2" "Configure access URL/URIs (domains)"                         \
         "3" "Add a Public Key"                                            \
         "4" "Remove a Public Key"                                         \
