@@ -31,8 +31,8 @@
 CMD=$1
 CMD_USR=$2
 # Lê dados anteriores
-. /script/info/hostname.var
-. /script/info/email.var
+[ -e /script/info/hostname.var ] && . /script/info/hostname.var
+[ -e /script/info/email.var ] &&. /script/info/email.var
 # Inclui funções básicas
 . /script/functions.sh
 

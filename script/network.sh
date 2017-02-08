@@ -28,7 +28,7 @@ VAR_FILE=/script/info/network.var
 # Pergunta se altera para IP fixo, apenas no VirtualBox
 # Usa todos os dados obtidos anteriormente com DHCP
 function AskIpFixo(){
-  local IP_TMP, IP_OK, IP_ABORT, IP_FIM, MSG, ERR_ST
+  local IP_TMP IP_OK IP_ABORT IP_FIM MSG ERR_ST
   local NET_ARQ=/etc/sysconfig/network-scripts/ifcfg-eth0
   NET_BOOT=$(GetConfEqual $NET_ARQ BOOTPROTO)
   [ "$NET_BOOT" != "static" ] && NET_BOOT="DHCP" || NET_BOOT="STATIC"

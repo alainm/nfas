@@ -40,13 +40,12 @@ function InitUsers(){
     cat $FILE | grep -E "Defaults[[:blank:]]+secure_path" | grep -q "/usr/local/bin"
     [ "$?" != "0" ] && eval "sed -i 's@^\(Defaults[[:blank:]]\+secure_path\)\(.*\)@# \1\2\n\1 = $NEW_PATH@' $FILE"
     # Add further condigurations to the end of sudoers
-    echo ""                                       >> $FILE
     echo "#{NFAS-sudo} Allow users in group sudo to execute any command, with password, for 30 minutes" >> $FILE
     # Ask for root password, not the user's for security, don't ask again for 30 minutes
     # http://lifehacker.com/make-sudo-sessions-last-longer-in-linux-1221545774
     echo "Defaults	rootpw,timestamp_timeout=30"  >> $FILE
     # All Applications (Linux users need to be in grout "sudo" to execute commands as sudo
-    echo "%sudo	ALL=(ALL:ALL) ALL"                >> $FILE
+    echo "%sudo	ALL=(ALL:ALL) ALL\n"              >> $FILE
   fi # CentOS
 }
 
