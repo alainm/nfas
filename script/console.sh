@@ -60,6 +60,8 @@ function AddColorToFile(){
     echo '  # Retorna se é SFTP ou SCP, só pode escrever na tela se for SSH'              >> $ARQ
     echo '  return 0'                                                                     >> $ARQ
     echo 'fi'                                                                             >> $ARQ
+    # Force en_US.UTF-8, nome scripts may be sensitive to translation
+    echo 'export LANG=en_US.UTF-8'                                                        >> $ARQ
     echo '# Cores do Prompt, contribuição Marcos Carlos, quem desenvolveu estas cores...' >> $ARQ
     if [ "$ARQ" == "/root/.bashrc" ]; then
       echo 'export PS1="\[$(tput bold)\]\[$(tput setaf 3)\][\[$(tput setaf 1)\]\u\[$(tput setaf 3)\]@\[$(tput setaf 1)\]\h \[$(tput setaf 3)\]\W\[$(tput setaf 3)\]]\[$(tput setaf 1)\]\\$ \[$(tput setaf 7)\]\[$(tput sgr0)\]"' >> $ARQ

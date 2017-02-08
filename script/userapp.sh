@@ -27,6 +27,30 @@ TITLE="NFAS - Application and User Configuration"
 [ "$DISTRO_NAME" == "CentOS" ] && SU_C="--session-command" || SU_C="-c"
 
 #-----------------------------------------------------------------------
+# Inicialize user system, called by --first
+function InitUsers(){
+  if [ "$DISTRO_NAME" == "CentOS" ]; then
+    ### Execution with sudo is blocked, meke a setup based on Ubuntu...
+    local FILE=/etc/sudoers
+    [ -e $FILE.orig ] || cp -fa $FILE $FILE.orig
+    # Create group "sudo" to set user access in sudoers
+    groupadd -fr sudo
+    # Change Path after sudo for a normal one,  check if already none
+    local NEW_PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    cat $FILE | grep -E "Defaults[[:blank:]]+secure_path" | grep -q "/usr/local/bin"
+    [ "$?" != "0" ] && eval "sed -i 's@^\(Defaults[[:blank:]]\+secure_path\)\(.*\)@# \1\2\n\1 = $NEW_PATH@' $FILE"
+    # Add further condigurations to the end of sudoers
+    echo ""                                       >> $FILE
+    echo "#{NFAS-sudo} Allow users in group sudo to execute any command, with password, for 30 minutes" >> $FILE
+    # Ask for root password, not the user's for security, don't ask again for 30 minutes
+    # http://lifehacker.com/make-sudo-sessions-last-longer-in-linux-1221545774
+    echo "Defaults	rootpw,timestamp_timeout=30"  >> $FILE
+    # All Applications (Linux users need to be in grout "sudo" to execute commands as sudo
+    echo "%sudo	ALL=(ALL:ALL) ALL"                >> $FILE
+  fi # CentOS
+}
+
+#-----------------------------------------------------------------------
 # Function for asking and check the name of an Application
 # usage: AskName <VAR> "Name type"
 # VAR is a variable that will recieve the answer
@@ -148,6 +172,8 @@ function NewApp(){
   useradd -m $APP_NAME
   if [ "$DISTRO_NAME" == "CentOS" ]; then
     echo "$NEW_PWD" | passwd --stdin $APP_NAME > /dev/null
+    # need to add to group sudo
+    usermod -a -G sudo $APP_NAME
   else
     # NOTE: --stdin only works on CentOS (not on Ubuntu 14.04)
     # http://ccm.net/faq/790-changing-password-via-a-script
@@ -332,8 +358,8 @@ function ListAllAppDomains() {
 # main()
 
 if [ "$CMD" == "--first" ]; then
-#      /script/userapp.sh --newapp      # Create and configure defaults
-#      [ $? == 0 ] && ConfigAppMenu     # if not aborted, Next Menu
+  # Inicialize user systmem configurations
+  InitUsers
   # Create first Application during instalation
   NewApp
   if [ $? == 0 ]; then

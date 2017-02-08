@@ -562,7 +562,7 @@ function HaproxyInstall(){
     mkdir -p /etc/haproxy/ssl
 
     # add groupo, user and diretory for haproxy, needed for CHROOT
-    id -g haproxy &>/dev/null || groupadd haproxy
+    id -g haproxy &>/dev/null || groupadd -r haproxy
     id -u haproxy &>/dev/null || useradd -g haproxy -s /usr/sbin/nologin -r haproxy
     # creates diretories in etc and stats.
     mkdir -p /var/lib/haproxy
